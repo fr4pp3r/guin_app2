@@ -272,6 +272,12 @@ or QR code. `DocumentAccessRules` (pure Dart) evaluates expiry / single-use / us
 `VerificationService.consumeDocument` enforces it with an optimistic lock on the parent row's
 `use_count`, so every scan that is actually used counts exactly once.
 
+**Browser verification (no app required):** the `verify-document` Edge Function
+(`supabase/functions/verify-document/`) serves a lightweight HTML page at the same QR code URL.
+External agencies can scan a document QR code and verify it in any browser — the page renders
+the verification result and provides a "Mark as Used" button that calls the same optimistic-locked
+consume endpoint. Deploy with `supabase functions deploy verify-document`.
+
 **View-only in the app:** `document_viewer_screen.dart` fetches the released file into memory,
 checks its bytes against `document_hash`, renders it with `pdfrx`, stamps a per-view watermark,
 and requests screenshot blocking (`no_screenshot`) while open. It has **no download button**.

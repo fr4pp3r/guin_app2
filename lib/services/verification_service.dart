@@ -35,7 +35,7 @@ class VerificationService {
   }
 
   String buildQrUrl(String baseUrl, String documentId, String token) {
-    return '$baseUrl/verify/$documentId?token=$token';
+    return '$baseUrl/verify-document/$documentId?token=$token';
   }
 
   static const String verificationBaseUrl = 'https://barangay-guion.app';

@@ -1,6 +1,6 @@
 /// Parses the QR payload printed inside a released barangay document.
 /// The QR encodes a URL like:
-///   https://barangay-guion.app/verify/BRGY-GUION-2026-000123?token=<64hex>
+///   https://barangay-guion.app/verify-document/BRGY-GUION-2026-000123?token=<64hex>
 /// but a bare document id is also accepted for manual entry.
 library;
 

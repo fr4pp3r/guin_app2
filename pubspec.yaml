@@ -59,10 +59,17 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  
+
   # Assets
   assets:
     - .env
     - assets/images/
     - assets/icons/
     - assets/fonts/
+
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/roboto-regular.ttf
+        - asset: assets/fonts/roboto-bold.ttf
+          weight: 700
