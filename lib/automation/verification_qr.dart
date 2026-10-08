@@ -20,18 +20,29 @@ class VerificationQrParser {
     final looksLikeUrl = value.contains('://') || value.startsWith('http');
 
     if (uri != null && looksLikeUrl) {
-      final segments = uri.pathSegments;
-      final verifyIndex = segments.indexOf('verify');
-      if (verifyIndex == -1 || verifyIndex >= segments.length - 1) {
-        return null; // URL that is not a verification URL
+      // Support query-param format: ?documentId=...&token=...
+      final queryDocumentId = uri.queryParameters['documentId'];
+      if (queryDocumentId != null && queryDocumentId.isNotEmpty) {
+        final token = uri.queryParameters['token'];
+        return VerificationQr(
+          documentId: queryDocumentId,
+          token: (token == null || token.isEmpty) ? null : token,
+        );
       }
-      final documentId = segments[verifyIndex + 1];
-      if (documentId.isEmpty) return null;
-      final token = uri.queryParameters['token'];
-      return VerificationQr(
-        documentId: documentId,
-        token: (token == null || token.isEmpty) ? null : token,
-      );
+      // Support path format: /verify-document/:documentId?token=...
+      final segments = uri.pathSegments;
+      final verifyDocIndex = segments.indexOf('verify-document');
+      if (verifyDocIndex != -1 && verifyDocIndex < segments.length - 1) {
+        final documentId = segments[verifyDocIndex + 1];
+        if (documentId.isNotEmpty) {
+          final token = uri.queryParameters['token'];
+          return VerificationQr(
+            documentId: documentId,
+            token: (token == null || token.isEmpty) ? null : token,
+          );
+        }
+      }
+      return null; // URL that is not a verification URL
     }
 
     // Bare document id (manual entry)

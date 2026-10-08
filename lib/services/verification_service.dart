@@ -35,10 +35,10 @@ class VerificationService {
   }
 
   String buildQrUrl(String baseUrl, String documentId, String token) {
-    return '$baseUrl/verify-document/$documentId?token=$token';
+    return '$baseUrl?documentId=$documentId&token=$token';
   }
 
-  static const String verificationBaseUrl = 'https://barangay-guion.app';
+  static const String verificationBaseUrl = 'https://citeease-verify.vercel.app';
 
   String buildCopyToken(String documentId, int copyNumber) {
     final bytes = List<int>.generate(16, (_) => Random.secure().nextInt(256));

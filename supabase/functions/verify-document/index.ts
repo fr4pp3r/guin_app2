@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -10,7 +9,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -39,7 +38,7 @@ serve(async (req) => {
 
     if (token) {
       // Try parent verification token
-      const { data: parent, error: parentErr } = await supabase
+      const { data: parent } = await supabase
         .from("document_verifications")
         .select("*")
         .eq("document_id", documentId)
@@ -50,7 +49,7 @@ serve(async (req) => {
         verification = parent;
       } else {
         // Try print copy token
-        const { data: copyData, error: copyErr } = await supabase
+        const { data: copyData } = await supabase
           .from("document_print_copies")
           .select("*")
           .eq("verification_token", token)
@@ -147,19 +146,23 @@ serve(async (req) => {
       );
     }
 
-    // GET: return verification data (or HTML page)
-    const accept = req.headers.get("Accept") || "";
-    if (accept.includes("text/html")) {
+    // GET: always serve HTML for browser requests; JSON only if ?format=json
+    const format = url.searchParams.get("format");
+    if (format === "json") {
       return new Response(
-        renderHtml(verification, copy, decision, token),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8" } }
+        JSON.stringify({ verification, copy, decision }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    return new Response(
-      JSON.stringify({ verification, copy, decision }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    const html = renderHtml(verification, copy, decision, token);
+    return new Response(html, {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "text/html; charset=utf-8",
+      },
+    });
   } catch (err) {
     return new Response(
       JSON.stringify({ error: "Internal server error", detail: String(err) }),

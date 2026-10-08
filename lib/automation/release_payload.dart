@@ -49,7 +49,7 @@ class ReleasePayload {
     final token = sha256
         .convert(utf8.encode('$documentId:$requestId:${now.toIso8601String()}'))
         .toString();
-    final qrUrl = '$verificationBaseUrl/verify-document/$documentId?token=$token';
+    final qrUrl = '$verificationBaseUrl?documentId=$documentId&token=$token';
     return ReleasePayload(
       documentId: documentId,
       verificationToken: token,

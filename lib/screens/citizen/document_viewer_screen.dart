@@ -696,7 +696,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
         ? 'Unlimited'
         : '${request.remainingUses}';
     final rawQrUrl = request.qrUrl?.trim();
-    final qrUrl = (rawQrUrl == null || rawQrUrl.isEmpty) ? null : rawQrUrl;
+    final storedQrUrl = (rawQrUrl == null || rawQrUrl.isEmpty) ? null : rawQrUrl;
+    // Regenerate QR URL with new query-param format if documentId exists
+    final qrUrl = _regenerateQrUrl(request) ?? storedQrUrl;
 
     return Container(
       width: double.infinity,
@@ -833,6 +835,28 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
   /// Slim tappable row inside the summary card that opens a larger,
   /// scannable view of the document's verification QR code. Rendered only
   /// when the row actually carries a QR link.
+  /// Regenerates the QR URL with the new query-param format from the stored
+  /// URL's token. Falls back to the stored URL if the token can't be parsed.
+  String? _regenerateQrUrl(DocumentRequest request) {
+    final documentId = request.documentId;
+    if (documentId == null || documentId.isEmpty) return null;
+
+    final storedUrl = request.qrUrl?.trim();
+    if (storedUrl == null || storedUrl.isEmpty) return null;
+
+    final uri = Uri.tryParse(storedUrl);
+    if (uri == null) return null;
+
+    final token = uri.queryParameters['token'];
+    if (token == null || token.isEmpty) return null;
+
+    return VerificationService().buildQrUrl(
+      VerificationService.verificationBaseUrl,
+      documentId,
+      token,
+    );
+  }
+
   Widget _buildViewQrAction(String qrUrl) {
     return Material(
       type: MaterialType.transparency,

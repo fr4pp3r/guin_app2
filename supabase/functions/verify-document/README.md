@@ -18,8 +18,10 @@ by scanning a QR code on a barangay-issued document — no Flutter app required.
 ## Deploy
 
 ```bash
-supabase functions deploy verify-document
+supabase functions deploy verify-document --no-verify-jwt
 ```
+
+> **Important:** `--no-verify-jwt` is required because this is a public endpoint — anyone with a QR code can verify a document without logging in.
 
 ## Environment
 

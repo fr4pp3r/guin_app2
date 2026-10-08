@@ -623,7 +623,7 @@ ReleasePayload buildReleasePayload({
   required String releasedBy,
   required String finalDocumentUrl,
   DateTime? now,
-  String verificationBaseUrl = 'https://barangay-guion.app',
+  String verificationBaseUrl = 'https://citeease-verify.vercel.app',
 }) {
   final timestamp = now ?? DateTime.now();
   return ReleasePayload.buildIdentity(
