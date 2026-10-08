@@ -1,0 +1,68 @@
+name: guin_app
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.10.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Supabase
+  supabase_flutter: ^2.5.6
+  
+  # State Management
+  provider: ^6.1.2
+  
+  # Image Handling
+  image_picker: ^1.1.2
+  image_cropper: ^8.0.2
+  cached_network_image: ^3.3.1
+  
+  # PDF Generation
+  pdf: ^3.11.1
+  printing: ^5.13.4
+  
+  # HTTP Client
+  http: ^1.1.0
+  
+  # File Handling
+  path_provider: ^2.1.4
+  open_filex: ^4.5.0
+  file_picker: ^13.1.0
+  
+  # Utilities
+  intl: ^0.19.0
+  flutter_dotenv: ^5.1.0
+  
+  # Security & Encryption
+  crypto: ^3.0.3
+  shared_preferences: ^2.2.3
+  
+  # UI Components
+  flutter_svg: ^2.0.10+1
+  shimmer: ^3.0.0
+  qr_flutter: ^4.1.0
+  
+  # Permissions
+  permission_handler: ^11.3.1
+  mobile_scanner: ^7.4.2
+  pdfrx: ^2.4.8
+  no_screenshot: ^2.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  
+  # Assets
+  assets:
+    - .env
+    - assets/images/
+    - assets/icons/
+    - assets/fonts/
