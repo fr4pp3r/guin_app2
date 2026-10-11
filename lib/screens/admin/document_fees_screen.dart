@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:guin_app/providers/barangay_provider.dart';
 import 'package:guin_app/models/document_fee.dart';
 import 'package:guin_app/utils/helpers.dart';
+import 'package:guin_app/automation/automation_constants.dart';
 
 class DocumentFeesScreen extends StatefulWidget {
   const DocumentFeesScreen({super.key});
@@ -418,9 +419,6 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
   }
 
   String _formatDocumentType(String type) {
-    return type
-        .split('_')
-        .map((word) => word[0].toUpperCase() + word.substring(1))
-        .join(' ');
+    return AutomationConstants.labelFor(type);
   }
 }

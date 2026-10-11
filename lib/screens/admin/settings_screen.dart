@@ -1,5 +1,10 @@
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:guin_app/providers/barangay_provider.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
@@ -21,6 +26,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
   final _barangayCaptainController = TextEditingController();
   final _contactNumberController = TextEditingController();
   final _emailController = TextEditingController();
+  final _logoUrlController = TextEditingController();
 
   bool _isEditing = false;
   bool _isLoading = true;
@@ -42,6 +48,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     _barangayCaptainController.dispose();
     _contactNumberController.dispose();
     _emailController.dispose();
+    _logoUrlController.dispose();
     super.dispose();
   }
 
@@ -62,6 +69,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
           _barangayCaptainController.text = config.barangayCaptain ?? '';
           _contactNumberController.text = config.contactNumber ?? '';
           _emailController.text = config.email ?? '';
+          _logoUrlController.text = config.logoUrl ?? '';
           _isLoading = false;
         });
       }
@@ -102,7 +110,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
         email: _emailController.text.trim().isEmpty
             ? null
             : _emailController.text.trim(),
-        logoUrl: config.logoUrl,
+        logoUrl: _logoUrlController.text.trim().isEmpty ? null : _logoUrlController.text.trim(),
       );
 
       if (!mounted) return;
@@ -117,6 +125,77 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
       Helpers.showErrorSnackBar(
         context,
         Helpers.parseSupabaseError(e.toString()),
+      );
+    }
+  }
+
+  Future<void> _uploadLogo() async {
+    if (!_isEditing) return;
+
+    Helpers.showLoadingDialog(context, 'Uploading logo...');
+
+    try {
+      // Pick image file (returns List<PlatformFile> in newer versions)
+      final result = await FilePicker.pickFiles(
+        type: FileType.image,
+      );
+
+      if (result == null || result.isEmpty) {
+        if (!mounted) return;
+        Helpers.dismissDialog(context);
+        return;
+      }
+
+      final file = result.first;
+      Uint8List fileBytes;
+      if (file.path != null) {
+        fileBytes = await File(file.path!).readAsBytes();
+        if (fileBytes.isEmpty) {
+          if (!mounted) return;
+          Helpers.dismissDialog(context);
+          Helpers.showErrorSnackBar(context, 'Could not read file');
+          return;
+        }
+      } else {
+        if (!mounted) return;
+        Helpers.dismissDialog(context);
+        Helpers.showErrorSnackBar(context, 'Could not read file: no path available');
+        return;
+      };
+      final extension = file.extension ?? 'png';
+      final fileName = 'logo_${DateTime.now().millisecondsSinceEpoch}.$extension';
+
+      // Upload to Supabase Storage
+      final supabase = Supabase.instance.client;
+      final bucket = 'barangay-assets';
+
+      await supabase.storage.from(bucket).uploadBinary(
+        fileName,
+        fileBytes,
+        fileOptions: const FileOptions(
+          contentType: 'image/png',
+          upsert: true,
+        ),
+      );
+
+      // Get public URL
+      final publicUrl = supabase.storage.from(bucket).getPublicUrl(fileName);
+
+      // Update controller and show success
+      if (!mounted) return;
+      Helpers.dismissDialog(context);
+
+      setState(() {
+        _logoUrlController.text = publicUrl;
+      });
+
+      Helpers.showSuccessSnackBar(context, 'Logo uploaded successfully');
+    } catch (e) {
+      if (!mounted) return;
+      Helpers.dismissDialog(context);
+      Helpers.showErrorSnackBar(
+        context,
+        'Upload failed: ${Helpers.parseSupabaseError(e.toString())}',
       );
     }
   }
@@ -380,6 +459,40 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                     ),
+                                  ),
+                                  const SizedBox(height: AppSizes.paddingM),
+                                  const SizedBox(height: AppSizes.paddingM),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextFormField(
+                                          controller: _logoUrlController,
+                                          enabled: _isEditing,
+                                          keyboardType: TextInputType.url,
+                                          decoration: InputDecoration(
+                                            labelText: 'Barangay Logo URL',
+                                            hintText: 'https://example.com/logo.png',
+                                            prefixIcon: const Icon(Icons.image_outlined),
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: AppSizes.paddingS),
+                                      if (_isEditing)
+                                        OutlinedButton.icon(
+                                          onPressed: _uploadLogo,
+                                          icon: const Icon(Icons.cloud_upload_outlined, size: 18),
+                                          label: const Text('Upload'),
+                                          style: OutlinedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 16,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                   const SizedBox(height: AppSizes.paddingM),
                                   TextFormField(

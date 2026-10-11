@@ -74,18 +74,33 @@ enum DocumentType {
   barangayClearance,
   indigency,
   barangayId,
-  cedula;
+  cedula,
+  businessClearance,
+  certification,
+  oathUndertaking,
+  goodMoral,
+  residency;
 
   String get value {
     switch (this) {
       case DocumentType.barangayClearance:
         return 'barangay_clearance';
+      case DocumentType.businessClearance:
+        return 'business_clearance';
+      case DocumentType.certification:
+        return 'certification';
+      case DocumentType.oathUndertaking:
+        return 'oath_undertaking';
       case DocumentType.indigency:
         return 'indigency';
-      case DocumentType.barangayId:
-        return 'barangay_id';
+      case DocumentType.goodMoral:
+        return 'good_moral';
+      case DocumentType.residency:
+        return 'residency';
       case DocumentType.cedula:
         return 'cedula';
+      case DocumentType.barangayId:
+        return 'barangay_id';
     }
   }
 
@@ -93,12 +108,22 @@ enum DocumentType {
     switch (this) {
       case DocumentType.barangayClearance:
         return 'Barangay Clearance';
+      case DocumentType.businessClearance:
+        return 'Barangay Business Clearance';
+      case DocumentType.certification:
+        return 'Barangay Certification';
+      case DocumentType.oathUndertaking:
+        return 'Oath of Undertaking';
       case DocumentType.indigency:
         return 'Certificate of Indigency';
-      case DocumentType.barangayId:
-        return 'Barangay ID';
+      case DocumentType.goodMoral:
+        return 'Certificate of Good Moral Character';
+      case DocumentType.residency:
+        return 'Certificate of Residency';
       case DocumentType.cedula:
         return 'Cedula';
+      case DocumentType.barangayId:
+        return 'Barangay ID';
     }
   }
 
@@ -106,12 +131,22 @@ enum DocumentType {
     switch (value) {
       case 'barangay_clearance':
         return DocumentType.barangayClearance;
+      case 'business_clearance':
+        return DocumentType.businessClearance;
+      case 'certification':
+        return DocumentType.certification;
+      case 'oath_undertaking':
+        return DocumentType.oathUndertaking;
       case 'indigency':
         return DocumentType.indigency;
-      case 'barangay_id':
-        return DocumentType.barangayId;
+      case 'good_moral':
+        return DocumentType.goodMoral;
+      case 'residency':
+        return DocumentType.residency;
       case 'cedula':
         return DocumentType.cedula;
+      case 'barangay_id':
+        return DocumentType.barangayId;
       default:
         throw Exception('Invalid document type: $value');
     }

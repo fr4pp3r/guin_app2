@@ -366,12 +366,22 @@ class DocumentRequest {
     switch (documentType) {
       case 'barangay_clearance':
         return 'Barangay Clearance';
+      case 'business_clearance':
+        return 'Barangay Business Clearance';
+      case 'certification':
+        return 'Barangay Certification';
+      case 'oath_undertaking':
+        return 'Oath of Undertaking';
       case 'indigency':
         return 'Certificate of Indigency';
-      case 'barangay_id':
-        return 'Barangay ID';
+      case 'good_moral':
+        return 'Certificate of Good Moral Character';
+      case 'residency':
+        return 'Certificate of Residency';
       case 'cedula':
         return 'Cedula';
+      case 'barangay_id':
+        return 'Barangay ID';
       default:
         return documentType;
     }

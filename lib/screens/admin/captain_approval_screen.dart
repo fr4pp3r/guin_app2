@@ -188,6 +188,76 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
             expiresAtLabel: expiresAtLabel,
           );
           break;
+        case 'business_clearance':
+          pdfFile = await PdfService.generateBusinessClearance(
+            request: request,
+            config: config,
+            userFullName: citizen.fullName,
+            userAddress: citizen.address,
+            userAge: citizen.age,
+            civilStatus: citizen.civilStatus,
+            profilePhotoUrl: citizen.profilePhotoUrl,
+            documentId: payload.documentId,
+            qrUrl: payload.qrUrl,
+            expiresAtLabel: expiresAtLabel,
+          );
+          break;
+        case 'certification':
+          pdfFile = await PdfService.generateCertification(
+            request: request,
+            config: config,
+            userFullName: citizen.fullName,
+            userAddress: citizen.address,
+            userAge: citizen.age,
+            civilStatus: citizen.civilStatus,
+            profilePhotoUrl: citizen.profilePhotoUrl,
+            documentId: payload.documentId,
+            qrUrl: payload.qrUrl,
+            expiresAtLabel: expiresAtLabel,
+          );
+          break;
+        case 'good_moral':
+          pdfFile = await PdfService.generateGoodMoral(
+            request: request,
+            config: config,
+            userFullName: citizen.fullName,
+            userAddress: citizen.address,
+            userAge: citizen.age,
+            civilStatus: citizen.civilStatus,
+            profilePhotoUrl: citizen.profilePhotoUrl,
+            documentId: payload.documentId,
+            qrUrl: payload.qrUrl,
+            expiresAtLabel: expiresAtLabel,
+          );
+          break;
+        case 'residency':
+          pdfFile = await PdfService.generateResidency(
+            request: request,
+            config: config,
+            userFullName: citizen.fullName,
+            userAddress: citizen.address,
+            userAge: citizen.age,
+            civilStatus: citizen.civilStatus,
+            profilePhotoUrl: citizen.profilePhotoUrl,
+            documentId: payload.documentId,
+            qrUrl: payload.qrUrl,
+            expiresAtLabel: expiresAtLabel,
+          );
+          break;
+        case 'oath_undertaking':
+          pdfFile = await PdfService.generateOathUndertaking(
+            request: request,
+            config: config,
+            userFullName: citizen.fullName,
+            userAddress: citizen.address,
+            userAge: citizen.age,
+            civilStatus: citizen.civilStatus,
+            profilePhotoUrl: citizen.profilePhotoUrl,
+            documentId: payload.documentId,
+            qrUrl: payload.qrUrl,
+            expiresAtLabel: expiresAtLabel,
+          );
+          break;
         default:
           throw Exception('Unknown document type: ${request.documentType}');
       }
@@ -629,6 +699,16 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
         return Icons.people_outline;
       case 'barangay_id':
         return Icons.badge_outlined;
+      case 'business_clearance':
+        return Icons.storefront;
+      case 'certification':
+        return Icons.verified;
+      case 'oath_undertaking':
+        return Icons.assignment_turned_in;
+      case 'good_moral':
+        return Icons.workspace_premium;
+      case 'residency':
+        return Icons.home;
       default:
         return Icons.description_outlined;
     }

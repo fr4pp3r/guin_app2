@@ -544,6 +544,86 @@ class DocumentAutomationService {
           expiresAtLabel: expiresAtLabel,
           copyNotice: copyNotice,
         );
+      case 'business_clearance':
+        return PdfService.generateBusinessClearance(
+          request: request,
+          config: config,
+          userFullName: citizen.fullName,
+          userAddress: citizen.address,
+          userAge: citizen.age,
+          civilStatus: citizen.civilStatus,
+          profilePhotoUrl: citizen.profilePhotoUrl,
+          isDraft: isDraft,
+          approverName: approverName,
+          documentId: documentId,
+          qrUrl: qrUrl,
+          expiresAtLabel: expiresAtLabel,
+          copyNotice: copyNotice,
+        );
+      case 'certification':
+        return PdfService.generateCertification(
+          request: request,
+          config: config,
+          userFullName: citizen.fullName,
+          userAddress: citizen.address,
+          userAge: citizen.age,
+          civilStatus: citizen.civilStatus,
+          profilePhotoUrl: citizen.profilePhotoUrl,
+          isDraft: isDraft,
+          approverName: approverName,
+          documentId: documentId,
+          qrUrl: qrUrl,
+          expiresAtLabel: expiresAtLabel,
+          copyNotice: copyNotice,
+        );
+      case 'good_moral':
+        return PdfService.generateGoodMoral(
+          request: request,
+          config: config,
+          userFullName: citizen.fullName,
+          userAddress: citizen.address,
+          userAge: citizen.age,
+          civilStatus: citizen.civilStatus,
+          profilePhotoUrl: citizen.profilePhotoUrl,
+          isDraft: isDraft,
+          approverName: approverName,
+          documentId: documentId,
+          qrUrl: qrUrl,
+          expiresAtLabel: expiresAtLabel,
+          copyNotice: copyNotice,
+        );
+      case 'residency':
+        return PdfService.generateResidency(
+          request: request,
+          config: config,
+          userFullName: citizen.fullName,
+          userAddress: citizen.address,
+          userAge: citizen.age,
+          civilStatus: citizen.civilStatus,
+          profilePhotoUrl: citizen.profilePhotoUrl,
+          isDraft: isDraft,
+          approverName: approverName,
+          documentId: documentId,
+          qrUrl: qrUrl,
+          expiresAtLabel: expiresAtLabel,
+          copyNotice: copyNotice,
+        );
+      case 'oath_undertaking':
+        return PdfService.generateOathUndertaking(
+          request: request,
+          config: config,
+          userFullName: citizen.fullName,
+          userAddress: citizen.address,
+          userAge: citizen.age,
+          civilStatus: citizen.civilStatus,
+          profilePhotoUrl: citizen.profilePhotoUrl,
+          isDraft: isDraft,
+          approverName: approverName,
+          documentId: documentId,
+          qrUrl: qrUrl,
+          expiresAtLabel: expiresAtLabel,
+          copyNotice: copyNotice,
+        );
       default:
         throw Exception('Unknown document type: ${request.documentType}');
     }

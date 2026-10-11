@@ -7,6 +7,97 @@ import 'package:guin_app/providers/document_provider.dart';
 import 'package:guin_app/providers/barangay_provider.dart';
 import 'package:guin_app/services/ai_document_processor.dart';
 
+/// Which shared fill-up form a document type uses.
+enum _FormFamily { cedula, indigency, barangayId }
+
+class _DocumentTypeOption {
+  const _DocumentTypeOption({
+    required this.type,
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.family,
+  });
+
+  final String type;
+  final String title;
+  final String description;
+  final IconData icon;
+  final _FormFamily family;
+}
+
+/// All document types a citizen can request, in the order they are shown.
+/// Types 1,2,3,7,8 share the cedula form; 4,5,6 share the indigency form;
+/// barangay_id keeps its own small form.
+const List<_DocumentTypeOption> _documentTypeOptions = [
+  _DocumentTypeOption(
+    type: 'business_clearance',
+    title: 'Barangay Business Clearance',
+    description: 'For business permits and renewals',
+    icon: Icons.storefront,
+    family: _FormFamily.cedula,
+  ),
+  _DocumentTypeOption(
+    type: 'certification',
+    title: 'Barangay Certification',
+    description: 'General barangay certification',
+    icon: Icons.verified,
+    family: _FormFamily.cedula,
+  ),
+  _DocumentTypeOption(
+    type: 'barangay_clearance',
+    title: 'Barangay Clearance',
+    description: 'Certificate of residence and good standing',
+    icon: Icons.description,
+    family: _FormFamily.cedula,
+  ),
+  _DocumentTypeOption(
+    type: 'oath_undertaking',
+    title: 'Oath of Undertaking',
+    description: 'For first-time job seekers',
+    icon: Icons.assignment_turned_in,
+    family: _FormFamily.indigency,
+  ),
+  _DocumentTypeOption(
+    type: 'indigency',
+    title: 'Certificate of Indigency',
+    description: 'For financial assistance purposes',
+    icon: Icons.volunteer_activism,
+    family: _FormFamily.indigency,
+  ),
+  _DocumentTypeOption(
+    type: 'good_moral',
+    title: 'Certificate of Good Moral Character',
+    description: 'Character reference',
+    icon: Icons.workspace_premium,
+    family: _FormFamily.indigency,
+  ),
+  _DocumentTypeOption(
+    type: 'residency',
+    title: 'Certificate of Residency',
+    description: 'Proof of residency',
+    icon: Icons.home,
+    family: _FormFamily.cedula,
+  ),
+  _DocumentTypeOption(
+    type: 'cedula',
+    title: 'Cedula',
+    description: 'Community tax certificate',
+    icon: Icons.receipt_long,
+    family: _FormFamily.cedula,
+  ),
+  _DocumentTypeOption(
+    type: 'barangay_id',
+    title: 'Barangay ID',
+    description: 'Official barangay identification',
+    icon: Icons.badge,
+    family: _FormFamily.barangayId,
+  ),
+];
+
+const List<String> _genders = ['Male', 'Female'];
+const List<String> _civilStatuses = ['Single', 'Married', 'Widowed', 'Divorced'];
+
 class RequestDocumentScreen extends StatefulWidget {
   const RequestDocumentScreen({super.key});
 
@@ -18,25 +109,39 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
   final _formKey = GlobalKey<FormState>();
   final _purposeController = TextEditingController();
 
-  // Document-specific form controllers
+  // Barangay ID form controllers (only used by the barangay_id type).
   final _idFullNameController = TextEditingController();
   final _idAddressController = TextEditingController();
   final _idContactController = TextEditingController();
 
+  // Shared controllers for the indigency fill-up form (oath_undertaking,
+  // indigency, good_moral). One set is reused across all three types.
   final _indigencyFullNameController = TextEditingController();
+  final _indigencyAddressController = TextEditingController();
+  final _indigencyAgeController = TextEditingController();
+  final _indigencyCivilStatusController = TextEditingController();
+  final _indigencyRequesterController = TextEditingController();
+  final _indigencyRequesterAddressController = TextEditingController();
   final _indigencyPurposeController = TextEditingController();
 
+  // Shared controllers for the cedula fill-up form (business_clearance,
+  // certification, barangay_clearance, residency, cedula). One set is reused
+  // across all five types.
+  final _cedulaLastNameController = TextEditingController();
   final _cedulaFirstNameController = TextEditingController();
   final _cedulaMiddleNameController = TextEditingController();
-  final _cedulaLastNameController = TextEditingController();
   final _cedulaAddressController = TextEditingController();
-  final _cedulaPlaceOfBirthController = TextEditingController();
+  final _cedulaBirthPlaceController = TextEditingController();
   final _cedulaHeightController = TextEditingController();
   final _cedulaWeightController = TextEditingController();
+  final _cedulaTinController = TextEditingController();
+  final _cedulaOccupationController = TextEditingController();
+  final _cedulaAnnualIncomeController = TextEditingController();
+  final _cedulaCitizenshipController = TextEditingController(text: 'Filipino');
   DateTime? _cedulaBirthDate;
   String _cedulaGender = 'Male';
   String _cedulaCivilStatus = 'Single';
-  String _cedulaCitizenship = 'Filipino';
+  String _businessStatus = 'NEW';
 
   String? _selectedDocumentType;
   final bool _showPaymentSection = false;
@@ -47,6 +152,15 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
   bool _aiProcessing = false;
   bool _aiSuggestionApplied = false;
   final _aiProcessor = AiDocumentProcessor();
+
+  _DocumentTypeOption? get _selectedOption {
+    final type = _selectedDocumentType;
+    if (type == null) return null;
+    for (final option in _documentTypeOptions) {
+      if (option.type == type) return option;
+    }
+    return null;
+  }
 
   @override
   void initState() {
@@ -65,45 +179,67 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
     _idAddressController.dispose();
     _idContactController.dispose();
     _indigencyFullNameController.dispose();
+    _indigencyAddressController.dispose();
+    _indigencyAgeController.dispose();
+    _indigencyCivilStatusController.dispose();
+    _indigencyRequesterController.dispose();
+    _indigencyRequesterAddressController.dispose();
     _indigencyPurposeController.dispose();
+    _cedulaLastNameController.dispose();
     _cedulaFirstNameController.dispose();
     _cedulaMiddleNameController.dispose();
-    _cedulaLastNameController.dispose();
     _cedulaAddressController.dispose();
-    _cedulaPlaceOfBirthController.dispose();
+    _cedulaBirthPlaceController.dispose();
     _cedulaHeightController.dispose();
     _cedulaWeightController.dispose();
+    _cedulaTinController.dispose();
+    _cedulaOccupationController.dispose();
+    _cedulaAnnualIncomeController.dispose();
+    _cedulaCitizenshipController.dispose();
     super.dispose();
   }
 
   Map<String, dynamic> _getDocumentData() {
-    switch (_selectedDocumentType) {
-      case 'barangay_id':
+    switch (_selectedOption?.family) {
+      case _FormFamily.barangayId:
         return {
           'full_name': _idFullNameController.text.trim(),
           'address': _idAddressController.text.trim(),
           'contact_number': _idContactController.text.trim(),
         };
-      case 'indigency':
+      case _FormFamily.indigency:
         return {
           'full_name': _indigencyFullNameController.text.trim(),
+          'address': _indigencyAddressController.text.trim(),
+          'age': _indigencyAgeController.text.trim(),
+          'civil_status': _indigencyCivilStatusController.text.trim(),
+          'requester': _indigencyRequesterController.text.trim(),
+          'requester_address': _indigencyRequesterAddressController.text.trim(),
           'purpose': _indigencyPurposeController.text.trim(),
         };
-      case 'cedula':
-        return {
+      case _FormFamily.cedula:
+        final cedulaData = <String, dynamic>{
+          'last_name': _cedulaLastNameController.text.trim(),
           'first_name': _cedulaFirstNameController.text.trim(),
           'middle_name': _cedulaMiddleNameController.text.trim(),
-          'last_name': _cedulaLastNameController.text.trim(),
           'address': _cedulaAddressController.text.trim(),
-          'birth_date': _cedulaBirthDate?.toIso8601String(),
-          'birth_place': _cedulaPlaceOfBirthController.text.trim(),
           'gender': _cedulaGender,
           'civil_status': _cedulaCivilStatus,
-          'citizenship': _cedulaCitizenship,
+          'birth_place': _cedulaBirthPlaceController.text.trim(),
+          'birth_date': _cedulaBirthDate?.toIso8601String(),
           'height': _cedulaHeightController.text.trim(),
           'weight': _cedulaWeightController.text.trim(),
+          'tin': _cedulaTinController.text.trim(),
+          'occupation': _cedulaOccupationController.text.trim(),
+          'annual_income': _cedulaAnnualIncomeController.text.trim(),
+          'citizenship': _cedulaCitizenshipController.text.trim(),
+          'purpose': _purposeController.text.trim(),
         };
-      default:
+        if (_selectedOption?.type == 'business_clearance') {
+          cedulaData['business_status'] = _businessStatus;
+        }
+        return cedulaData;
+      case null:
         return {};
     }
   }
@@ -131,45 +267,78 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
   }
 
   TextEditingController? _controllerForSuggestionField(String field) {
-    switch (field) {
-      case 'purpose':
-        return _selectedDocumentType == 'indigency'
-            ? _indigencyPurposeController
-            : _purposeController;
-      case 'full_name':
-        if (_selectedDocumentType == 'barangay_id') {
-          return _idFullNameController;
+    switch (_selectedOption?.family) {
+      case _FormFamily.barangayId:
+        switch (field) {
+          case 'full_name':
+            return _idFullNameController;
+          case 'address':
+            return _idAddressController;
+          case 'contact_number':
+            return _idContactController;
+          case 'purpose':
+            return _purposeController;
+          default:
+            return null;
         }
-        if (_selectedDocumentType == 'indigency') {
-          return _indigencyFullNameController;
+      case _FormFamily.indigency:
+        switch (field) {
+          case 'full_name':
+            return _indigencyFullNameController;
+          case 'address':
+            return _indigencyAddressController;
+          case 'age':
+            return _indigencyAgeController;
+          case 'civil_status':
+            return _indigencyCivilStatusController;
+          case 'requester':
+            return _indigencyRequesterController;
+          case 'requester_address':
+            return _indigencyRequesterAddressController;
+          case 'purpose':
+            return _indigencyPurposeController;
+          default:
+            return null;
         }
-        return null;
-      case 'address':
-        if (_selectedDocumentType == 'barangay_id') {
-          return _idAddressController;
+      case _FormFamily.cedula:
+        switch (field) {
+          case 'last_name':
+            return _cedulaLastNameController;
+          case 'first_name':
+            return _cedulaFirstNameController;
+          case 'middle_name':
+            return _cedulaMiddleNameController;
+          case 'address':
+            return _cedulaAddressController;
+          case 'birth_place':
+            return _cedulaBirthPlaceController;
+          case 'height':
+            return _cedulaHeightController;
+          case 'weight':
+            return _cedulaWeightController;
+          case 'tin':
+            return _cedulaTinController;
+          case 'occupation':
+            return _cedulaOccupationController;
+          case 'annual_income':
+            return _cedulaAnnualIncomeController;
+          case 'citizenship':
+            return _cedulaCitizenshipController;
+          case 'purpose':
+            return _purposeController;
+          default:
+            return null;
         }
-        if (_selectedDocumentType == 'cedula') {
-          return _cedulaAddressController;
-        }
-        return null;
-      case 'contact_number':
-        return _idContactController;
-      case 'first_name':
-        return _cedulaFirstNameController;
-      case 'middle_name':
-        return _cedulaMiddleNameController;
-      case 'last_name':
-        return _cedulaLastNameController;
-      case 'birth_place':
-        return _cedulaPlaceOfBirthController;
-      case 'height':
-        return _cedulaHeightController;
-      case 'weight':
-        return _cedulaWeightController;
-      default:
+      case null:
         return null;
     }
   }
+
+  // The indigency-family form carries its own Purpose field; every other
+  // family uses the shared top-level Purpose field.
+  String get _effectivePurpose => _selectedOption?.family == _FormFamily.indigency
+      ? _indigencyPurposeController.text.trim()
+      : _purposeController.text.trim();
 
   Future<void> _runAiCheck() async {
     if (_aiProcessing) return;
@@ -179,7 +348,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
       );
       return;
     }
-    final purpose = _purposeController.text.trim();
+    final purpose = _effectivePurpose;
     if (purpose.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter a purpose first')),
@@ -218,7 +387,11 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         }
       });
       if (suggestion.normalizedPurpose.trim().isNotEmpty) {
-        _purposeController.text = suggestion.normalizedPurpose;
+        final purposeController =
+            _selectedOption?.family == _FormFamily.indigency
+                ? _indigencyPurposeController
+                : _purposeController;
+        purposeController.text = suggestion.normalizedPurpose;
       }
       _aiSuggestionApplied = false;
       _aiSuggestion = null;
@@ -300,27 +473,29 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
       );
       return;
     }
+    if (_selectedOption?.family == _FormFamily.cedula &&
+        _cedulaBirthDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select your birth date')),
+      );
+      return;
+    }
 
     final authProvider = context.read<AuthProvider>();
     final documentProvider = context.read<DocumentProvider>();
     final barangayProvider = context.read<BarangayProvider>();
 
-    // Get fee amount
+    // A missing fee record is treated as a free document instead of blocking
+    // the submission.
     final fee = barangayProvider.getFeeByType(_selectedDocumentType!);
-    if (fee == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Fee information not found')),
-      );
-      return;
-    }
 
     try {
       await documentProvider.createRequest(
         userId: authProvider.userProfile!.id,
         documentType: _selectedDocumentType!,
-        purpose: _purposeController.text.trim(),
+        purpose: _effectivePurpose,
         documentData: _getDocumentData(),
-        paymentAmount: fee.feeAmount,
+        paymentAmount: fee?.feeAmount ?? 0.00,
       );
 
       if (!mounted) return;
@@ -415,50 +590,32 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-                _buildDocumentTypeCard(
-                  'barangay_id',
-                  'Barangay ID',
-                  Icons.badge,
-                  'Official barangay identification',
-                ),
-                _buildDocumentTypeCard(
-                  'indigency',
-                  'Certificate of Indigency',
-                  Icons.description,
-                  'For financial assistance purposes',
-                ),
-                _buildDocumentTypeCard(
-                  'cedula',
-                  'Cedula',
-                  Icons.document_scanner,
-                  'Community tax certificate',
-                ),
+                _buildDocumentTypeSection(),
                 const SizedBox(height: 24),
 
-                // Purpose
-                TextFormField(
-                  controller: _purposeController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Purpose',
-                    border: OutlineInputBorder(),
-                    hintText: 'Briefly describe the purpose of this request',
+                // Purpose — hidden for indigency-family types, which carry
+                // their own Purpose field inside the fill-up form.
+                if (_selectedOption?.family != _FormFamily.indigency) ...[
+                  TextFormField(
+                    controller: _purposeController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Purpose',
+                      border: OutlineInputBorder(),
+                      hintText: 'Briefly describe the purpose of this request',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the purpose';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the purpose';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
+                ],
 
-                // Document-specific fields
-                if (_selectedDocumentType == 'barangay_id')
-                  _buildBarangayIdFields(),
-                if (_selectedDocumentType == 'indigency')
-                  _buildIndigencyFields(),
-                if (_selectedDocumentType == 'cedula') _buildCedulaFields(),
+                // Fill-up form for the selected document type
+                _buildSelectedForm(),
 
                 const SizedBox(height: 24),
 
@@ -515,27 +672,58 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
     );
   }
 
-  Widget _buildDocumentTypeCard(
-    String type,
-    String title,
-    IconData icon,
-    String description,
-  ) {
-    final isSelected = _selectedDocumentType == type;
+  Widget _buildDocumentTypeSection() {
     final barangayProvider = context.watch<BarangayProvider>();
-    final fee = barangayProvider.getFeeByType(type);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text(
+            'Certificates & Clearances',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.blue.shade700,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ),
+        for (final option in _documentTypeOptions)
+          _buildDocumentTypeCard(
+            option,
+            feeLabel: _feeLabelFor(barangayProvider, option.type),
+          ),
+      ],
+    );
+  }
+
+  String _feeLabelFor(BarangayProvider provider, String type) {
+    final fee = provider.getFeeByType(type);
+    if (fee == null || fee.feeAmount == 0) return 'Free';
+    return 'Fee: ₱${fee.feeAmount.toStringAsFixed(2)}';
+  }
+
+  Widget _buildDocumentTypeCard(
+    _DocumentTypeOption option, {
+    required String feeLabel,
+  }) {
+    final isSelected = _selectedDocumentType == option.type;
 
     return GestureDetector(
       onTap: () {
         setState(() {
-          _selectedDocumentType = type;
+          if (_selectedDocumentType != option.type) {
+            _businessStatus = 'NEW';
+          }
+          _selectedDocumentType = option.type;
           _aiSuggestionApplied = false;
           _aiSuggestion = null;
         });
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? Colors.blue.shade50 : Colors.white,
           border: Border.all(
@@ -546,33 +734,34 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 40, color: isSelected ? Colors.blue : Colors.grey),
-            const SizedBox(width: 16),
+            Icon(option.icon, size: 32, color: isSelected ? Colors.blue : Colors.grey),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    option.title,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: isSelected ? Colors.blue : Colors.black,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
-                    description,
+                    option.description,
                     style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
-                  if (fee != null)
-                    Text(
-                      'Fee: ₱${fee.feeAmount.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.green,
-                      ),
+                  const SizedBox(height: 4),
+                  Text(
+                    feeLabel,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.green,
                     ),
+                  ),
                 ],
               ),
             ),
@@ -581,6 +770,19 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildSelectedForm() {
+    switch (_selectedOption?.family) {
+      case _FormFamily.barangayId:
+        return _buildBarangayIdFields();
+      case _FormFamily.indigency:
+        return _buildIndigencyFields();
+      case _FormFamily.cedula:
+        return _buildCedulaFields();
+      case null:
+        return const SizedBox.shrink();
+    }
   }
 
   Widget _buildBarangayIdFields() {
@@ -627,25 +829,74 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Indigency Certificate Details',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        Text(
+          '${_selectedOption?.title ?? 'Document'} Details',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _indigencyFullNameController,
           decoration: const InputDecoration(
-            labelText: 'Full Name',
+            labelText: 'Name',
             border: OutlineInputBorder(),
           ),
           validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
+          controller: _indigencyAddressController,
+          decoration: const InputDecoration(
+            labelText: 'Address',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _indigencyAgeController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Age',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _indigencyCivilStatusController,
+                decoration: const InputDecoration(
+                  labelText: 'Civil Status',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _indigencyRequesterController,
+          decoration: const InputDecoration(
+            labelText: 'Requester',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _indigencyRequesterAddressController,
+          decoration: const InputDecoration(
+            labelText: "Requester's Address",
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
           controller: _indigencyPurposeController,
           maxLines: 2,
           decoration: const InputDecoration(
-            labelText: 'Specific Purpose',
+            labelText: 'Purpose',
             border: OutlineInputBorder(),
             hintText: 'e.g., Medical assistance, Educational support',
           ),
@@ -659,18 +910,73 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Cedula Details',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        Text(
+          '${_selectedOption?.title ?? 'Document'} Details',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
-        TextFormField(
-          controller: _cedulaFirstNameController,
-          decoration: const InputDecoration(
-            labelText: 'First Name',
-            border: OutlineInputBorder(),
+        if (_selectedOption?.type == 'business_clearance') ...[
+          Text(
+            'Type of Application',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.blue.shade700,
+            ),
           ),
-          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(value: 'NEW', label: Text('New')),
+                ButtonSegment(value: 'RENEW', label: Text('Renewal')),
+              ],
+              selected: {_businessStatus},
+              onSelectionChanged: (selection) {
+                setState(() => _businessStatus = selection.first);
+              },
+              style: ButtonStyle(
+                foregroundColor: WidgetStateProperty.resolveWith((states) =>
+                    states.contains(WidgetState.selected)
+                        ? Colors.white
+                        : Colors.blue.shade700),
+                backgroundColor: WidgetStateProperty.resolveWith((states) =>
+                    states.contains(WidgetState.selected)
+                        ? Colors.blue
+                        : Colors.white),
+                side: WidgetStateProperty.all(
+                  BorderSide(color: Colors.blue.shade300),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _cedulaLastNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Last Name',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _cedulaFirstNameController,
+                decoration: const InputDecoration(
+                  labelText: 'First Name',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         TextFormField(
@@ -679,51 +985,6 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
             labelText: 'Middle Name',
             border: OutlineInputBorder(),
           ),
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _cedulaLastNameController,
-          decoration: const InputDecoration(
-            labelText: 'Last Name',
-            border: OutlineInputBorder(),
-          ),
-          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
-        ),
-        const SizedBox(height: 16),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(
-            _cedulaBirthDate == null
-                ? 'Select Birth Date'
-                : 'Birth Date: ${_cedulaBirthDate!.day}/${_cedulaBirthDate!.month}/${_cedulaBirthDate!.year}',
-          ),
-          leading: const Icon(Icons.calendar_today),
-          onTap: () async {
-            final date = await showDatePicker(
-              context: context,
-              initialDate: DateTime(2000),
-              firstDate: DateTime(1900),
-              lastDate: DateTime.now(),
-            );
-            if (date != null) {
-              setState(() {
-                _cedulaBirthDate = date;
-              });
-            }
-          },
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4),
-            side: const BorderSide(color: Colors.grey),
-          ),
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _cedulaPlaceOfBirthController,
-          decoration: const InputDecoration(
-            labelText: 'Place of Birth',
-            border: OutlineInputBorder(),
-          ),
-          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
@@ -744,12 +1005,13 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                   labelText: 'Gender',
                   border: OutlineInputBorder(),
                 ),
-                items: ['Male', 'Female']
+                items: _genders
                     .map((g) => DropdownMenuItem(value: g, child: Text(g)))
                     .toList(),
                 onChanged: (value) {
+                  if (value == null) return;
                   setState(() {
-                    _cedulaGender = value!;
+                    _cedulaGender = value;
                   });
                 },
               ),
@@ -762,12 +1024,13 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                   labelText: 'Civil Status',
                   border: OutlineInputBorder(),
                 ),
-                items: ['Single', 'Married', 'Widowed', 'Divorced']
+                items: _civilStatuses
                     .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                     .toList(),
                 onChanged: (value) {
+                  if (value == null) return;
                   setState(() {
-                    _cedulaCivilStatus = value!;
+                    _cedulaCivilStatus = value;
                   });
                 },
               ),
@@ -776,14 +1039,41 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         ),
         const SizedBox(height: 16),
         TextFormField(
-          initialValue: _cedulaCitizenship,
+          controller: _cedulaBirthPlaceController,
           decoration: const InputDecoration(
-            labelText: 'Citizenship',
+            labelText: 'Birth Place',
             border: OutlineInputBorder(),
           ),
-          onChanged: (value) {
-            _cedulaCitizenship = value;
+          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+        ),
+        const SizedBox(height: 16),
+        InkWell(
+          onTap: () async {
+            final date = await showDatePicker(
+              context: context,
+              initialDate: _cedulaBirthDate ?? DateTime(2000),
+              firstDate: DateTime(1900),
+              lastDate: DateTime.now(),
+            );
+            if (date != null) {
+              setState(() {
+                _cedulaBirthDate = date;
+              });
+            }
           },
+          borderRadius: BorderRadius.circular(4),
+          child: InputDecorator(
+            decoration: const InputDecoration(
+              labelText: 'Birth Date',
+              border: OutlineInputBorder(),
+              suffixIcon: Icon(Icons.calendar_today),
+            ),
+            child: Text(
+              _cedulaBirthDate == null
+                  ? 'Select birth date'
+                  : '${_cedulaBirthDate!.day}/${_cedulaBirthDate!.month}/${_cedulaBirthDate!.year}',
+            ),
+          ),
         ),
         const SizedBox(height: 16),
         Row(
@@ -796,8 +1086,6 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                   labelText: 'Height (cm)',
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) =>
-                    value?.isEmpty ?? true ? 'Required' : null,
               ),
             ),
             const SizedBox(width: 16),
@@ -809,11 +1097,43 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                   labelText: 'Weight (kg)',
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) =>
-                    value?.isEmpty ?? true ? 'Required' : null,
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _cedulaTinController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'TIN',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _cedulaOccupationController,
+          decoration: const InputDecoration(
+            labelText: 'Pinagkakakitaan (Trabaho/Negosyo)',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _cedulaAnnualIncomeController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Kabuuang Kita o Sweldo ng Nakaraang Taon',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _cedulaCitizenshipController,
+          decoration: const InputDecoration(
+            labelText: 'Citizenship',
+            border: OutlineInputBorder(),
+          ),
         ),
       ],
     );

@@ -6,9 +6,14 @@ class DocumentDataValidator {
 
   static const supportedTypes = <String>{
     'barangay_clearance',
+    'business_clearance',
+    'certification',
+    'oath_undertaking',
     'indigency',
-    'barangay_id',
+    'good_moral',
+    'residency',
     'cedula',
+    'barangay_id',
   };
 
   static ValidationResult validate({
@@ -32,6 +37,21 @@ class DocumentDataValidator {
     switch (documentType) {
       case 'barangay_clearance':
         // Uses citizen profile fields; documentData optional.
+        break;
+      case 'business_clearance':
+      case 'certification':
+      case 'residency':
+        _require(errors, documentData, 'first_name');
+        _require(errors, documentData, 'last_name');
+        _require(errors, documentData, 'address');
+        _require(errors, documentData, 'birth_date');
+        _require(errors, documentData, 'birth_place');
+        _require(errors, documentData, 'gender');
+        break;
+      case 'good_moral':
+      case 'oath_undertaking':
+        _require(errors, documentData, 'full_name');
+        _require(errors, documentData, 'purpose');
         break;
       case 'indigency':
         _require(errors, documentData, 'full_name');

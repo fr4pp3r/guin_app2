@@ -224,174 +224,187 @@ class PdfService {
     String? copyNotice,
   }) async {
     final pdf = pw.Document(theme: await _loadUnicodeTheme());
-
-    // Load profile photo if available
-    pw.ImageProvider? photoImage;
-    if (profilePhotoUrl != null && profilePhotoUrl.isNotEmpty) {
-      try {
-        final response = await http.get(Uri.parse(profilePhotoUrl));
-        if (response.statusCode == 200) {
-          photoImage = pw.MemoryImage(response.bodyBytes);
-        }
-      } catch (e) {
-        print('Error loading profile photo: $e');
-      }
-    }
+    final now = DateTime.now();
+    final month = DateFormat('MMMM').format(now);
+    final year2 = now.year.toString().substring(2);
 
     pdf.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat.legal,
-        margin: const pw.EdgeInsets.all(40),
+        pageFormat: PdfPageFormat.letter,
+        margin: const pw.EdgeInsets.only(
+          left: 60,
+          right: 60,
+          top: 55,
+          bottom: 50,
+        ),
         build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
+          return pw.Stack(
             children: [
-              // Header with photo
-              pw.Row(
+              // Faded circular seal/watermark centered behind text
+              pw.Positioned.fill(
+                child: pw.Center(
+                  child: pw.Opacity(
+                    opacity: 0.08,
+                    child: pw.SizedBox(width: 320, height: 320),
+                  ),
+                ),
+              ),
+              pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  pw.Expanded(child: _buildHeader(config)),
-                  if (photoImage != null)
-                    pw.Container(
-                      width: 80,
-                      height: 100,
-                      decoration: pw.BoxDecoration(
-                        border: pw.Border.all(
-                          color: PdfColors.blue900,
-                          width: 2,
+                  // Header: logo left, address block right
+                  pw.Row(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.SizedBox(width: 70 + 16, height: 70),
+                      pw.Expanded(
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.center,
+                          children: [
+                            pw.Text(
+                              'Republic of the Philippines',
+                              style: const pw.TextStyle(fontSize: 10),
+                            ),
+                            pw.SizedBox(height: 1),
+                            pw.Text(
+                              'Province of Palawan',
+                              style: const pw.TextStyle(fontSize: 10),
+                            ),
+                            pw.SizedBox(height: 1),
+                            pw.Text(
+                              'Municipality of Narra',
+                              style: const pw.TextStyle(fontSize: 10),
+                            ),
+                            pw.SizedBox(height: 1),
+                            pw.Text(
+                              'Barangay Poblacion',
+                              style: pw.TextStyle(
+                                fontSize: 11,
+                                fontWeight: pw.FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      child: pw.Image(photoImage, fit: pw.BoxFit.cover),
+                    ],
+                  ),
+                  pw.SizedBox(height: 8),
+                  pw.Center(
+                    child: pw.Text(
+                      'OFFICE OF THE PUNONG BARANGAY',
+                      style: pw.TextStyle(
+                        fontSize: 11,
+                        fontWeight: pw.FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
                     ),
-                ],
-              ),
-              pw.SizedBox(height: 30),
+                  ),
+                  pw.SizedBox(height: 6),
+                  pw.Divider(
+                    thickness: 2,
+                    color: PdfColors.black,
+                  ),
+                  pw.SizedBox(height: 4),
+                  pw.Divider(
+                    thickness: 0.5,
+                    color: PdfColors.black,
+                  ),
+                  pw.SizedBox(height: 16),
 
-              // Title
-              pw.Center(
-                child: pw.Column(
-                  children: [
-                    pw.Text(
+                  // Title
+                  pw.Center(
+                    child: pw.Text(
                       'CERTIFICATE OF INDIGENCY',
                       style: pw.TextStyle(
-                        fontSize: 24,
+                        fontSize: 18,
                         fontWeight: pw.FontWeight.bold,
-                        color: PdfColors.blue900,
+                        letterSpacing: 1.5,
                       ),
                     ),
-                    pw.SizedBox(height: 5),
-                    pw.Container(
-                      width: 280,
-                      height: 3,
-                      decoration: const pw.BoxDecoration(
-                        gradient: pw.LinearGradient(
-                          colors: [PdfColors.blue900, PdfColors.blue600],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              pw.SizedBox(height: 30),
-
-              // TO WHOM IT MAY CONCERN
-              pw.Text(
-                'TO WHOM IT MAY CONCERN:',
-                style: pw.TextStyle(
-                  fontSize: 14,
-                  fontWeight: pw.FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              pw.SizedBox(height: 20),
-
-              // Body
-              pw.Paragraph(
-                text:
-                    '          This is to certify that $userFullName, $userAge years old, $civilStatus, Filipino citizen, and a bonafide resident of $userAddress, ${config.barangayName}, is among the indigent families in our barangay.',
-                style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
-                textAlign: pw.TextAlign.justify,
-              ),
-              pw.SizedBox(height: 20),
-
-              pw.Paragraph(
-                text:
-                    '          This certification further states that the above-named person belongs to a low-income family and is in need of financial assistance.',
-                style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
-                textAlign: pw.TextAlign.justify,
-              ),
-              pw.SizedBox(height: 20),
-
-              pw.Paragraph(
-                text:
-                    '          This certification is being issued upon the request of the above-named person for ${request.purpose}.',
-                style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
-                textAlign: pw.TextAlign.justify,
-              ),
-              pw.SizedBox(height: 20),
-
-              pw.Paragraph(
-                text:
-                    '          Issued this ${_formatDate(DateTime.now())} at ${config.barangayName}.',
-                style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
-                textAlign: pw.TextAlign.justify,
-              ),
-              pw.SizedBox(height: 40),
-
-              // Signature Section
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.center,
-                    children: [
-                      pw.Container(
-                        width: 200,
-                        height: 1,
-                        color: PdfColors.black,
-                      ),
-                      pw.SizedBox(height: 5),
-                      pw.Text(
-                        userFullName,
-                        style: pw.TextStyle(
-                          fontSize: 12,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                      pw.Text(
-                        'Applicant Signature',
-                        style: const pw.TextStyle(fontSize: 10),
-                      ),
-                    ],
                   ),
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.center,
-                    children: [
-                      pw.Container(
-                        width: 200,
-                        height: 1,
-                        color: PdfColors.black,
+                  pw.SizedBox(height: 18),
+
+                  // Salutation
+                  pw.Text(
+                    'TO WHOM IT MAY CONCERN;',
+                    style: pw.TextStyle(
+                      fontSize: 12,
+                      fontWeight: pw.FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  pw.SizedBox(height: 16),
+
+                  // Body
+                  pw.Paragraph(
+                    text:
+                        'This is to certify that ___________, ${userAge >= 0 ? userAge : '___'} years old, _____, Filipino Citizen is a bonafide resident of ___________, Barangay Poblacion, Narra, Palawan.',
+                    style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                    textAlign: pw.TextAlign.justify,
+                  ),
+                  pw.SizedBox(height: 14),
+                  pw.Paragraph(
+                    text:
+                        'This certifies further that he/she belongs to INDIGENT FAMILIES of this Barangay.',
+                    style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                    textAlign: pw.TextAlign.justify,
+                  ),
+                  pw.SizedBox(height: 14),
+                  pw.Paragraph(
+                    text:
+                        'This certification is being issued upon request of _______________________, for __________ purpose that may legally serve his/her best.',
+                    style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                    textAlign: pw.TextAlign.justify,
+                  ),
+                  pw.SizedBox(height: 14),
+                  pw.Paragraph(
+                    text:
+                        'Issued this ______ day of $month, 20$year2 at Barangay Hall, Poblacion, Narra, Palawan.',
+                    style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                    textAlign: pw.TextAlign.justify,
+                  ),
+                  pw.Spacer(),
+
+                  // Signature block
+                  pw.Align(
+                    alignment: pw.Alignment.centerRight,
+                    child: pw.Container(
+                      width: 230,
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.center,
+                        children: [
+                          pw.Text(
+                            (config.barangayCaptain ?? 'NENITA R. NACARIO')
+                                .toUpperCase(),
+                            style: pw.TextStyle(
+                              fontSize: 12,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                          pw.SizedBox(height: 4),
+                          pw.Text(
+                            'Punong Barangay',
+                            style: const pw.TextStyle(fontSize: 11),
+                          ),
+                        ],
                       ),
-                      pw.SizedBox(height: 5),
-                      pw.Text(
-                        config.barangayCaptain ?? 'BARANGAY CAPTAIN',
-                        style: pw.TextStyle(
-                          fontSize: 12,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
+                    ),
+                  ),
+                  pw.SizedBox(height: 16),
+
+                  // Footer note
+                  pw.Align(
+                    alignment: pw.Alignment.centerLeft,
+                    child: pw.Text(
+                      'Note: This certificate valid without the barangay seal.',
+                      style: pw.TextStyle(
+                        fontSize: 9,
+                        fontStyle: pw.FontStyle.italic,
                       ),
-                      pw.Text(
-                        'Barangay Captain',
-                        style: const pw.TextStyle(fontSize: 10),
-                      ),
-                    ],
+                    ),
                   ),
                 ],
               ),
-              pw.SizedBox(height: 30),
-
-              // Footer
-              _buildFooter(config, documentId ?? request.id, qrUrl: qrUrl ?? request.qrUrl, expiresAtLabel: expiresAtLabel, copyNotice: copyNotice),
             ],
           );
         },
@@ -610,6 +623,1176 @@ class PdfService {
     );
 
     return _savePdf(pdf, 'cedula_${request.id}.pdf');
+  }
+
+  /// Generate Barangay Business Clearance PDF
+  /// (NEW establishment variant by default; RENEW variant when
+  /// `documentData['business_status']` is 'RENEW').
+  static Future<File> generateBusinessClearance({
+    required DocumentRequest request,
+    required BarangayConfig config,
+    required String userFullName,
+    required String userAddress,
+    required int userAge,
+    required String civilStatus,
+    String? profilePhotoUrl,
+    bool isDraft = false,
+    String? approverName,
+    String? documentId,
+    String? qrUrl,
+    String? expiresAtLabel,
+    String? copyNotice,
+  }) async {
+    final pdf = pw.Document(theme: await _loadUnicodeTheme());
+    final data = request.documentData;
+    final isRenew =
+        data['business_status']?.toString().toUpperCase() == 'RENEW';
+
+    // Load profile photo if available
+    pw.ImageProvider? photoImage;
+    if (profilePhotoUrl != null && profilePhotoUrl.isNotEmpty) {
+      try {
+        final response = await http.get(Uri.parse(profilePhotoUrl));
+        if (response.statusCode == 200) {
+          photoImage = pw.MemoryImage(response.bodyBytes);
+        }
+      } catch (e) {
+        // Photo load failures must never block PDF generation.
+      }
+    }
+
+    final businessName = data['business_name']?.toString().isNotEmpty == true
+        ? data['business_name'].toString()
+        : (data['occupation']?.toString().isNotEmpty == true
+            ? data['occupation'].toString()
+            : '____________________');
+    final location = data['business_location']?.toString().isNotEmpty == true
+        ? data['business_location'].toString()
+        : (data['address']?.toString().isNotEmpty == true
+            ? data['address'].toString()
+            : userAddress);
+    final operatorName = data['operator_name']?.toString().isNotEmpty == true
+        ? data['operator_name'].toString()
+        : userFullName;
+    final businessAddress =
+        data['business_address']?.toString().isNotEmpty == true
+            ? data['business_address'].toString()
+            : userAddress;
+
+    final businessFields = <(String, String)>[
+      (businessName, '(Business Name or Trade Activity)'),
+      (location, '(Location)'),
+      (operatorName, '(Operator/Manager)'),
+      (businessAddress, '(Address)'),
+    ];
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.legal,
+        margin: const pw.EdgeInsets.all(40),
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Header with photo
+              pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Expanded(child: _buildHeader(config)),
+                  if (photoImage != null)
+                    pw.Container(
+                      width: 80,
+                      height: 100,
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border.all(
+                          color: PdfColors.blue900,
+                          width: 2,
+                        ),
+                      ),
+                      child: pw.Image(photoImage, fit: pw.BoxFit.cover),
+                    ),
+                ],
+              ),
+              pw.SizedBox(height: 16),
+
+              // Date (top-right, underlined)
+              pw.Align(
+                alignment: pw.Alignment.centerRight,
+                child: pw.Text(
+                  'Date: ${_formatDate(DateTime.now())}',
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                    decoration: pw.TextDecoration.underline,
+                  ),
+                ),
+              ),
+              pw.SizedBox(height: 14),
+
+              // Title (two stacked bold centered lines)
+              pw.Center(
+                child: pw.Column(
+                  children: [
+                    pw.Text(
+                      'BARANGAY/BUSINESS CLEARANCE',
+                      style: pw.TextStyle(
+                        fontSize: 24,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.blue900,
+                      ),
+                    ),
+                    pw.Text(
+                      'YEAR ${DateTime.now().year}',
+                      style: pw.TextStyle(
+                        fontSize: 20,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.blue900,
+                      ),
+                    ),
+                    pw.SizedBox(height: 5),
+                    pw.Container(
+                      width: 280,
+                      height: 3,
+                      decoration: const pw.BoxDecoration(
+                        gradient: pw.LinearGradient(
+                          colors: [PdfColors.blue900, PdfColors.blue600],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 22),
+
+              // Salutation
+              pw.Text(
+                'TO WHOM IT MAY CONCERN;',
+                style: pw.TextStyle(
+                  fontSize: 14,
+                  fontWeight: pw.FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              pw.SizedBox(height: 16),
+
+              // Intro
+              pw.Paragraph(
+                text:
+                    'This is to certify that the business or trade activity described below:',
+                style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                textAlign: pw.TextAlign.justify,
+              ),
+              pw.SizedBox(height: 14),
+
+              // Centered field stack (bold underlined value + italic caption)
+              pw.Column(
+                children: [
+                  for (final (value, caption) in businessFields) ...[
+                    pw.Center(
+                      child: pw.Text(
+                        value,
+                        textAlign: pw.TextAlign.center,
+                        style: pw.TextStyle(
+                          fontSize: 14,
+                          fontWeight: pw.FontWeight.bold,
+                          decoration: pw.TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                    pw.Center(
+                      child: pw.Text(
+                        caption,
+                        textAlign: pw.TextAlign.center,
+                        style: pw.TextStyle(
+                          fontSize: 9,
+                          fontStyle: pw.FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                    pw.SizedBox(height: 10),
+                  ],
+                ],
+              ),
+              pw.SizedBox(height: 6),
+
+              // Variant clauses
+              if (!isRenew) ...[
+                pw.RichText(
+                  text: pw.TextSpan(
+                    style: const pw.TextStyle(
+                      fontSize: 12,
+                      lineSpacing: 1.5,
+                    ),
+                    children: [
+                      const pw.TextSpan(text: 'Proposed to be '),
+                      pw.TextSpan(
+                        text: 'NEW',
+                        style: pw.TextStyle(
+                          fontWeight: pw.FontWeight.bold,
+                          decoration: pw.TextDecoration.underline,
+                        ),
+                      ),
+                      const pw.TextSpan(
+                        text:
+                            ' established in this Barangay and is being applied for a Barangay Clearance to be used in securing a corresponding Legal Permits has been found to be:',
+                      ),
+                    ],
+                  ),
+                  textAlign: pw.TextAlign.justify,
+                  overflow: pw.TextOverflow.span,
+                ),
+                pw.SizedBox(height: 8),
+                pw.Paragraph(
+                  text:
+                      '√  In conformity with the provisions of existing Ordinances, rules and Regulations being enforced in this Barangay;',
+                  style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                  textAlign: pw.TextAlign.justify,
+                ),
+                pw.SizedBox(height: 4),
+                pw.Paragraph(
+                  text:
+                      '[  ]  not among those businesses or trade activities banned to be established in this Barangay.',
+                  style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                  textAlign: pw.TextAlign.justify,
+                ),
+                pw.SizedBox(height: 8),
+                pw.Paragraph(
+                  text: 'In view of the foregoing, this Barangay thru the undersigned.',
+                  style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                  textAlign: pw.TextAlign.justify,
+                ),
+                pw.SizedBox(height: 8),
+                pw.Paragraph(
+                  text:
+                      '√  Interpose NO objection for the issuance of the corresponding Mayor\'s Permit being applied.',
+                  style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                  textAlign: pw.TextAlign.justify,
+                ),
+              ] else ...[
+                pw.RichText(
+                  text: pw.TextSpan(
+                    style: const pw.TextStyle(
+                      fontSize: 12,
+                      lineSpacing: 1.5,
+                    ),
+                    children: [
+                      const pw.TextSpan(text: 'Being applied for '),
+                      pw.TextSpan(
+                        text: 'RENEW',
+                        style: pw.TextStyle(
+                          fontWeight: pw.FontWeight.bold,
+                          decoration: pw.TextDecoration.underline,
+                        ),
+                      ),
+                      const pw.TextSpan(
+                        text:
+                            ' of the corresponding Mayor\'s Permit has been found to be:',
+                      ),
+                    ],
+                  ),
+                  textAlign: pw.TextAlign.justify,
+                  overflow: pw.TextOverflow.span,
+                ),
+                pw.SizedBox(height: 8),
+                pw.Paragraph(
+                  text:
+                      'X  Complying with the provisions of existing Barangay Ordinances, Rules and Regulations being enforced in this Barangay.',
+                  style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                  textAlign: pw.TextAlign.justify,
+                ),
+                pw.SizedBox(height: 4),
+                pw.Paragraph(
+                  text:
+                      '[  ]  Partially complying with the provisions of existing Barangay Ordinances, Rules and Regulation being enforced in this Barangay.',
+                  style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                  textAlign: pw.TextAlign.justify,
+                ),
+                pw.SizedBox(height: 8),
+                pw.Paragraph(
+                  text:
+                      'In view of the foregoing, this Barangay, thru the undersigned.',
+                  style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                  textAlign: pw.TextAlign.justify,
+                ),
+                pw.SizedBox(height: 8),
+                pw.Paragraph(
+                  text:
+                      'X  Interpose NO objection for the issuance of the corresponding Mayor\'s Permit being applied for;',
+                  style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                  textAlign: pw.TextAlign.justify,
+                ),
+                pw.SizedBox(height: 4),
+                pw.Paragraph(
+                  text:
+                      '[  ]  Recommends only the issuance of a "TEMPORARY MAYOR\'S PERMIT" for not more than three (3) months and within that period the requirements under existing Barangay Ordinances, Rules and Regulations on that matter should be totally complied with, otherwise this Barangay would take the necessary actions within legal bound, to stop its continued operation.',
+                  style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                  textAlign: pw.TextAlign.justify,
+                ),
+              ],
+              pw.SizedBox(height: 22),
+
+              // Signature Section (right-aligned, single rule line)
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.end,
+                children: [
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.center,
+                    children: [
+                      pw.Container(
+                        width: 200,
+                        height: 1,
+                        color: PdfColors.black,
+                      ),
+                      pw.SizedBox(height: 5),
+                      pw.Text(
+                        approverName ??
+                            config.barangayCaptain ??
+                            'PUNONG BARANGAY',
+                        style: pw.TextStyle(
+                          fontSize: 12,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.Text(
+                        'Punong Barangay',
+                        style: const pw.TextStyle(fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 10),
+
+              // Note (bottom-left, italic)
+              pw.Align(
+                alignment: pw.Alignment.centerLeft,
+                child: pw.Text(
+                  'Note: This certificate is not valid without the barangay seal.',
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontStyle: pw.FontStyle.italic,
+                  ),
+                ),
+              ),
+              pw.SizedBox(height: 16),
+
+              // Footer
+              _buildFooter(config, documentId ?? request.id, qrUrl: qrUrl ?? request.qrUrl, expiresAtLabel: expiresAtLabel, copyNotice: copyNotice),
+            ],
+          );
+        },
+      ),
+    );
+
+    return _savePdf(pdf, 'business_clearance_${request.id}.pdf');
+  }
+
+  /// Generate Barangay Certification PDF (employment/salary).
+  static Future<File> generateCertification({
+    required DocumentRequest request,
+    required BarangayConfig config,
+    required String userFullName,
+    required String userAddress,
+    required int userAge,
+    required String civilStatus,
+    String? profilePhotoUrl,
+    bool isDraft = false,
+    String? approverName,
+    String? documentId,
+    String? qrUrl,
+    String? expiresAtLabel,
+    String? copyNotice,
+  }) async {
+    final pdf = pw.Document(theme: await _loadUnicodeTheme());
+    final data = request.documentData;
+
+    // Load profile photo if available
+    pw.ImageProvider? photoImage;
+    if (profilePhotoUrl != null && profilePhotoUrl.isNotEmpty) {
+      try {
+        final response = await http.get(Uri.parse(profilePhotoUrl));
+        if (response.statusCode == 200) {
+          photoImage = pw.MemoryImage(response.bodyBytes);
+        }
+      } catch (e) {
+        // Photo load failures must never block PDF generation.
+      }
+    }
+
+    final occupation = data['occupation']?.toString().isNotEmpty == true
+        ? data['occupation'].toString()
+        : '____________________';
+    final requester = data['requester']?.toString().isNotEmpty == true
+        ? data['requester'].toString()
+        : userFullName;
+
+    String salaryLabel;
+    final incomeVal = data['annual_income'];
+    if (incomeVal == null || incomeVal.toString().trim().isEmpty) {
+      salaryLabel = 'Php ______';
+    } else {
+      final parsed = num.tryParse(incomeVal.toString().replaceAll(',', ''));
+      salaryLabel = parsed != null
+          ? 'Php ${NumberFormat('#,##0.00').format(parsed)}'
+          : 'Php ______';
+    }
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.legal,
+        margin: const pw.EdgeInsets.all(40),
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Header with photo
+              pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Expanded(child: _buildHeader(config)),
+                  if (photoImage != null)
+                    pw.Container(
+                      width: 80,
+                      height: 100,
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border.all(
+                          color: PdfColors.blue900,
+                          width: 2,
+                        ),
+                      ),
+                      child: pw.Image(photoImage, fit: pw.BoxFit.cover),
+                    ),
+                ],
+              ),
+              pw.SizedBox(height: 30),
+
+              // Title
+              pw.Center(
+                child: pw.Column(
+                  children: [
+                    pw.Text(
+                      'BARANGAY CERTIFICATION',
+                      style: pw.TextStyle(
+                        fontSize: 24,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.blue900,
+                      ),
+                    ),
+                    pw.SizedBox(height: 5),
+                    pw.Container(
+                      width: 250,
+                      height: 3,
+                      decoration: const pw.BoxDecoration(
+                        gradient: pw.LinearGradient(
+                          colors: [PdfColors.blue900, PdfColors.blue600],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 30),
+
+              // Salutation
+              pw.Text(
+                'TO WHOM IT MAY CONCERN;',
+                style: pw.TextStyle(
+                  fontSize: 14,
+                  fontWeight: pw.FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              pw.SizedBox(height: 16),
+
+              // Body
+              pw.Paragraph(
+                text:
+                    'This is to certify that $userFullName, of legal age, $civilStatus, is a Bonafide resident of $userAddress, ${config.barangayName}.',
+                style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                textAlign: pw.TextAlign.justify,
+              ),
+              pw.SizedBox(height: 14),
+
+              // Occupation / salary (values bolded)
+              pw.RichText(
+                text: pw.TextSpan(
+                  style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                  children: [
+                    const pw.TextSpan(
+                      text: 'This certifies further that the work is a ',
+                    ),
+                    pw.TextSpan(
+                      text: occupation,
+                      style: const pw.TextStyle(
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    const pw.TextSpan(text: ' with monthly salary of '),
+                    pw.TextSpan(
+                      text: salaryLabel,
+                      style: const pw.TextStyle(
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    const pw.TextSpan(text: ' only.'),
+                  ],
+                ),
+                textAlign: pw.TextAlign.justify,
+                overflow: pw.TextOverflow.span,
+              ),
+              pw.SizedBox(height: 14),
+
+              pw.Paragraph(
+                text:
+                    'This certification is being issued upon request of $requester for ${request.purpose} it may serve.',
+                style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                textAlign: pw.TextAlign.justify,
+              ),
+              pw.SizedBox(height: 14),
+
+              pw.Paragraph(
+                text:
+                    'Issued this ${_formatDate(DateTime.now())} at ${config.barangayName}.',
+                style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                textAlign: pw.TextAlign.justify,
+              ),
+              pw.SizedBox(height: 36),
+
+              // Signature Section (right-aligned, single rule line)
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.end,
+                children: [
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.center,
+                    children: [
+                      pw.Container(
+                        width: 200,
+                        height: 1,
+                        color: PdfColors.black,
+                      ),
+                      pw.SizedBox(height: 5),
+                      pw.Text(
+                        approverName ??
+                            config.barangayCaptain ??
+                            'PUNONG BARANGAY',
+                        style: pw.TextStyle(
+                          fontSize: 12,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.Text(
+                        'Punong Barangay',
+                        style: const pw.TextStyle(fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 10),
+
+              // Note (bottom-left, italic)
+              pw.Align(
+                alignment: pw.Alignment.centerLeft,
+                child: pw.Text(
+                  'Note: This certificate is not valid without the barangay seal.',
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontStyle: pw.FontStyle.italic,
+                  ),
+                ),
+              ),
+              pw.SizedBox(height: 16),
+
+              // Footer
+              _buildFooter(config, documentId ?? request.id, qrUrl: qrUrl ?? request.qrUrl, expiresAtLabel: expiresAtLabel, copyNotice: copyNotice),
+            ],
+          );
+        },
+      ),
+    );
+
+    return _savePdf(pdf, 'certification_${request.id}.pdf');
+  }
+
+  /// Generate Certificate of Good Moral Character PDF.
+  static Future<File> generateGoodMoral({
+    required DocumentRequest request,
+    required BarangayConfig config,
+    required String userFullName,
+    required String userAddress,
+    required int userAge,
+    required String civilStatus,
+    String? profilePhotoUrl,
+    bool isDraft = false,
+    String? approverName,
+    String? documentId,
+    String? qrUrl,
+    String? expiresAtLabel,
+    String? copyNotice,
+  }) async {
+    final pdf = pw.Document(theme: await _loadUnicodeTheme());
+
+    // Load profile photo if available
+    pw.ImageProvider? photoImage;
+    if (profilePhotoUrl != null && profilePhotoUrl.isNotEmpty) {
+      try {
+        final response = await http.get(Uri.parse(profilePhotoUrl));
+        if (response.statusCode == 200) {
+          photoImage = pw.MemoryImage(response.bodyBytes);
+        }
+      } catch (e) {
+        // Photo load failures must never block PDF generation.
+      }
+    }
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.legal,
+        margin: const pw.EdgeInsets.all(40),
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Header with photo
+              pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Expanded(child: _buildHeader(config)),
+                  if (photoImage != null)
+                    pw.Container(
+                      width: 80,
+                      height: 100,
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border.all(
+                          color: PdfColors.blue900,
+                          width: 2,
+                        ),
+                      ),
+                      child: pw.Image(photoImage, fit: pw.BoxFit.cover),
+                    ),
+                ],
+              ),
+              pw.SizedBox(height: 30),
+
+              // Title
+              pw.Center(
+                child: pw.Column(
+                  children: [
+                    pw.Text(
+                      'CERTIFICATION',
+                      style: pw.TextStyle(
+                        fontSize: 24,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.blue900,
+                      ),
+                    ),
+                    pw.SizedBox(height: 5),
+                    pw.Container(
+                      width: 250,
+                      height: 3,
+                      decoration: const pw.BoxDecoration(
+                        gradient: pw.LinearGradient(
+                          colors: [PdfColors.blue900, PdfColors.blue600],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 30),
+
+              // Salutation
+              pw.Text(
+                'TO WHOM IT MAY CONCERN;',
+                style: pw.TextStyle(
+                  fontSize: 14,
+                  fontWeight: pw.FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              pw.SizedBox(height: 16),
+
+              // Body (GOOD MORAL CHARACTER bolded)
+              pw.RichText(
+                text: pw.TextSpan(
+                  style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                  children: [
+                    pw.TextSpan(
+                      text:
+                          'This is to certify that $userFullName, $civilStatus, legal age, Filipino citizen, is a resident of this Barangay and who is personally known to me to be a law-abiding citizen and has a ',
+                    ),
+                    const pw.TextSpan(
+                      text: 'GOOD MORAL CHARACTER',
+                      style: pw.TextStyle(
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    const pw.TextSpan(
+                      text:
+                          '. That of my own personal knowledge, has not committed, nor been involved in, any kind of unlawful activities in this Barangay.',
+                    ),
+                  ],
+                ),
+                textAlign: pw.TextAlign.justify,
+                overflow: pw.TextOverflow.span,
+              ),
+              pw.SizedBox(height: 14),
+
+              pw.Paragraph(
+                text:
+                    'Issued this ${_formatDate(DateTime.now())} at Barangay Hall, ${config.barangayName} for whatever purpose it may serve him/her best.',
+                style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                textAlign: pw.TextAlign.justify,
+              ),
+              pw.SizedBox(height: 36),
+
+              // Signature Section (right-aligned, single rule line)
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.end,
+                children: [
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.center,
+                    children: [
+                      pw.Container(
+                        width: 200,
+                        height: 1,
+                        color: PdfColors.black,
+                      ),
+                      pw.SizedBox(height: 5),
+                      pw.Text(
+                        approverName ??
+                            config.barangayCaptain ??
+                            'PUNONG BARANGAY',
+                        style: pw.TextStyle(
+                          fontSize: 12,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.Text(
+                        'Punong Barangay',
+                        style: const pw.TextStyle(fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 10),
+
+              // Note (bottom-left, italic)
+              pw.Align(
+                alignment: pw.Alignment.centerLeft,
+                child: pw.Text(
+                  'Note: This certificate is not valid without the barangay seal.',
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontStyle: pw.FontStyle.italic,
+                  ),
+                ),
+              ),
+              pw.SizedBox(height: 16),
+
+              // Footer
+              _buildFooter(config, documentId ?? request.id, qrUrl: qrUrl ?? request.qrUrl, expiresAtLabel: expiresAtLabel, copyNotice: copyNotice),
+            ],
+          );
+        },
+      ),
+    );
+
+    return _savePdf(pdf, 'good_moral_${request.id}.pdf');
+  }
+
+  /// Generate Certificate of Residency PDF.
+  static Future<File> generateResidency({
+    required DocumentRequest request,
+    required BarangayConfig config,
+    required String userFullName,
+    required String userAddress,
+    required int userAge,
+    required String civilStatus,
+    String? profilePhotoUrl,
+    bool isDraft = false,
+    String? approverName,
+    String? documentId,
+    String? qrUrl,
+    String? expiresAtLabel,
+    String? copyNotice,
+  }) async {
+    final pdf = pw.Document(theme: await _loadUnicodeTheme());
+    final data = request.documentData;
+
+    // Load profile photo if available
+    pw.ImageProvider? photoImage;
+    if (profilePhotoUrl != null && profilePhotoUrl.isNotEmpty) {
+      try {
+        final response = await http.get(Uri.parse(profilePhotoUrl));
+        if (response.statusCode == 200) {
+          photoImage = pw.MemoryImage(response.bodyBytes);
+        }
+      } catch (e) {
+        // Photo load failures must never block PDF generation.
+      }
+    }
+
+    final requester = data['requester']?.toString().isNotEmpty == true
+        ? data['requester'].toString()
+        : userFullName;
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.legal,
+        margin: const pw.EdgeInsets.all(40),
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Header with photo
+              pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Expanded(child: _buildHeader(config)),
+                  if (photoImage != null)
+                    pw.Container(
+                      width: 80,
+                      height: 100,
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border.all(
+                          color: PdfColors.blue900,
+                          width: 2,
+                        ),
+                      ),
+                      child: pw.Image(photoImage, fit: pw.BoxFit.cover),
+                    ),
+                ],
+              ),
+              pw.SizedBox(height: 30),
+
+              // Title (two stacked bold centered lines)
+              pw.Center(
+                child: pw.Column(
+                  children: [
+                    pw.Text(
+                      'BARANGAY CERTIFICATION OF',
+                      style: pw.TextStyle(
+                        fontSize: 22,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.blue900,
+                      ),
+                    ),
+                    pw.Text(
+                      'RESIDENCY',
+                      style: pw.TextStyle(
+                        fontSize: 24,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.blue900,
+                      ),
+                    ),
+                    pw.SizedBox(height: 5),
+                    pw.Container(
+                      width: 250,
+                      height: 3,
+                      decoration: const pw.BoxDecoration(
+                        gradient: pw.LinearGradient(
+                          colors: [PdfColors.blue900, PdfColors.blue600],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 30),
+
+              // Salutation
+              pw.Text(
+                'TO WHOM IT MAY CONCERN;',
+                style: pw.TextStyle(
+                  fontSize: 14,
+                  fontWeight: pw.FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              pw.SizedBox(height: 16),
+
+              // Body
+              pw.Paragraph(
+                text:
+                    'This is to certify that $userFullName, of legal age, $civilStatus, Filipino citizen, bonafide resident of $userAddress, ${config.barangayName}.',
+                style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                textAlign: pw.TextAlign.justify,
+              ),
+              pw.SizedBox(height: 14),
+
+              pw.Paragraph(
+                text:
+                    'This certification is issued upon request of $requester for ${request.purpose} purpose may serve her/him best.',
+                style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                textAlign: pw.TextAlign.justify,
+              ),
+              pw.SizedBox(height: 14),
+
+              pw.Paragraph(
+                text:
+                    'Issued this ${_formatDate(DateTime.now())} at Barangay Hall, ${config.barangayName}.',
+                style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                textAlign: pw.TextAlign.justify,
+              ),
+              pw.SizedBox(height: 36),
+
+              // Signature Section (right-aligned, single rule line)
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.end,
+                children: [
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.center,
+                    children: [
+                      pw.Container(
+                        width: 200,
+                        height: 1,
+                        color: PdfColors.black,
+                      ),
+                      pw.SizedBox(height: 5),
+                      pw.Text(
+                        approverName ??
+                            config.barangayCaptain ??
+                            'PUNONG BARANGAY',
+                        style: pw.TextStyle(
+                          fontSize: 12,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.Text(
+                        'Punong Barangay',
+                        style: const pw.TextStyle(fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 10),
+
+              // Note (bottom-left, italic)
+              pw.Align(
+                alignment: pw.Alignment.centerLeft,
+                child: pw.Text(
+                  'Note: This certificate is not valid without the barangay seal.',
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontStyle: pw.FontStyle.italic,
+                  ),
+                ),
+              ),
+              pw.SizedBox(height: 16),
+
+              // Footer
+              _buildFooter(config, documentId ?? request.id, qrUrl: qrUrl ?? request.qrUrl, expiresAtLabel: expiresAtLabel, copyNotice: copyNotice),
+            ],
+          );
+        },
+      ),
+    );
+
+    return _savePdf(pdf, 'residency_${request.id}.pdf');
+  }
+
+  /// Generate Certification Oath Undertaking PDF
+  /// (First Time Jobseeker Act of 2019, R.A. 11261).
+  static Future<File> generateOathUndertaking({
+    required DocumentRequest request,
+    required BarangayConfig config,
+    required String userFullName,
+    required String userAddress,
+    required int userAge,
+    required String civilStatus,
+    String? profilePhotoUrl,
+    bool isDraft = false,
+    String? approverName,
+    String? documentId,
+    String? qrUrl,
+    String? expiresAtLabel,
+    String? copyNotice,
+  }) async {
+    final pdf = pw.Document(theme: await _loadUnicodeTheme());
+    final data = request.documentData;
+
+    // Load profile photo if available
+    pw.ImageProvider? photoImage;
+    if (profilePhotoUrl != null && profilePhotoUrl.isNotEmpty) {
+      try {
+        final response = await http.get(Uri.parse(profilePhotoUrl));
+        if (response.statusCode == 200) {
+          photoImage = pw.MemoryImage(response.bodyBytes);
+        }
+      } catch (e) {
+        // Photo load failures must never block PDF generation.
+      }
+    }
+
+    final residencyLength = data['residency_length']?.toString().isNotEmpty ==
+            true
+        ? data['residency_length'].toString()
+        : '______';
+
+    const undertakings = [
+      'That this is the first time that I will actively look for a job, and therefore requesting that a Barangay Certification be issued in my favor to avail the benefits of the law;',
+      'That I am aware that the benefits and privilege/s under the said law shall be validated only for one (1) year from the date that the Barangay Certification is issued;',
+      'That can avail the benefits of the Law only once;',
+      'That I understand that may personal information shall be included in the Roster/List of First Time Jobseeker and will not be used for any unlawful purpose;',
+      'That I will inform and/or report to the Barangay personally, through text or other means, or through my family/relative once I get employed, and',
+      'That I am not a beneficiary of the Job Start Program under R.A. No. 10869 and other laws that give similar exemptions for the documents or transactions exempted under R.A. No. 11261;',
+      'That if issued the request certification, I will not use the same in any fraud, neither falsify nor help and/or assist in the fabrication of the said certification;',
+      'That this undertaking is made solely for the purpose of obtaining a Barangay Certification consistent with the objective of R.A. No. 11261 and not for any other purpose;',
+      'That I consent to the use of my personal information pursuant to the Data Privacy Act and other applicable laws, and regulations;',
+    ];
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.legal,
+        margin: const pw.EdgeInsets.all(40),
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Header with photo
+              pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Expanded(child: _buildHeader(config)),
+                  if (photoImage != null)
+                    pw.Container(
+                      width: 80,
+                      height: 100,
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border.all(
+                          color: PdfColors.blue900,
+                          width: 2,
+                        ),
+                      ),
+                      child: pw.Image(photoImage, fit: pw.BoxFit.cover),
+                    ),
+                ],
+              ),
+              pw.SizedBox(height: 30),
+
+              // Title
+              pw.Center(
+                child: pw.Column(
+                  children: [
+                    pw.Text(
+                      'CERTIFICATION OATH UNDERTAKING',
+                      style: pw.TextStyle(
+                        fontSize: 24,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.blue900,
+                      ),
+                    ),
+                    pw.SizedBox(height: 5),
+                    pw.Container(
+                      width: 290,
+                      height: 3,
+                      decoration: const pw.BoxDecoration(
+                        gradient: pw.LinearGradient(
+                          colors: [PdfColors.blue900, PdfColors.blue600],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 24),
+
+              // Salutation
+              pw.Text(
+                'TO WHOM IT MAY CONCERN:',
+                style: pw.TextStyle(
+                  fontSize: 14,
+                  fontWeight: pw.FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              pw.SizedBox(height: 14),
+
+              // Intro
+              pw.Paragraph(
+                text:
+                    'I\'m $userFullName, $userAge years old, $civilStatus, resident of $userAddress, ${config.barangayName}, for $residencyLength (years/months), availing the benefits of Republic Act 11261, otherwise known as the First Time Jobseeker Act of 2019, do hereby declare, agree and undertake to abide and be bound by the following.',
+                style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                textAlign: pw.TextAlign.justify,
+              ),
+              pw.SizedBox(height: 10),
+
+              // Numbered undertakings
+              for (var i = 0; i < undertakings.length; i++) ...[
+                pw.Paragraph(
+                  text: '${i + 1}. ${undertakings[i]}',
+                  style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                  textAlign: pw.TextAlign.justify,
+                ),
+                pw.SizedBox(height: 4),
+              ],
+              pw.SizedBox(height: 6),
+
+              pw.Paragraph(
+                text:
+                    'Issued this ${_formatDate(DateTime.now())} at Barangay Hall, ${config.barangayName}.',
+                style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+                textAlign: pw.TextAlign.justify,
+              ),
+              pw.SizedBox(height: 28),
+
+              // Signature Section (right-aligned, single rule line)
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.end,
+                children: [
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.center,
+                    children: [
+                      pw.Container(
+                        width: 200,
+                        height: 1,
+                        color: PdfColors.black,
+                      ),
+                      pw.SizedBox(height: 5),
+                      pw.Text(
+                        approverName ??
+                            config.barangayCaptain ??
+                            'PUNONG BARANGAY',
+                        style: pw.TextStyle(
+                          fontSize: 12,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.Text(
+                        'Punong Barangay',
+                        style: const pw.TextStyle(fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 10),
+
+              // Note (bottom-left, italic)
+              pw.Align(
+                alignment: pw.Alignment.centerLeft,
+                child: pw.Text(
+                  'Note: This certificate is not valid without the barangay seal.',
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontStyle: pw.FontStyle.italic,
+                  ),
+                ),
+              ),
+              pw.SizedBox(height: 16),
+
+              // Footer
+              _buildFooter(config, documentId ?? request.id, qrUrl: qrUrl ?? request.qrUrl, expiresAtLabel: expiresAtLabel, copyNotice: copyNotice),
+            ],
+          );
+        },
+      ),
+    );
+
+    return _savePdf(pdf, 'oath_undertaking_${request.id}.pdf');
   }
 
   /// Generate Barangay ID Card (Front and Back)
@@ -1058,40 +2241,30 @@ class PdfService {
 
   // Helper Methods
   static pw.Widget _buildHeader(BarangayConfig config) {
-    return pw.Center(
-      child: pw.Column(
-        children: [
-          pw.Text(
-            'REPUBLIC OF THE PHILIPPINES',
-            style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.SizedBox(width: 12, height: 55),
+        pw.Expanded(
+          child: pw.Column(
+            children: [
+              pw.Text(
+                'REPUBLIC OF THE PHILIPPINES',
+                style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+              ),
+              pw.Text('Province of Palawan', style: const pw.TextStyle(fontSize: 10)),
+              pw.Text('Municipality of Narra', style: const pw.TextStyle(fontSize: 10)),
+              pw.Text('Barangay Poblacion', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 5),
+              pw.Text(
+                'OFFICE OF THE PUNONG BARANGAY',
+                style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
+              ),
+              pw.SizedBox(height: 3),
+            ],
           ),
-          pw.Text('Province/City', style: const pw.TextStyle(fontSize: 10)),
-          pw.Text(
-            config.barangayName.toUpperCase(),
-            style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
-          ),
-          pw.SizedBox(height: 5),
-          pw.Text(
-            'OFFICE OF THE BARANGAY CAPTAIN',
-            style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
-          ),
-          pw.SizedBox(height: 3),
-          pw.Text(
-            config.barangayAddress,
-            style: const pw.TextStyle(fontSize: 9),
-          ),
-          if (config.contactNumber != null)
-            pw.Text(
-              'Tel: ${config.contactNumber}',
-              style: const pw.TextStyle(fontSize: 9),
-            ),
-          if (config.email != null)
-            pw.Text(
-              'Email: ${config.email}',
-              style: const pw.TextStyle(fontSize: 9),
-            ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

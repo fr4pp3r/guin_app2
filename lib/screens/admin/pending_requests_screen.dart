@@ -132,6 +132,61 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
             profilePhotoUrl: userProfile.profilePhotoUrl,
           );
           break;
+        case 'business_clearance':
+          pdfFile = await PdfService.generateBusinessClearance(
+            request: request,
+            config: config,
+            userFullName: userProfile.fullName,
+            userAddress: userProfile.address,
+            userAge: userProfile.age,
+            civilStatus: userProfile.civilStatus,
+            profilePhotoUrl: userProfile.profilePhotoUrl,
+          );
+          break;
+        case 'certification':
+          pdfFile = await PdfService.generateCertification(
+            request: request,
+            config: config,
+            userFullName: userProfile.fullName,
+            userAddress: userProfile.address,
+            userAge: userProfile.age,
+            civilStatus: userProfile.civilStatus,
+            profilePhotoUrl: userProfile.profilePhotoUrl,
+          );
+          break;
+        case 'good_moral':
+          pdfFile = await PdfService.generateGoodMoral(
+            request: request,
+            config: config,
+            userFullName: userProfile.fullName,
+            userAddress: userProfile.address,
+            userAge: userProfile.age,
+            civilStatus: userProfile.civilStatus,
+            profilePhotoUrl: userProfile.profilePhotoUrl,
+          );
+          break;
+        case 'residency':
+          pdfFile = await PdfService.generateResidency(
+            request: request,
+            config: config,
+            userFullName: userProfile.fullName,
+            userAddress: userProfile.address,
+            userAge: userProfile.age,
+            civilStatus: userProfile.civilStatus,
+            profilePhotoUrl: userProfile.profilePhotoUrl,
+          );
+          break;
+        case 'oath_undertaking':
+          pdfFile = await PdfService.generateOathUndertaking(
+            request: request,
+            config: config,
+            userFullName: userProfile.fullName,
+            userAddress: userProfile.address,
+            userAge: userProfile.age,
+            civilStatus: userProfile.civilStatus,
+            profilePhotoUrl: userProfile.profilePhotoUrl,
+          );
+          break;
         default:
           throw Exception('Unknown document type: ${request.documentType}');
       }
@@ -767,6 +822,18 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
         return Icons.people_outline;
       case 'barangay_id':
         return Icons.badge_outlined;
+      case 'cedula':
+        return Icons.receipt_long;
+      case 'business_clearance':
+        return Icons.storefront;
+      case 'certification':
+        return Icons.verified;
+      case 'oath_undertaking':
+        return Icons.assignment_turned_in;
+      case 'good_moral':
+        return Icons.workspace_premium;
+      case 'residency':
+        return Icons.home;
       default:
         return Icons.description_outlined;
     }

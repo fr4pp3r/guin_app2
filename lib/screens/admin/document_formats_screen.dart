@@ -194,6 +194,45 @@ class _DocumentFormatsScreenState extends State<DocumentFormatsScreen> {
                     color: Colors.purple,
                     onPreview: () => _generatePreview('barangay_id'),
                   ),
+                  _buildFormatCard(
+                    title: 'Barangay Business Clearance',
+                    description:
+                        'Clearance for business permits and renewals',
+                    icon: Icons.storefront,
+                    color: Colors.teal,
+                    onPreview: () => _generatePreview('business_clearance'),
+                  ),
+                  _buildFormatCard(
+                    title: 'Barangay Certification',
+                    description:
+                        'General certification of employment and salary',
+                    icon: Icons.verified,
+                    color: Colors.indigo,
+                    onPreview: () => _generatePreview('certification'),
+                  ),
+                  _buildFormatCard(
+                    title: 'Certificate of Good Moral Character',
+                    description:
+                        'Certificate attesting good moral character',
+                    icon: Icons.workspace_premium,
+                    color: Colors.cyan,
+                    onPreview: () => _generatePreview('good_moral'),
+                  ),
+                  _buildFormatCard(
+                    title: 'Certificate of Residency',
+                    description: 'Proof of residency in the barangay',
+                    icon: Icons.home,
+                    color: Colors.brown,
+                    onPreview: () => _generatePreview('residency'),
+                  ),
+                  _buildFormatCard(
+                    title: 'Oath of Undertaking',
+                    description:
+                        'First-time jobseeker oath under R.A. 11261',
+                    icon: Icons.assignment_turned_in,
+                    color: Colors.blueGrey,
+                    onPreview: () => _generatePreview('oath_undertaking'),
+                  ),
                 ],
               ),
             ),
@@ -371,6 +410,11 @@ class _DocumentFormatsScreenState extends State<DocumentFormatsScreen> {
           'weight_kg': 65.0,
           'tin_number': '123-456-789-000',
           'community_tax_due': 5.00,
+          'occupation': 'Utility',
+          'annual_income': 15000.0,
+          'requester': 'Maria Santos',
+          'business_name': 'Sample Store',
+          'business_location': '123 Sample Street',
         },
         requestStatus: 'approved',
         paymentAmount: 50.0,
@@ -428,6 +472,61 @@ class _DocumentFormatsScreenState extends State<DocumentFormatsScreen> {
             emergencyContactNumber: '09987654321',
             bloodType: 'O+',
             config: config,
+          );
+          break;
+
+        case 'business_clearance':
+          pdfFile = await PdfService.generateBusinessClearance(
+            request: sampleRequest,
+            config: config,
+            userFullName: 'Juan Dela Cruz',
+            userAddress: '123 Sample Street, Purok 1',
+            userAge: 30,
+            civilStatus: 'Single',
+          );
+          break;
+
+        case 'certification':
+          pdfFile = await PdfService.generateCertification(
+            request: sampleRequest,
+            config: config,
+            userFullName: 'Maria Santos',
+            userAddress: '456 Example Road, Purok 2',
+            userAge: 28,
+            civilStatus: 'Married',
+          );
+          break;
+
+        case 'good_moral':
+          pdfFile = await PdfService.generateGoodMoral(
+            request: sampleRequest,
+            config: config,
+            userFullName: 'Juan Dela Cruz',
+            userAddress: '123 Sample Street, Purok 1',
+            userAge: 30,
+            civilStatus: 'Single',
+          );
+          break;
+
+        case 'residency':
+          pdfFile = await PdfService.generateResidency(
+            request: sampleRequest,
+            config: config,
+            userFullName: 'Maria Santos',
+            userAddress: '456 Example Road, Purok 2',
+            userAge: 28,
+            civilStatus: 'Married',
+          );
+          break;
+
+        case 'oath_undertaking':
+          pdfFile = await PdfService.generateOathUndertaking(
+            request: sampleRequest,
+            config: config,
+            userFullName: 'Juan Dela Cruz',
+            userAddress: '123 Sample Street, Purok 1',
+            userAge: 30,
+            civilStatus: 'Single',
           );
           break;
       }

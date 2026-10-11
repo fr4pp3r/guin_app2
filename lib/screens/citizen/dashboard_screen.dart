@@ -844,9 +844,21 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
   IconData _getDocumentIcon(String type) {
     switch (type) {
       case 'barangay_clearance':
-        return Icons.verified_user;
+        return Icons.description;
+      case 'business_clearance':
+        return Icons.storefront;
+      case 'certification':
+        return Icons.verified;
+      case 'oath_undertaking':
+        return Icons.assignment_turned_in;
       case 'indigency':
-        return Icons.people;
+        return Icons.volunteer_activism;
+      case 'good_moral':
+        return Icons.workspace_premium;
+      case 'residency':
+        return Icons.home;
+      case 'cedula':
+        return Icons.receipt_long;
       case 'barangay_id':
         return Icons.badge;
       default:

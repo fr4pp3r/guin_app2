@@ -7,6 +7,7 @@ import 'package:guin_app/screens/citizen/document_viewer_screen.dart';
 import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/utils/role_access.dart';
 import 'package:guin_app/utils/constants.dart';
+import 'package:guin_app/automation/automation_constants.dart';
 
 class AllRequestsScreen extends StatefulWidget {
   const AllRequestsScreen({super.key});
@@ -674,9 +675,6 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
   }
 
   String _formatDocumentType(String type) {
-    return type
-        .split('_')
-        .map((word) => word[0].toUpperCase() + word.substring(1))
-        .join(' ');
+    return AutomationConstants.labelFor(type);
   }
 }

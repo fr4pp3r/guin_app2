@@ -13,9 +13,14 @@ import {
 
 const DOCUMENT_TYPES = [
   "barangay_clearance",
+  "business_clearance",
+  "certification",
+  "oath_undertaking",
   "indigency",
-  "barangay_id",
+  "good_moral",
+  "residency",
   "cedula",
+  "barangay_id",
 ] as const;
 
 const RESPONSE_SCHEMA: Record<string, unknown> = {

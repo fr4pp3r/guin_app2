@@ -13,9 +13,14 @@ class AutomationConstants {
   /// Document type display helpers used in notifications.
   static const documentTypeLabels = <String, String>{
     'barangay_clearance': 'Barangay Clearance',
+    'business_clearance': 'Barangay Business Clearance',
+    'certification': 'Barangay Certification',
+    'oath_undertaking': 'Oath of Undertaking',
     'indigency': 'Certificate of Indigency',
+    'good_moral': 'Certificate of Good Moral Character',
+    'residency': 'Certificate of Residency',
+    'cedula': 'Cedula',
     'barangay_id': 'Barangay ID',
-    'cedula': 'Community Tax Certificate',
   };
 
   static String labelFor(String documentType) =>
