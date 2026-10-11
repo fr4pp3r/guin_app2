@@ -235,7 +235,6 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
       context,
       MaterialPageRoute(builder: (_) => const CreateUserScreen()),
     );
-    // Refresh after returning
     if (mounted) {
       context.read<UserProvider>().loadAllUsers();
       _tabController.animateTo(1);
@@ -322,19 +321,11 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
   }
 
   Widget _buildPendingCard(UserProfile user) {
-    return Container(
+    return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      elevation: 2,
+      shadowColor: Colors.black.withValues(alpha: 0.07),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -382,6 +373,10 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                 ),
               ],
             ),
+            if (_kycBadgeData(user) != null) ...[
+              const SizedBox(height: 10),
+              _kycBadge(_kycBadgeData(user)!),
+            ],
             const Divider(height: 20),
             _infoRow(Icons.location_on, user.address),
             const SizedBox(height: 4),
@@ -393,6 +388,51 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
               Icons.access_time,
               'Registered: ${Helpers.formatDate(user.createdAt)}',
             ),
+            // ID info
+            if (user.kycIdType != null) ...[
+              const SizedBox(height: 4),
+              _infoRow(
+                Icons.badge_outlined,
+                '${KycIdTypes.label(user.kycIdType)}: ${user.kycIdNumber ?? "N/A"}',
+              ),
+            ],
+            if (user.idIssuedAt != null) ...[
+              const SizedBox(height: 4),
+              _infoRow(
+                Icons.event_available,
+                'ID issued: ${Helpers.formatDate(user.idIssuedAt!)}',
+              ),
+            ],
+            if (user.idExpiryAt != null) ...[
+              const SizedBox(height: 4),
+              _infoRow(
+                Icons.event_busy,
+                'ID expires: ${Helpers.formatDate(user.idExpiryAt!)}',
+              ),
+            ],
+            // Liveness info
+            if (user.livenessVerified) ...[
+              const SizedBox(height: 4),
+              _infoRow(
+                Icons.face_retouching_natural,
+                'Liveness verified${user.livenessVerifiedAt != null ? " on ${Helpers.formatDate(user.livenessVerifiedAt!)}" : ""}',
+              ),
+            ],
+            // Indigent info
+            if (user.isIndigent &&
+                (user.indigencyReason?.isNotEmpty ?? false)) ...[
+              const SizedBox(height: 4),
+              _infoRow(
+                Icons.speaker_notes_outlined,
+                'Indigency reason: ${user.indigencyReason}',
+              ),
+            ],
+            const SizedBox(height: 12),
+            _kycPhotoRow(user),
+            if (user.kycAiResult != null) ...[
+              const SizedBox(height: 4),
+              _kycAiSummary(user.kycAiResult!),
+            ],
             const SizedBox(height: 16),
             Row(
               children: [
@@ -433,6 +473,420 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
     );
   }
 
+  // ── KYC pre-check surface on pending cards ──────────────────────────────
+
+  ({String label, Color color, IconData icon})? _kycBadgeData(
+    UserProfile user,
+  ) {
+    switch (user.kycMethod) {
+      case 'ai_verified':
+        return (
+          label: 'AI pre-checked',
+          color: const Color(0xFF1976D2),
+          icon: Icons.auto_awesome,
+        );
+      case 'indigent_bypass':
+        return (
+          label: 'Indigent — guarantor verification required',
+          color: Colors.orange[800]!,
+          icon: Icons.priority_high,
+        );
+      case 'guarantor_verified':
+        return (
+          label: 'Guarantor-backed',
+          color: Colors.teal[700]!,
+          icon: Icons.verified_user,
+        );
+      default:
+        return null;
+    }
+  }
+
+  Widget _kycBadge(({String label, Color color, IconData icon}) data) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: data.color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: data.color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(data.icon, size: 12, color: data.color),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              data.label,
+              style: TextStyle(
+                fontSize: 11,
+                color: data.color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Compact side-by-side thumbnails so the reviewer can compare the profile
+  /// photo against the uploaded ID (front + back).
+  Widget _kycPhotoRow(UserProfile user) {
+    final idLabel = user.isIndigent ? 'Certificate of Indigency' : 'ID';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _kycThumb(user.profilePhotoUrl, 'Profile photo'),
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: _kycThumb(user.validIdUrl, '$idLabel — front')),
+          ],
+        ),
+        if (user.validIdBackUrl != null) ...[
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _kycThumb(user.validIdBackUrl, '$idLabel — back'),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _kycThumb(String? url, String label) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            height: 92,
+            width: double.infinity,
+            color: Colors.grey.shade100,
+            child: url == null
+                ? Icon(Icons.image_outlined, color: Colors.grey.shade400)
+                : Image.network(
+                    url,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) =>
+                        Icon(Icons.broken_image_outlined, color: Colors.grey.shade400),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10.5, color: AppColors.textSecondary),
+        ),
+      ],
+    );
+  }
+
+  /// Collapsible, read-only summary of the stored AI pre-check. Keeps the
+  /// card scannable while giving the reviewer the machine's reasoning.
+  Widget _kycAiSummary(Map<String, dynamic> kyc) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: Material(
+        color: Colors.transparent,
+        child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 8),
+        childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+        dense: true,
+        iconColor: AppColors.textSecondary,
+        collapsedIconColor: AppColors.textSecondary,
+        leading: const Icon(
+          Icons.auto_awesome,
+          size: 16,
+          color: Color(0xFF1976D2),
+        ),
+        title: const Text(
+          'AI advisory summary',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+        ),
+        children: [
+          ..._kycSummaryRows(kyc),
+          const SizedBox(height: 4),
+          const Text(
+            'AI-assisted advisory — final review by the barangay.',
+            style: TextStyle(
+              fontSize: 10.5,
+              fontStyle: FontStyle.italic,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    ),
+    );
+  }
+
+  List<Widget> _kycSummaryRows(Map<String, dynamic> kyc) {
+    final rows = <Widget>[];
+    void addRow(String label, String value) {
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 118,
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Text(value, style: const TextStyle(fontSize: 11.5)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // ID authenticity
+    final idAuthenticity = _kycString(
+      kyc,
+      ['id_authenticity', 'idAuthenticity'],
+    );
+    if (idAuthenticity != null) {
+      addRow('ID authenticity', _idAuthenticityLabel(idAuthenticity));
+    }
+
+    // ID type guess/match
+    final idTypeGuess = _kycString(
+      kyc,
+      ['id_type_guess', 'idTypeGuess'],
+    );
+    final idTypeMatch = _kycString(
+      kyc,
+      ['id_type_match', 'idTypeMatch'],
+    );
+    if (idTypeGuess != null) {
+      addRow('ID type detected', _idTypeGuessLabel(idTypeGuess));
+    }
+    if (idTypeMatch != null) {
+      addRow('Type match', idTypeMatch == 'true' ? 'Matches declared type' : 'Does not match declared type');
+    }
+
+    // Selfie quality
+    final selfieQuality = _kycString(
+      kyc,
+      ['selfie_quality', 'selfieQuality'],
+    );
+    if (selfieQuality != null) {
+      addRow('Selfie quality', _selfieQualityLabel(selfieQuality));
+    }
+
+    // Liveness spoof signal
+    final liveness = _kycMap(kyc, ['liveness']);
+    final spoofSignal = liveness != null
+        ? _kycString(liveness, ['spoof_signal', 'spoofSignal'])
+        : _kycString(kyc, ['liveness_spoof_signal']);
+    if (spoofSignal != null) {
+      addRow('Liveness signal', _spoofSignalLabel(spoofSignal));
+    }
+
+    // Liveness notes
+    final livenessNotes = liveness != null
+        ? _kycString(liveness, ['notes'])
+        : _kycString(kyc, ['liveness_notes']);
+    if (livenessNotes != null) {
+      addRow('Liveness notes', livenessNotes);
+    }
+
+    // Field checks
+    final fieldChecks = _kycMap(kyc, ['field_checks', 'fieldChecks']);
+    if (fieldChecks != null) {
+      fieldChecks.forEach((key, value) {
+        addRow(_fieldCheckLabel(key), _fieldCheckValue(value));
+      });
+    }
+
+    // Recommendation
+    final recommendation = _kycString(kyc, ['recommendation']);
+    if (recommendation != null) {
+      addRow('Recommendation', _recommendationLabel(recommendation));
+    }
+
+    // Reasons
+    final reasons = _kycReasons(kyc, ['reasons']);
+    if (reasons.isNotEmpty) {
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.only(left: 126, bottom: 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: reasons
+                .take(4)
+                .map(
+                  (r) => Text(
+                    '• $r',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+      );
+    }
+
+    // Prompt version
+    final promptVersion = _kycString(kyc, ['prompt_version', 'promptVersion']);
+    if (promptVersion != null) {
+      addRow('Check version', promptVersion);
+    }
+
+    return rows;
+  }
+
+  String? _kycString(Map<String, dynamic> kyc, List<String> keys) {
+    for (final key in keys) {
+      final value = kyc[key];
+      if (value is String && value.isNotEmpty) return value;
+    }
+    return null;
+  }
+
+  Map<String, dynamic>? _kycMap(Map<String, dynamic> kyc, List<String> keys) {
+    for (final key in keys) {
+      final value = kyc[key];
+      if (value is Map<String, dynamic>) return value;
+    }
+    return null;
+  }
+
+  List<String> _kycReasons(Map<String, dynamic> kyc, List<String> keys) {
+    for (final key in keys) {
+      final value = kyc[key];
+      if (value is List) return value.whereType<String>().toList();
+    }
+    return const [];
+  }
+
+  String _idAuthenticityLabel(String value) {
+    switch (value) {
+      case 'authentic':
+        return 'Looks authentic';
+      case 'suspicious':
+        return 'Suspicious — needs closer look';
+      case 'unreadable':
+        return 'Unreadable';
+      case 'uncertain':
+        return 'Uncertain';
+      default:
+        return value;
+    }
+  }
+
+  String _idTypeGuessLabel(String value) {
+    switch (value) {
+      case 'barangay_id':
+        return 'Barangay ID';
+      case 'drivers_license':
+        return "Driver's License";
+      case 'passport':
+        return 'Passport';
+      case 'national_id':
+        return 'National ID';
+      case 'umid':
+        return 'UMID';
+      case 'prc':
+        return 'PRC ID';
+      case 'sss':
+        return 'SSS ID';
+      case 'philhealth':
+        return 'PhilHealth ID';
+      case 'postal_id':
+        return 'Postal ID';
+      case 'voters_id':
+        return "Voter's ID";
+      case 'other':
+        return 'Other';
+      case 'unknown':
+        return 'Unknown';
+      default:
+        return value;
+    }
+  }
+
+  String _selfieQualityLabel(String value) {
+    switch (value) {
+      case 'good':
+        return 'Good quality';
+      case 'poor':
+        return 'Poor quality';
+      case 'no_face':
+        return 'No face detected';
+      case 'uncertain':
+        return 'Uncertain';
+      default:
+        return value;
+    }
+  }
+
+  String _spoofSignalLabel(String value) {
+    switch (value) {
+      case 'live_looking':
+        return 'Live-looking';
+      case 'spoof_suspected':
+        return 'Spoof suspected';
+      case 'uncertain':
+        return 'Uncertain';
+      default:
+        return value;
+    }
+  }
+
+  String _fieldCheckLabel(String key) {
+    switch (key) {
+      case 'full_name':
+        return 'Name check';
+      case 'date_of_birth':
+      case 'birth_date':
+        return 'Birth date check';
+      case 'address':
+        return 'Address check';
+      case 'gender':
+        return 'Gender check';
+      default:
+        return key;
+    }
+  }
+
+  String _fieldCheckValue(Object? value) {
+    if (value == 'match') return 'Matches';
+    if (value == 'mismatch') return 'Does not match';
+    if (value == 'unverifiable') return 'Unverifiable';
+    return value.toString();
+  }
+
+  String _recommendationLabel(String value) {
+    switch (value) {
+      case 'looks_ok':
+        return 'Looks OK — advisory only';
+      case 'needs_review':
+        return 'Needs review — advisory only';
+      default:
+        return value;
+    }
+  }
+
   // ── All Users tab ────────────────────────────────────────────────────────
 
   Widget _buildAllUsersTab(UserProvider userProvider) {
@@ -450,7 +904,6 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
       onRefresh: () => userProvider.loadAllUsers(),
       child: Column(
         children: [
-          // Search + filter bar
           Container(
             color: Colors.white,
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -540,18 +993,12 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
     final roleColor = _roleColor(user.role);
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
+      child: Material(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: ListTile(
+        elevation: 2,
+        shadowColor: Colors.black.withValues(alpha: 0.06),
+        child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Stack(
           children: [
@@ -673,8 +1120,9 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
           child: const Icon(Icons.more_vert, color: Colors.grey),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _emptyState(String message, IconData icon, Color color) {
     return Center(

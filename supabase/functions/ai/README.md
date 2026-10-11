@@ -36,7 +36,13 @@ Headers: `Authorization: Bearer <supabase-jwt>`, `Content-Type: application/json
 Error envelope: `{ "error": { "code": string, "message": string } }`.
 
 **Tasks today:** `ping` (connectivity test), `document-processor` (AI document
-validation) and `incident-classifier` (AI incident categorization) — both live.
+validation), `incident-classifier` (AI incident categorization) and
+`id-verifier` (advisory ID plausibility pre-check) — all live.
+
+> `id-verifier` is **advisory only**: it returns `looks_ok` or `needs_review` and
+> never approves or rejects a registration — a captain always reviews. It does
+> **not** compare the selfie to the face on the ID, and there is no
+> `guarantor-verifier` task (guarantors are existing approved users).
 
 ## Adding a feature
 

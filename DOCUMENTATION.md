@@ -411,9 +411,9 @@ and services — not a copy of any single legacy script.
 
 | Table                  | Purpose                                                        |
 | ---------------------- | -------------------------------------------------------------- |
-| `users_profile`        | Accounts, `password_hash`, approval workflow, role             |
+| `users_profile`        | Accounts, `password_hash`, approval workflow, role, KYC metadata (method/result/indigent/review audit)             |
 | `document_requests`    | Requests, payment tracking, release + verification metadata    |
-| `barangay_config`      | Barangay identity + GCash payment details (single-row config)  |
+| `barangay_config`      | Barangay identity + GCash payment details + sample Barangay ID (front/back, single-row config)  |
 | `document_fees`        | Per-`document_type` pricing                                    |
 | `barangay_id_details`  | Type-specific fields for Barangay ID                           |
 | `indigency_details`    | Type-specific fields for Certificate of Indigency              |
@@ -515,11 +515,62 @@ permission checks in `role_access.dart`.
 
 ### Registration flow (verified)
 
-New accounts are created with `is_approved = false`, `registration_status = 'pending'`,
-`role = 'citizen'`, and land on the pending-approval screen. Only `captain` and `admin`
-can approve users (`canManageUsers`). Login is permitted while pending — the app routes
-to `/pending-approval` rather than blocking sign-in outright. Rejections store a reason
-shown to the applicant.
+New accounts now use a two-branch automatic KYC pre-check (non-indigent) plus an
+indigent bypass.
+
+Registration accepts **any valid government ID** (barangay ID, driver's license, passport,
+national ID, UMID, PRC, SSS, PhilHealth, postal ID, voter's ID, ...), and the AI pre-check is
+**advisory only**: it returns `looks_ok` or `needs_review` and **never** approves or rejects a
+registration — a captain/admin always reviews. It deliberately does **not** compare the selfie to
+the face printed on the ID.
+
+**Branch 1 — With a valid government ID (default)**
+1. Register through the 4-step wizard: account → personal → address → documents.
+2. In the Documents step the user uploads their **profile photo (selfie)** and their
+   **government ID** (front, plus back for two-sided IDs) and picks the ID type.
+   The "I have no valid government ID (indigent)" checkbox is **OFF**.
+3. On submit, the app runs an **advisory** ID pre-check via the `id-verifier` edge
+   function (`lib/services/ai_id_verifier.dart`). It reports ID authenticity/plausibility
+   for the **declared** ID type, the detected ID type (and whether it matches), the selfie
+   capture quality, a passive anti-spoof signal on the selfie, and per-field consistency
+   against the submitted form fields. There is **no** sample-template comparison and **no**
+   selfie-vs-ID face match.
+4. The account is created as **pending** (`is_approved = false`, `registration_status = 'pending'`).
+   A PII-safe `kyc_ai_result` (authenticity, type guess/match, selfie quality, liveness signal,
+   field checks, advisory recommendation, reasons, `prompt_version`) is stored for the reviewer;
+   the user is routed to `/pending-approval`.
+5. Whether the pre-check is clean, unavailable (no AI call, quota/timeout/network), or
+   returned an unusable payload, the registration **never blocks** and is **never auto-approved**:
+   the captain/admin decides via **Admin → Manage Users → Pending** (`/admin/pending-users`).
+
+**Branch 2 — Indigent (no valid ID)**
+1. In the Documents step tick **"I have no valid government ID (indigent)"**. The
+   Barangay ID upload is hidden and a required **"Reason / situation"** field appears;
+   uploading a **Certificate of Indigency (optional)** stores it as `valid_id_url` for
+   review.
+2. On submit the app **skips the AI pre-check** entirely. The account is created as
+   `pending` with `is_indigent = true`, `kyc_method = 'indigent_bypass'`, and
+   `indigency_reason` set. It lands on `/pending-approval` and must be manually
+   approved/rejected by the captain/admin. The Manage Users pending card shows a distinct
+   **"Indigent — manual verification required"** badge.
+
+**Admin approval/review details**
+- Pending users show: the KYC/advisory badge, indigency reason + optional COI thumbnail when
+  applicable, side-by-side profile photo and ID thumbnails (front and back for a two-sided ID),
+  and a collapsible **AI pre-check summary** (ID authenticity, detected vs declared type,
+  selfie quality, anti-spoof signal, name/birth-date/address/gender field checks, advisory
+  recommendation, reasons, version) when `kyc_ai_result` exists. The summary carries the honest
+  footnote: *"AI-assisted pre-check — final review by the barangay."*
+- Approving a pending user sets `registration_status = 'approved'`, `is_approved = true`,
+  `kyc_verified_at = NOW()`, `kyc_reviewed_by` to the approving admin/captain, and
+  **coalesces `kyc_method` to `'manual_verified'`** if it was null (so a user whose
+  pre-check was unavailable is marked as manually verified). Rejecting sets
+  `registration_status = 'rejected'`, `is_approved = false`, and writes both
+  `rejection_reason` and `kyc_rejection_reason`.
+
+Only `captain` and `admin` can approve/reject users (`canManageUsers`). Login is
+permitted while pending — the app routes to `/pending-approval` rather than blocking
+sign-in outright.
 
 ---
 
@@ -655,7 +706,7 @@ flutter pub upgrade        # upgrade dependencies
 flutter run                # run on attached device
 flutter run -d chrome      # run on web
 flutter analyze            # static analysis (flutter_lints)
-flutter test               # run tests (no tests currently exist)
+flutter test               # run unit tests (test/automation)
 flutter clean             # clear build artifacts
 flutter doctor             # verify toolchain
 flutter build apk          # Android release

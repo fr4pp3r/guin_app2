@@ -20,7 +20,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _imagePicker = ImagePicker();
 
   // Controllers
-  final _fullNameController = TextEditingController();
+  final _givenNameController = TextEditingController();
+  final _middleNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _placeOfBirthController = TextEditingController();
@@ -42,7 +44,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   void dispose() {
-    _fullNameController.dispose();
+    _givenNameController.dispose();
+    _middleNameController.dispose();
+    _lastNameController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
     _placeOfBirthController.dispose();
@@ -53,7 +57,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final profile = authProvider.userProfile;
     if (profile == null) return;
 
-    _fullNameController.text = profile.fullName;
+    _givenNameController.text = profile.givenName;
+    _middleNameController.text = profile.middleName;
+    _lastNameController.text = profile.lastName;
     _phoneController.text = profile.phoneNumber;
     _addressController.text = profile.address;
     _placeOfBirthController.text = profile.placeOfBirth;
@@ -148,7 +154,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final age = _calculateAge(_selectedDateOfBirth!);
 
     final success = await authProvider.updateProfile(
-      fullName: _fullNameController.text.trim(),
+      givenName: _givenNameController.text.trim(),
+      middleName: _middleNameController.text.trim(),
+      lastName: _lastNameController.text.trim(),
       address: _addressController.text.trim(),
       age: age,
       dateOfBirth: _selectedDateOfBirth,
@@ -361,8 +369,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     // Populate fields when entering edit mode
     if (_isEditMode &&
-        _fullNameController.text.isEmpty &&
-        userProfile.fullName.isNotEmpty) {
+        _givenNameController.text.isEmpty &&
+        userProfile.givenName.isNotEmpty) {
       _populateFields(authProvider);
     }
 
@@ -690,13 +698,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: AppSizes.paddingM),
           _buildFormCard([
             TextFormField(
-              controller: _fullNameController,
+              controller: _givenNameController,
               decoration: const InputDecoration(
-                labelText: 'Full Name',
+                labelText: 'Given Name *',
                 prefixIcon: Icon(Icons.person_outline),
               ),
               validator: (v) =>
-                  (v == null || v.isEmpty) ? 'Full name is required' : null,
+                  (v == null || v.trim().isEmpty) ? 'Given name is required' : null,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _middleNameController,
+              decoration: const InputDecoration(
+                labelText: 'Middle Name (optional)',
+                prefixIcon: Icon(Icons.person_outline),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _lastNameController,
+              decoration: const InputDecoration(
+                labelText: 'Last Name *',
+                prefixIcon: Icon(Icons.person_outline),
+              ),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Last name is required' : null,
             ),
             const SizedBox(height: 16),
             // Email (read-only)

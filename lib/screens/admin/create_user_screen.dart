@@ -23,7 +23,9 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   final _addressFormKey = GlobalKey<FormState>();
 
   // Step 1 — Account
-  final _fullNameCtrl = TextEditingController();
+  final _givenNameCtrl = TextEditingController();
+  final _middleNameCtrl = TextEditingController();
+  final _lastNameCtrl = TextEditingController();
   final _usernameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
@@ -41,7 +43,8 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   // Step 3 — Address & Documents
   final _addressCtrl = TextEditingController();
   File? _profilePhoto;
-  File? _validId;
+  File? _validIdFront;
+  File? _validIdBack;
 
   final _imagePicker = ImagePicker();
 
@@ -62,7 +65,9 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   @override
   void dispose() {
     _pageController.dispose();
-    _fullNameCtrl.dispose();
+    _givenNameCtrl.dispose();
+    _middleNameCtrl.dispose();
+    _lastNameCtrl.dispose();
     _usernameCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
@@ -73,7 +78,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImage(bool isPhoto) async {
+  Future<void> _pickImage(bool isPhoto, {bool front = true}) async {
     final picked = await _imagePicker.pickImage(
       source: ImageSource.gallery,
       maxWidth: isPhoto ? 800 : 1200,
@@ -84,8 +89,10 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
       setState(() {
         if (isPhoto) {
           _profilePhoto = File(picked.path);
+        } else if (front) {
+          _validIdFront = File(picked.path);
         } else {
-          _validId = File(picked.path);
+          _validIdBack = File(picked.path);
         }
       });
     }
@@ -141,7 +148,9 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
       username: _usernameCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
       password: _passwordCtrl.text.trim(),
-      fullName: _fullNameCtrl.text.trim(),
+      givenName: _givenNameCtrl.text.trim(),
+      middleName: _middleNameCtrl.text.trim(),
+      lastName: _lastNameCtrl.text.trim(),
       address: _addressCtrl.text.trim(),
       age: age,
       dateOfBirth: _dob!,
@@ -151,16 +160,18 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
       phoneNumber: _phoneCtrl.text.trim(),
       role: _role,
       profilePhoto: _profilePhoto,
-      validId: _validId,
+      validIdFront: _validIdFront,
+      validIdBack: _validIdBack,
     );
 
     if (!mounted) return;
     Helpers.dismissDialog(context);
 
     if (ok) {
+      final fullName = [_givenNameCtrl.text.trim(), if (_middleNameCtrl.text.trim().isNotEmpty) _middleNameCtrl.text.trim(), _lastNameCtrl.text.trim()].join(' ');
       Helpers.showSuccessSnackBar(
         context,
-        'User "${_fullNameCtrl.text.trim()}" created successfully',
+        'User "$fullName" created successfully',
       );
       Navigator.pop(context);
     } else {
@@ -394,7 +405,11 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
         key: _accountFormKey,
         child: Column(
           children: [
-            _field(_fullNameCtrl, 'Full Name', Icons.badge),
+            _field(_givenNameCtrl, 'Given Name *', Icons.badge),
+            const SizedBox(height: 14),
+            _field(_middleNameCtrl, 'Middle Name', Icons.badge),
+            const SizedBox(height: 14),
+            _field(_lastNameCtrl, 'Last Name *', Icons.badge),
             const SizedBox(height: 14),
             _field(_usernameCtrl, 'Username', Icons.alternate_email),
             const SizedBox(height: 14),
@@ -569,76 +584,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
             ),
             const SizedBox(height: 8),
-            GestureDetector(
-              onTap: () => _pickImage(true),
-              child: Container(
-                height: 140,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: _profilePhoto == null
-                        ? const Color(0xFF1976D2).withValues(alpha: 0.4)
-                        : Colors.transparent,
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 8,
-                    ),
-                  ],
-                ),
-                child: _profilePhoto == null
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF1976D2,
-                              ).withValues(alpha: 0.08),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.person_add_outlined,
-                              size: 32,
-                              color: Color(0xFF1976D2),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Tap to upload photo',
-                            style: TextStyle(
-                              color: Color(0xFF1976D2),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Text(
-                            'Optional',
-                            style: TextStyle(fontSize: 11, color: Colors.grey),
-                          ),
-                        ],
-                      )
-                    : Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.file(
-                              _profilePhoto!,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                            ),
-                          ),
-                          _changeOverlay(() => _pickImage(true)),
-                        ],
-                      ),
-              ),
-            ),
-
+            _buildProfilePhotoCard(),
             const SizedBox(height: 20),
 
             // Valid ID
@@ -647,75 +593,157 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
             ),
             const SizedBox(height: 8),
-            GestureDetector(
-              onTap: () => _pickImage(false),
-              child: Container(
-                height: 160,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: _validId == null
-                        ? Colors.orange.withValues(alpha: 0.5)
-                        : Colors.transparent,
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 8,
-                    ),
-                  ],
-                ),
-                child: _validId == null
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.orange.withValues(alpha: 0.08),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.badge_outlined,
-                              size: 32,
-                              color: Colors.orange,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Tap to upload valid ID',
-                            style: TextStyle(
-                              color: Colors.orange,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Text(
-                            'Optional — government-issued ID',
-                            style: TextStyle(fontSize: 11, color: Colors.grey),
-                          ),
-                        ],
-                      )
-                    : Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.file(
-                              _validId!,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                            ),
-                          ),
-                          _changeOverlay(() => _pickImage(false)),
-                        ],
-                      ),
-              ),
+            Row(
+              children: [
+                Expanded(child: _buildIdCard(front: true)),
+                const SizedBox(width: 12),
+                Expanded(child: _buildIdCard(front: false)),
+              ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildProfilePhotoCard() {
+    return GestureDetector(
+      onTap: () => _pickImage(true),
+      child: Container(
+        height: 140,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: _profilePhoto == null
+                ? const Color(0xFF1976D2).withValues(alpha: 0.4)
+                : Colors.transparent,
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+            ),
+          ],
+        ),
+        child: _profilePhoto == null
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(
+                        0xFF1976D2,
+                      ).withValues(alpha: 0.08),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.person_add_outlined,
+                      size: 32,
+                      color: Color(0xFF1976D2),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Tap to upload photo',
+                    style: TextStyle(
+                      color: Color(0xFF1976D2),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Text(
+                    'Optional',
+                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+                ],
+              )
+            : Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(
+                      _profilePhoto!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                    ),
+                  ),
+                  _changeOverlay(() => _pickImage(true)),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _buildIdCard({required bool front}) {
+    final file = front ? _validIdFront : _validIdBack;
+    return GestureDetector(
+      onTap: () => _pickImage(false, front: front),
+      child: Container(
+        height: 160,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: file == null
+                ? Colors.orange.withValues(alpha: 0.5)
+                : Colors.transparent,
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+            ),
+          ],
+        ),
+        child: file == null
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.08),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.badge_outlined,
+                      size: 32,
+                      color: Colors.orange,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    front ? 'ID Front' : 'ID Back',
+                    style: const TextStyle(
+                      color: Colors.orange,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Text(
+                    'Optional',
+                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+                ],
+              )
+            : Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(
+                      file!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                    ),
+                  ),
+                  _changeOverlay(() => _pickImage(false, front: front)),
+                ],
+              ),
       ),
     );
   }

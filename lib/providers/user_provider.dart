@@ -96,7 +96,9 @@ class UserProvider extends ChangeNotifier {
     required String username,
     required String email,
     required String password,
-    required String fullName,
+    required String givenName,
+    required String middleName,
+    required String lastName,
     required String address,
     required int age,
     required DateTime dateOfBirth,
@@ -106,14 +108,17 @@ class UserProvider extends ChangeNotifier {
     required String phoneNumber,
     required String role,
     File? profilePhoto,
-    File? validId,
+    File? validIdFront,
+    File? validIdBack,
   }) async {
     try {
       await _userService.createUser(
         username: username,
         email: email,
         password: password,
-        fullName: fullName,
+        givenName: givenName,
+        middleName: middleName,
+        lastName: lastName,
         address: address,
         age: age,
         dateOfBirth: dateOfBirth,
@@ -123,7 +128,8 @@ class UserProvider extends ChangeNotifier {
         phoneNumber: phoneNumber,
         role: role,
         profilePhoto: profilePhoto,
-        validId: validId,
+        validIdFront: validIdFront,
+        validIdBack: validIdBack,
       );
       await loadAllUsers();
       return true;

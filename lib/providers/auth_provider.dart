@@ -89,7 +89,9 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required String password,
     required String username,
-    required String fullName,
+    required String givenName,
+    required String middleName,
+    required String lastName,
     required String address,
     required int age,
     required String phoneNumber,
@@ -98,7 +100,16 @@ class AuthProvider extends ChangeNotifier {
     required String civilStatus,
     required String gender,
     File? profilePhoto,
-    File? validId,
+    File? validIdFront,
+    File? validIdBack,
+    String? idType,
+    String? idNumber,
+    DateTime? idIssuedAt,
+    DateTime? idExpiryAt,
+    bool livenessVerified = false,
+    Map<String, dynamic>? kycAiResult,
+    bool isIndigent = false,
+    String? indigencyReason,
   }) async {
     _isLoading = true;
     _error = null;
@@ -134,19 +145,29 @@ class AuthProvider extends ChangeNotifier {
         );
       }
 
-      // Upload valid ID if provided
+      // Upload the ID images. The front is stored in `valid_id_url`,
+      // the back in `valid_id_back_url`.
       String? validIdUrl;
-      if (validId != null) {
+      String? validIdBackUrl;
+      if (validIdFront != null) {
         final tempId = DateTime.now().millisecondsSinceEpoch.toString();
-        validIdUrl = await _userService.uploadValidId(tempId, validId);
+        validIdUrl = await _userService.uploadValidId(tempId, validIdFront);
+      }
+      if (validIdBack != null) {
+        final tempId = DateTime.now().millisecondsSinceEpoch.toString();
+        validIdBackUrl = await _userService.uploadValidId(tempId, validIdBack);
       }
 
-      // Sign up with custom auth (creates profile with hashed password)
+      // Sign up with custom auth (creates profile with hashed password).
+      // Registration never self-approves: the profile is inserted pending and
+      // an officer decides later.
       _userProfile = await _authService.signUp(
         email: email,
         password: password,
         username: username,
-        fullName: fullName,
+        givenName: givenName,
+        middleName: middleName,
+        lastName: lastName,
         address: address,
         age: age,
         phoneNumber: phoneNumber,
@@ -156,6 +177,15 @@ class AuthProvider extends ChangeNotifier {
         gender: gender,
         profilePhotoUrl: profilePhotoUrl,
         validIdUrl: validIdUrl,
+        validIdBackUrl: validIdBackUrl,
+        idType: idType,
+        idNumber: idNumber,
+        idIssuedAt: idIssuedAt,
+        idExpiryAt: idExpiryAt,
+        livenessVerified: livenessVerified,
+        kycAiResult: kycAiResult,
+        isIndigent: isIndigent,
+        indigencyReason: indigencyReason,
       );
 
       _isLoading = false;
@@ -216,7 +246,9 @@ class AuthProvider extends ChangeNotifier {
 
   /// Update user profile (for citizen profile editing)
   Future<bool> updateProfile({
-    String? fullName,
+    String? givenName,
+    String? middleName,
+    String? lastName,
     String? address,
     int? age,
     DateTime? dateOfBirth,
@@ -242,7 +274,10 @@ class AuthProvider extends ChangeNotifier {
 
       String? profilePhotoUrl;
       if (profilePhoto != null) {
-        profilePhotoUrl = await _userService.uploadProfilePhoto(userId, profilePhoto);
+        profilePhotoUrl = await _userService.uploadProfilePhoto(
+          userId,
+          profilePhoto,
+        );
       }
 
       String? validIdUrl;
@@ -252,7 +287,9 @@ class AuthProvider extends ChangeNotifier {
 
       _userProfile = await _userService.updateUserProfile(
         userId: userId,
-        fullName: fullName,
+        givenName: givenName,
+        middleName: middleName,
+        lastName: lastName,
         address: address,
         age: age,
         dateOfBirth: dateOfBirth,

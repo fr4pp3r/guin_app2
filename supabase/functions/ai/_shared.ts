@@ -12,10 +12,18 @@
 //   - never log the API key or full prompt contents
 // The router in index.ts registers each handler under its task name.
 
+export interface GeminiImage {
+  mime_type: string;
+  data: string;
+}
+
 export interface GeminiOptions {
   model?: string;
   responseSchema?: Record<string, unknown>;
   temperature?: number;
+  // Base64-encoded images sent as inline_data parts ahead of the text
+  // prompt. Supports any number of images; the order is preserved.
+  images?: GeminiImage[];
 }
 
 export const corsHeaders: Record<string, string> = {
@@ -68,8 +76,15 @@ export async function callGemini(
   if (typeof opts.temperature === "number") {
     generationConfig.temperature = opts.temperature;
   }
+  const parts: Array<Record<string, unknown>> = [];
+  if (opts.images && opts.images.length > 0) {
+    for (const image of opts.images) {
+      parts.push({ inline_data: { mime_type: image.mime_type, data: image.data } });
+    }
+  }
+  parts.push({ text: prompt });
   const body = JSON.stringify({
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    contents: [{ role: "user", parts }],
     generationConfig,
   });
 

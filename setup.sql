@@ -48,6 +48,26 @@
 --     The legacy notify_* trigger functions are intentionally NOT included:
 --     they assumed a 4-value request_status enum and would fail to compile
 --     against the column this file creates.
+--
+--  5. KYC accepts ANY valid government ID.
+--     kyc_id_type / kyc_guarantors.guarantor_id_type share ONE whitelist
+--     (see DESIGN NOTE 6). There is no face-match column and no separate
+--     guarantor AI result: an indigent registrant with no ID is sponsored by a
+--     guarantor who is an existing APPROVED user, recorded on
+--     public.kyc_guarantors, and the sponsorship never auto-approves.
+--     barcode/template matching against a captain-uploaded sample is gone, so
+--     barangay_config.sample_barangay_id_front_url / _back_url are DEPRECATED
+--     and unused — kept only so an existing upload is not lost.
+--     On an EXISTING database, apply
+--     supabase/migrations/20261016_kyc_general_ids_guarantor.sql instead of
+--     re-running this file.
+--
+--  6. The canonical government-ID whitelist, used by users_profile.kyc_id_type
+--     and kyc_guarantors.guarantor_id_type (TEXT + CHECK, not an enum, for the
+--     same reason as DESIGN NOTE 1). Keep in sync with ID_TYPES in
+--     supabase/functions/ai/_kyc.ts:
+--     barangay_id, drivers_license, passport, national_id, umid, prc, sss,
+--     philhealth, postal_id, voters_id, other
 -- ============================================================================
 
 
@@ -72,6 +92,7 @@ DROP TABLE IF EXISTS public.barangay_id_details     CASCADE;
 DROP TABLE IF EXISTS public.notifications           CASCADE;
 DROP TABLE IF EXISTS public.document_requests       CASCADE;
 DROP TABLE IF EXISTS public.document_fees           CASCADE;
+DROP TABLE IF EXISTS public.kyc_guarantors          CASCADE;
 DROP TABLE IF EXISTS public.barangay_config         CASCADE;
 DROP TABLE IF EXISTS public.users_profile           CASCADE;
 
@@ -163,6 +184,34 @@ CREATE TABLE public.users_profile (
   rejection_reason    TEXT,
   profile_photo_url   TEXT,
   valid_id_url        TEXT,
+
+  -- KYC (see DESIGN NOTES 5 and 6). Registration accepts ANY valid government
+  -- ID; kyc_id_type is which one this user actually presented. Everything is
+  -- nullable/defaulted because a user may be created before any KYC path runs.
+  kyc_id_type         TEXT
+                        CHECK (kyc_id_type IS NULL OR kyc_id_type IN (
+                          'barangay_id','drivers_license','passport','national_id',
+                          'umid','prc','sss','philhealth','postal_id','voters_id',
+                          'other')),
+  kyc_id_number       TEXT,
+  id_issued_at        DATE,
+  id_expiry_at        DATE,
+  liveness_verified   BOOLEAN DEFAULT FALSE,
+  liveness_verified_at TIMESTAMPTZ,
+  kyc_method          TEXT
+                        CHECK (kyc_method IS NULL OR kyc_method IN (
+                          'ai_verified','manual_verified','indigent_bypass',
+                          'guarantor_verified')),
+  kyc_ai_result       JSONB,
+  is_indigent         BOOLEAN DEFAULT FALSE,
+  indigency_reason    TEXT,
+  kyc_verified_at     TIMESTAMPTZ,
+  kyc_reviewed_by     UUID REFERENCES public.users_profile(id),
+  kyc_rejection_reason TEXT,
+  -- DEPRECATED: superseded by kyc_id_type/kyc_id_number. Retained so existing
+  -- rows and the legacy user_profile model keep working; nothing writes it.
+  barangay_id_number  TEXT,
+
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -178,6 +227,12 @@ CREATE TABLE public.barangay_config (
   contact_number   TEXT,
   email            TEXT,
   logo_url         TEXT,
+  -- DEPRECATED / UNUSED (DESIGN NOTE 5): these held a sample Barangay ID
+  -- template to match uploads against. Any valid government ID is now
+  -- accepted, so nothing reads them; kept so an existing captain upload is
+  -- not lost.
+  sample_barangay_id_front_url TEXT,
+  sample_barangay_id_back_url  TEXT,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -499,6 +554,36 @@ CREATE TABLE public.audit_logs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- 3m. KYC guarantors -----------------------------------------------------
+-- One row per indigent registrant who was sponsored. The guarantor is always
+-- an EXISTING APPROVED user, so their identity is already verified by their own
+-- users_profile row; this table only records who vouched for whom and the
+-- captain's decision. There is no separate guarantor AI result and no
+-- guarantor_verified_at: a sponsorship NEVER auto-approves, it always lands in
+-- the captain's pending queue.
+-- See supabase/migrations/20261016_kyc_general_ids_guarantor.sql for the
+-- additive version of this table for existing databases.
+CREATE TABLE public.kyc_guarantors (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  indigent_user_id     UUID NOT NULL REFERENCES public.users_profile(id) ON DELETE CASCADE,
+  guarantor_user_id    UUID NOT NULL REFERENCES public.users_profile(id),
+  guarantor_full_name  TEXT NOT NULL,
+  guarantor_id_type    TEXT
+                         CHECK (guarantor_id_type IS NULL OR guarantor_id_type IN (
+                           'barangay_id','drivers_license','passport','national_id',
+                           'umid','prc','sss','philhealth','postal_id','voters_id',
+                           'other')),
+  guarantor_id_number  TEXT,
+  relationship         TEXT NOT NULL,
+  status               TEXT NOT NULL DEFAULT 'pending'
+                         CHECK (status IN ('pending','approved','rejected')),
+  reviewed_by          UUID REFERENCES public.users_profile(id),
+  reviewed_at          TIMESTAMPTZ,
+  review_notes         TEXT,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 
 -- ============================================================================
 --  SECTION 4 — INDEXES
@@ -524,6 +609,8 @@ CREATE INDEX idx_incident_reports_submitted   ON public.incident_reports(submitt
 CREATE INDEX idx_incident_updates_report      ON public.incident_updates(incident_report_id);
 CREATE INDEX idx_audit_logs_entity            ON public.audit_logs(entity_type, entity_id);
 CREATE INDEX idx_audit_logs_request           ON public.audit_logs(request_id);
+CREATE INDEX idx_kyc_guarantors_indigent      ON public.kyc_guarantors(indigent_user_id);
+CREATE INDEX idx_kyc_guarantors_status        ON public.kyc_guarantors(status);
 
 
 -- ============================================================================
@@ -566,6 +653,10 @@ CREATE TRIGGER trg_incident_reports_updated_at
   BEFORE UPDATE ON public.incident_reports
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
+CREATE TRIGGER trg_kyc_guarantors_updated_at
+  BEFORE UPDATE ON public.kyc_guarantors
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
 
 -- ============================================================================
 --  SECTION 6 — ROW LEVEL SECURITY
@@ -593,6 +684,7 @@ ALTER TABLE public.incident_attachments   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.identity_access_logs   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.role_permissions       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.kyc_guarantors         ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "app_access_users_profile"          ON public.users_profile          FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "app_access_barangay_config"        ON public.barangay_config        FOR ALL USING (true) WITH CHECK (true);
@@ -612,6 +704,7 @@ CREATE POLICY "app_access_incident_attachments"   ON public.incident_attachments
 CREATE POLICY "app_access_identity_access_logs"   ON public.identity_access_logs   FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "app_access_role_permissions"       ON public.role_permissions       FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "app_access_audit_logs"             ON public.audit_logs             FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "app_access_kyc_guarantors"         ON public.kyc_guarantors         FOR ALL USING (true) WITH CHECK (true);
 
 
 -- ============================================================================
@@ -772,7 +865,7 @@ SELECT username, role, registration_status, is_approved
 FROM public.users_profile
 ORDER BY created_at;
 
--- Expected: 18 tables
+-- Expected: 19 tables
 SELECT COUNT(*) AS table_count
 FROM information_schema.tables
 WHERE table_schema = 'public'
@@ -827,4 +920,9 @@ WHERE id IN ('profile-photos','valid-ids','payment-receipts','documents');
 --    ADD COLUMN IF NOT EXISTS old_value     JSONB,
 --    ADD COLUMN IF NOT EXISTS new_value     JSONB,
 --    ADD COLUMN IF NOT EXISTS remarks       TEXT;
+--
+--  -- KYC (general government IDs + guarantor sponsorship). Do NOT copy the
+--  -- definitions out of Section 3 above: run the additive, re-runnable
+--  -- migration instead, which also repairs a half-applied state.
+--  --   supabase/migrations/20261016_kyc_general_ids_guarantor.sql
 -- ============================================================================

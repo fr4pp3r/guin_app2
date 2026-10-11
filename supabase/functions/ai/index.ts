@@ -20,6 +20,7 @@ import {
 } from "./_shared.ts";
 import documentProcessor from "./handlers/document_processor.ts";
 import incidentClassifier from "./handlers/incident_classifier.ts";
+import idVerifier from "./handlers/id_verifier.ts";
 
 const JWT_SECRET = Deno.env.get("SUPABASE_JWT_SECRET") ?? "";
 
@@ -53,6 +54,7 @@ type TaskHandler = (payload: Record<string, unknown>) => Promise<Response>;
 const routes: Record<string, TaskHandler> = {
   "document-processor": documentProcessor,
   "incident-classifier": incidentClassifier,
+  "id-verifier": idVerifier,
   ping: () => Promise.resolve(jsonResponse(200, { ok: true })),
 };
 

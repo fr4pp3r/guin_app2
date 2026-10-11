@@ -176,19 +176,11 @@ class _PendingUsersScreenState extends State<PendingUsersScreen> {
   }
 
   Widget _buildUserCard(UserProfile user) {
-    return Container(
+    return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.paddingM),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      elevation: 2,
+      shadowColor: Colors.black.withValues(alpha: 0.08),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(AppSizes.paddingL),
         child: Column(

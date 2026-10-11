@@ -14,11 +14,19 @@ class AuthService {
   Future<bool> get isLoggedIn => SessionManager.isLoggedIn();
 
   // Sign up with email and password (Custom Auth - No Supabase Auth)
+  //
+  // KYC posture: registration collects an ID type + number and a liveness
+  // selfie result, but NOTHING here approves anybody. Every insert lands as
+  // registration_status='pending' / is_approved=false and leaves kyc_method
+  // null — `kycAiResult` is advisory evidence for the reviewer, not a verdict.
+  // An officer stamps kyc_method when they approve (see UserService.approveUser).
   Future<UserProfile> signUp({
     required String email,
     required String password,
     required String username,
-    required String fullName,
+    required String givenName,
+    required String middleName,
+    required String lastName,
     required String address,
     required int age,
     required DateTime dateOfBirth,
@@ -28,6 +36,15 @@ class AuthService {
     required String phoneNumber,
     String? profilePhotoUrl,
     String? validIdUrl,
+    String? validIdBackUrl,
+    String? idType,
+    String? idNumber,
+    DateTime? idIssuedAt,
+    DateTime? idExpiryAt,
+    bool livenessVerified = false,
+    Map<String, dynamic>? kycAiResult,
+    bool isIndigent = false,
+    String? indigencyReason,
   }) async {
     try {
       // Check if email already exists
@@ -55,6 +72,10 @@ class AuthService {
       // Hash the password
       final hashedPassword = PasswordHash.generate(password);
 
+      // Build full_name from parts (DB trigger also does this, but we send it
+      // explicitly so the returned row is immediately consistent).
+      final fullName = [givenName, if (middleName.isNotEmpty) middleName, lastName].join(' ');
+
       // Create user profile with hashed password
       final response = await _supabase
           .from('users_profile')
@@ -62,6 +83,9 @@ class AuthService {
             'email': email,
             'password_hash': hashedPassword,
             'username': username,
+            'given_name': givenName,
+            'middle_name': middleName.isEmpty ? null : middleName,
+            'last_name': lastName,
             'full_name': fullName,
             'address': address,
             'age': age,
@@ -72,9 +96,23 @@ class AuthService {
             'phone_number': phoneNumber,
             'profile_photo_url': profilePhotoUrl,
             'valid_id_url': validIdUrl,
+            'valid_id_back_url': validIdBackUrl,
             'role': 'citizen',
+            // No auto-approval path exists: every registration waits for a
+            // captain/secretary review.
             'is_approved': false,
             'registration_status': 'pending',
+            'kyc_id_type': idType,
+            'kyc_id_number': idNumber,
+            'id_issued_at': _dateOnly(idIssuedAt),
+            'id_expiry_at': _dateOnly(idExpiryAt),
+            'liveness_verified': livenessVerified,
+            if (livenessVerified)
+              'liveness_verified_at': DateTime.now().toIso8601String(),
+            // Advisory only — kyc_method stays null until a human approves.
+            'kyc_ai_result': kycAiResult,
+            'is_indigent': isIndigent,
+            'indigency_reason': indigencyReason,
           })
           .select()
           .single();
@@ -291,3 +329,8 @@ class AuthService {
     }
   }
 }
+
+/// `id_issued_at` / `id_expiry_at` are DATE columns, so they go over the wire
+/// as a bare calendar day — the same shape as `date_of_birth`.
+String? _dateOnly(DateTime? value) =>
+    value?.toIso8601String().split('T').first;
