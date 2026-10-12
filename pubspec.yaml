@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   
   # Supabase
   supabase_flutter: ^2.5.6
@@ -34,7 +36,7 @@ dependencies:
   file_picker: ^13.1.0
   
   # Utilities
-  intl: ^0.19.0
+  intl: ^0.20.3
   flutter_dotenv: ^5.1.0
   
   # Security & Encryption
@@ -61,6 +63,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
 
   # Assets
   assets:

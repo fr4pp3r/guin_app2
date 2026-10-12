@@ -10,6 +10,9 @@ import 'package:guin_app/providers/notification_provider.dart';
 import 'package:guin_app/providers/barangay_provider.dart';
 import 'package:guin_app/providers/incident_report_provider.dart';
 import 'package:guin_app/providers/connectivity_provider.dart';
+import 'package:guin_app/providers/locale_provider.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
+import 'package:guin_app/l10n/app_l10n.dart';
 import 'package:guin_app/widgets/connectivity_banner.dart';
 
 void main() async {
@@ -66,22 +69,32 @@ class MainApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BarangayProvider()),
         ChangeNotifierProvider(create: (_) => IncidentReportProvider()),
         ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
+        ChangeNotifierProvider(create: (_) => LocaleProvider()),
       ],
-      child: MaterialApp(
-        title: 'Barangay E-Document System',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        initialRoute: AppRoutes.splash,
-        routes: AppRoutes.routes,
-        onGenerateRoute: AppRoutes.onGenerateRoute,
-        // The builder wraps the app's Navigator, so the offline pill overlays
-        // every route and survives navigation. MediaQuery/Directionality are
-        // provided by MaterialApp above this builder.
-        builder: (context, child) => Stack(
-          children: [
-            child ?? const SizedBox.shrink(),
-            const ConnectivityBanner(),
-          ],
+      child: Consumer<LocaleProvider>(
+        builder: (context, localeProvider, _) => MaterialApp(
+          onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          locale: localeProvider.locale,
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          initialRoute: AppRoutes.splash,
+          routes: AppRoutes.routes,
+          onGenerateRoute: AppRoutes.onGenerateRoute,
+          // The builder wraps the app's Navigator, so the offline pill overlays
+          // every route and survives navigation. MediaQuery/Directionality are
+          // provided by MaterialApp above this builder. It also keeps the
+          // context-free [AppL10n] accessor in sync with the active locale.
+          builder: (context, child) {
+            AppL10n.current = AppLocalizations.of(context);
+            return Stack(
+              children: [
+                child ?? const SizedBox.shrink(),
+                const ConnectivityBanner(),
+              ],
+            );
+          },
         ),
       ),
     );

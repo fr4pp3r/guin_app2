@@ -34,6 +34,9 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Generated localization output
+lib/l10n/generated/
+
 # Symbolication related
 app.*.symbols
 
