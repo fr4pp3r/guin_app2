@@ -7,6 +7,7 @@ import 'package:guin_app/config/routes.dart';
 import 'package:guin_app/screens/citizen/document_viewer_screen.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class CitizenDashboardScreen extends StatefulWidget {
   const CitizenDashboardScreen({super.key});
@@ -59,6 +60,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final authProvider = context.watch<AuthProvider>();
     final documentProvider = context.watch<DocumentProvider>();
     final notificationProvider = context.watch<NotificationProvider>();
@@ -130,8 +132,8 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Welcome back!',
+                          Text(
+                            l10n.citizenWelcomeBack,
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 12,
@@ -140,7 +142,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            userProfile?.fullName ?? 'User',
+                            userProfile?.fullName ?? l10n.citizenFallbackName,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
@@ -202,8 +204,8 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                       onPressed: () async {
                         final confirm = await Helpers.showConfirmDialog(
                           context,
-                          title: 'Logout',
-                          message: 'Are you sure you want to logout?',
+                          title: l10n.commonLogout,
+                          message: l10n.citizenLogoutConfirm,
                         );
                         if (confirm && context.mounted) {
                           await authProvider.signOut();
@@ -254,8 +256,8 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              const Text(
-                                'Quick Actions',
+                              Text(
+                                l10n.citizenQuickActions,
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
@@ -275,7 +277,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                           child: _buildActionCard(
                             context,
                             icon: Icons.file_copy,
-                            title: 'Request\nDocument',
+                            title: l10n.citizenRequestDocument.replaceAll(' ', '\n'),
                             color: AppColors.primary,
                             onTap: () {
                               Navigator.pushNamed(
@@ -290,7 +292,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                           child: _buildActionCard(
                             context,
                             icon: Icons.history,
-                            title: 'My\nRequests',
+                            title: l10n.myRequestsTitle.replaceAll(' ', '\n'),
                             color: AppColors.secondary,
                             onTap: () {
                               Navigator.pushNamed(
@@ -309,7 +311,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                           child: _buildActionCard(
                             context,
                             icon: Icons.report_problem,
-                            title: 'Report\nIncident',
+                            title: l10n.citizenReportIncident.replaceAll(' ', '\n'),
                             color: AppColors.warning,
                             onTap: () {
                               Navigator.pushNamed(
@@ -324,7 +326,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                           child: _buildActionCard(
                             context,
                             icon: Icons.qr_code_scanner,
-                            title: 'Verify\nDocument',
+                            title: l10n.citizenVerifyDocument.replaceAll(' ', '\n'),
                             color: Colors.teal,
                             onTap: () {
                               Navigator.pushNamed(
@@ -343,7 +345,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                           child: _buildActionCard(
                             context,
                             icon: Icons.list_alt,
-                            title: 'My\nReports',
+                            title: l10n.myReportsTitle.replaceAll(' ', '\n'),
                             color: AppColors.accent,
                             onTap: () {
                               Navigator.pushNamed(context, AppRoutes.myReports);
@@ -373,8 +375,8 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              const Text(
-                                'Your Requests',
+                              Text(
+                                l10n.citizenYourRequests,
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
@@ -392,7 +394,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                       children: [
                         Expanded(
                           child: _buildStatCard(
-                            'Total',
+                            l10n.citizenStatTotal,
                             documentProvider.myRequests.length.toString(),
                             Icons.description,
                             AppColors.primary,
@@ -407,7 +409,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                         const SizedBox(width: AppSizes.paddingM),
                         Expanded(
                           child: _buildStatCard(
-                            'Pending',
+                            l10n.citizenStatPending,
                             documentProvider.myRequests
                                 .where((r) => r.isPending)
                                 .length
@@ -425,7 +427,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                         const SizedBox(width: AppSizes.paddingM),
                         Expanded(
                           child: _buildStatCard(
-                            'Approved',
+                            l10n.citizenStatApproved,
                             documentProvider.myRequests
                                 .where((r) => r.isApproved)
                                 .length
@@ -461,8 +463,8 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              const Text(
-                                'Recent Requests',
+                              Text(
+                                l10n.citizenRecentRequests,
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
@@ -477,8 +479,8 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                           onPressed: () {
                             Navigator.pushNamed(context, AppRoutes.myRequests);
                           },
-                          child: const Text(
-                            'View All',
+                          child: Text(
+                            l10n.citizenViewAll,
                             style: TextStyle(
                               color: AppColors.primary,
                               fontWeight: FontWeight.w600,
@@ -499,7 +501,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                               const CircularProgressIndicator(strokeWidth: 3),
                               const SizedBox(height: AppSizes.paddingM),
                               Text(
-                                'Loading your requests...',
+                                l10n.citizenLoadingRequests,
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
                                   fontSize: 14,
@@ -531,7 +533,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                               ),
                               const SizedBox(height: AppSizes.paddingL),
                               Text(
-                                'No requests yet',
+                                l10n.citizenNoRequests,
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
                                   fontSize: 16,
@@ -540,7 +542,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Create your first document request',
+                                l10n.citizenCreateFirstRequest,
                                 style: TextStyle(
                                   color: Colors.grey.withValues(alpha: 0.7),
                                   fontSize: 13,
@@ -635,7 +637,11 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                                               ),
                                               const SizedBox(height: 4),
                                               Text(
-                                                'Requested: ${Helpers.formatDate(request.requestedAt)}',
+                                                l10n.citizenRequestedLabel(
+                                                  Helpers.formatDate(
+                                                    request.requestedAt,
+                                                  ),
+                                                ),
                                                 style: TextStyle(
                                                   fontSize: 12,
                                                   color:

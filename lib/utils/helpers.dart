@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:guin_app/l10n/app_l10n.dart';
 
 class Helpers {
   // Show snackbar
@@ -42,7 +43,7 @@ class Helpers {
             children: [
               const CircularProgressIndicator(),
               const SizedBox(width: 20),
-              Text(message ?? 'Loading...'),
+              Text(message ?? AppL10n.current.splashLoading),
             ],
           ),
         ),
@@ -73,11 +74,19 @@ class Helpers {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(cancelText),
+            child: Text(
+              cancelText == 'Cancel'
+                  ? AppL10n.current.commonCancel
+                  : cancelText,
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(confirmText),
+            child: Text(
+              confirmText == 'Confirm'
+                  ? AppL10n.current.commonConfirm
+                  : confirmText,
+            ),
           ),
         ],
       ),
@@ -102,43 +111,43 @@ class Helpers {
 
     if (difference.inDays > 365) {
       final years = (difference.inDays / 365).floor();
-      return '$years ${years == 1 ? 'year' : 'years'} ago';
+      return AppL10n.current.utilYearsAgo(years);
     } else if (difference.inDays > 30) {
       final months = (difference.inDays / 30).floor();
-      return '$months ${months == 1 ? 'month' : 'months'} ago';
+      return AppL10n.current.utilMonthsAgo(months);
     } else if (difference.inDays > 0) {
-      return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
+      return AppL10n.current.utilDaysAgo(difference.inDays);
     } else if (difference.inHours > 0) {
-      return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
+      return AppL10n.current.utilHoursAgo(difference.inHours);
     } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
+      return AppL10n.current.utilMinutesAgo(difference.inMinutes);
     } else {
-      return 'Just now';
+      return AppL10n.current.utilJustNow;
     }
   }
 
   // Parse Supabase error
   static String parseSupabaseError(dynamic error) {
-    if (error == null) return 'An unknown error occurred';
+    if (error == null) return AppL10n.current.utilErrorUnknown;
 
     final errorString = error.toString().toLowerCase();
 
     if (errorString.contains('duplicate key')) {
       if (errorString.contains('username')) {
-        return 'Username already exists';
+        return AppL10n.current.utilErrorUsernameExists;
       }
       if (errorString.contains('email')) {
-        return 'Email already exists';
+        return AppL10n.current.utilErrorEmailExists;
       }
-      return 'This record already exists';
+      return AppL10n.current.utilErrorRecordExists;
     }
 
     if (errorString.contains('invalid email')) {
-      return 'Invalid email address';
+      return AppL10n.current.utilErrorEmailInvalid;
     }
 
     if (errorString.contains('password')) {
-      return 'Invalid password. Must be at least 6 characters';
+      return AppL10n.current.utilErrorPasswordInvalid;
     }
 
     // Offline / connectivity failures surface in several shapes
@@ -151,23 +160,23 @@ class Helpers {
         errorString.contains('connection') ||
         errorString.contains('network') ||
         errorString.contains('timeout')) {
-      return 'You appear to be offline. Check your connection and try again';
+      return AppL10n.current.utilErrorOffline;
     }
 
     if (errorString.contains('unauthorized') ||
         errorString.contains('not authorized')) {
-      return 'You are not authorized to perform this action';
+      return AppL10n.current.utilErrorUnauthorized;
     }
 
     if (errorString.contains('not found')) {
-      return 'Record not found';
+      return AppL10n.current.utilErrorNotFound;
     }
 
     if (errorString.contains('user already registered')) {
-      return 'This email is already registered';
+      return AppL10n.current.utilErrorEmailRegistered;
     }
 
-    return 'An error occurred. Please try again';
+    return AppL10n.current.utilErrorGeneric;
   }
 
   // Validate file size (in MB)
@@ -179,11 +188,13 @@ class Helpers {
   // Format file size
   static String formatFileSize(int bytes) {
     if (bytes < 1024) {
-      return '$bytes B';
+      return AppL10n.current.utilSizeBytes(bytes);
     } else if (bytes < 1024 * 1024) {
-      return '${(bytes / 1024).toStringAsFixed(2)} KB';
+      return AppL10n.current.utilSizeKB((bytes / 1024).toStringAsFixed(2));
     } else {
-      return '${(bytes / (1024 * 1024)).toStringAsFixed(2)} MB';
+      return AppL10n.current.utilSizeMB(
+        (bytes / (1024 * 1024)).toStringAsFixed(2),
+      );
     }
   }
 

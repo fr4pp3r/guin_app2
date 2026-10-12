@@ -4,6 +4,7 @@ import 'package:guin_app/automation/verification_qr.dart';
 import 'package:guin_app/models/document_print_copy.dart';
 import 'package:guin_app/models/document_verification.dart';
 import 'package:guin_app/services/verification_service.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 const _blue = Color(0xFF1976D2);
@@ -92,6 +93,7 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
       );
 
   Future<void> _verify(String documentId, {String? token}) async {
+    final l10n = AppLocalizations.of(context);
     final hasToken = token != null && token.isNotEmpty;
     if (!hasToken && _tokenDocumentId != documentId) {
       // A plain ID lookup for another document drops the previous token.
@@ -119,16 +121,14 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
           _token = token;
           _tokenDocumentId = documentId;
         }
-        _error = verification == null
-            ? 'Document not found or verification token is invalid.'
-            : null;
+        _error = verification == null ? l10n.verifyDocumentNotFound : null;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _verification = null;
         _copy = null;
-        _error = 'Verification error: $e';
+        _error = l10n.verifyError(e);
       });
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -136,6 +136,7 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
   }
 
   Future<void> _openScanner() async {
+    final l10n = AppLocalizations.of(context);
     final raw = await Navigator.of(context).push<String>(
       MaterialPageRoute<String>(
         fullscreenDialog: true,
@@ -147,9 +148,7 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
     final qr = VerificationQrParser.parse(raw);
     if (qr == null) {
       setState(() {
-        _notice =
-            'Not a valid document QR. Scan the QR code printed on the '
-            'barangay document, or type the Document ID above.';
+        _notice = l10n.verifyInvalidQr;
       });
       return;
     }
@@ -159,6 +158,7 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
   }
 
   Future<void> _useDocument() async {
+    final l10n = AppLocalizations.of(context);
     final verification = _verification;
     final token = _usableToken;
     if (verification == null || token == null || _isUsing) return;
@@ -185,7 +185,7 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
           final remaining = updated == null
               ? null
               : DocumentAccessRules.remainingUses(_accessState(updated));
-          _feedback = 'Document used successfully. ${_usesLeft(remaining)}';
+          _feedback = l10n.verifyDocumentUsedSuccess(_usesLeft(remaining));
           _feedbackTone = _green;
         } else {
           _feedback =
@@ -197,7 +197,7 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _feedback = 'Could not use this document: $e';
+        _feedback = l10n.verifyCouldNotUse(e);
         _feedbackTone = _red;
       });
     } finally {
@@ -206,25 +206,27 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
   }
 
   String _usesLeft(int? remaining) {
-    if (remaining == null) return 'Uses remaining: Unlimited.';
-    if (remaining <= 0) return 'No uses remaining.';
-    return 'Uses remaining: $remaining.';
+    final l10n = AppLocalizations.of(context);
+    if (remaining == null) return l10n.verifyUsesUnlimited;
+    if (remaining <= 0) return l10n.verifyNoUsesRemaining;
+    return l10n.verifyUsesRemaining(remaining);
   }
 
   String _reasonFor(DocumentAccessDecision decision) {
+    final l10n = AppLocalizations.of(context);
     switch (decision) {
       case DocumentAccessDecision.allowed:
-        return 'This document is authentic and valid.';
+        return l10n.verifyReasonAllowed;
       case DocumentAccessDecision.notFound:
-        return 'No document matches this ID and token.';
+        return l10n.verifyReasonNotFound;
       case DocumentAccessDecision.revoked:
-        return 'This document was revoked and must not be honored.';
+        return l10n.verifyReasonRevoked;
       case DocumentAccessDecision.expired:
-        return 'This document has passed its expiry date.';
+        return l10n.verifyReasonExpired;
       case DocumentAccessDecision.used:
-        return 'This document has already been used.';
+        return l10n.verifyReasonUsed;
       case DocumentAccessDecision.useLimitReached:
-        return 'This document has reached its maximum number of uses.';
+        return l10n.verifyReasonUseLimit;
     }
   }
 
@@ -284,6 +286,7 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
   }
 
   Widget _buildHeader() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -313,8 +316,8 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
                     size: 22,
                   ),
                   const SizedBox(width: 10),
-                  const Text(
-                    'Verify Document',
+                  Text(
+                    l10n.verifyTitle,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -345,8 +348,7 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
                       if (v.trim().isNotEmpty) _verify(v.trim());
                     },
                     decoration: InputDecoration(
-                      hintText:
-                          'Enter Document ID (e.g. BRGY-GUION-2025-000001)',
+                      hintText: l10n.verifyDocumentIdHint,
                       hintStyle: const TextStyle(
                         fontSize: 13,
                         color: Colors.grey,
@@ -392,9 +394,9 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
                   children: [
                     Expanded(child: _buildScanButton()),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Scan the QR on the document, or type the ID above.',
+                        l10n.verifyScanOrTypeHint,
                         style: TextStyle(
                           color: Colors.white70,
                           fontSize: 11.5,
@@ -413,22 +415,23 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
   }
 
   Widget _buildScanButton() {
+    final l10n = AppLocalizations.of(context);
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: _openScanner,
-        child: const Padding(
-          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.qr_code_scanner, color: _blue, size: 20),
-              SizedBox(width: 8),
+              const Icon(Icons.qr_code_scanner, color: _blue, size: 20),
+              const SizedBox(width: 8),
               Text(
-                'Scan QR',
-                style: TextStyle(
+                l10n.verifyScanQrButton,
+                style: const TextStyle(
                   color: _blue,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -509,6 +512,7 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
   }
 
   Widget _buildEmptyState() {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -528,21 +532,21 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Document Verification',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            Text(
+              l10n.verifyEmptyStateTitle,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 10),
-            const Text(
-              'Scan the QR code on a barangay-issued document, or enter a document ID above, to check its authenticity.',
+            Text(
+              l10n.verifyEmptyStateDesc,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: Colors.grey, height: 1.5),
+              style: const TextStyle(fontSize: 13, color: Colors.grey, height: 1.5),
             ),
             const SizedBox(height: 22),
             OutlinedButton.icon(
               onPressed: _openScanner,
               icon: const Icon(Icons.qr_code_scanner, size: 18),
-              label: const Text('Scan QR'),
+              label: Text(l10n.verifyScanQrButton),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF1976D2),
                 side: BorderSide(
@@ -564,6 +568,7 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
   }
 
   Widget _buildVerificationResult(DocumentVerification v) {
+    final l10n = AppLocalizations.of(context);
     final decision = _service.evaluate(v);
     final tone = _toneFor(decision);
     final remaining = DocumentAccessRules.remainingUses(_accessState(v));
@@ -595,7 +600,7 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
                   children: [
                     Text(
                       decision == DocumentAccessDecision.allowed
-                          ? 'Document Verified'
+                          ? l10n.verifyDocumentVerified
                           : DocumentAccessRules.describe(decision),
                       style: TextStyle(
                         fontSize: 19,
@@ -621,21 +626,21 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
           const Divider(height: 1),
           const SizedBox(height: 16),
           _detailRow(
-            'Document Type',
+            l10n.verifyDocTypeLabel,
             Text(
               v.documentType,
               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ),
           _detailRow(
-            'Citizen Name',
+            l10n.verifyCitizenNameLabel,
             Text(
               v.citizenName,
               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ),
           _detailRow(
-            'Status',
+            l10n.commonStatus,
             Wrap(
               spacing: 8,
               runSpacing: 6,
@@ -654,14 +659,14 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
           ),
           if (_copy != null) _buildCopyRow(),
           _detailRow(
-            'Issued',
+            l10n.verifyIssuedLabel,
             Text(
               _formatDate(v.issuedAt),
               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ),
           _detailRow(
-            'Expiry',
+            l10n.verifyExpiryLabel,
             Wrap(
               spacing: 8,
               runSpacing: 6,
@@ -669,31 +674,34 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
               children: [
                 Text(
                   v.expiresAt == null
-                      ? 'No expiry date'
+                      ? l10n.verifyNoExpiry
                       : _formatDate(v.expiresAt!),
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                _badge(expired ? 'Expired' : 'Valid', expired ? _red : _green),
+                _badge(
+                  expired ? l10n.verifyExpiredBadge : l10n.verifyValidBadge,
+                  expired ? _red : _green,
+                ),
               ],
             ),
           ),
           _detailRow(
-            'Usage',
+            l10n.verifyUsageLabel,
             _badge(
-              v.singleUse ? 'Single use' : 'Multi use',
+              v.singleUse ? l10n.verifySingleUseBadge : l10n.verifyMultiUseBadge,
               v.singleUse ? _blue : _neutral,
             ),
           ),
           _detailRow(
-            'Uses Remaining',
+            l10n.verifyUsesRemainingLabel,
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  remaining == null ? 'Unlimited' : '$remaining',
+                  remaining == null ? l10n.verifyUnlimited : '$remaining',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -701,8 +709,11 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
                 ),
                 if (v.maxUses != null)
                   Text(
-                    ' of ${v.maxUses}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    l10n.verifyOfMaxUses(v.maxUses!),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
                   ),
               ],
             ),
@@ -720,9 +731,10 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
 
   /// Row shown when the scanned QR belongs to a watermarked printable copy.
   Widget _buildCopyRow() {
+    final l10n = AppLocalizations.of(context);
     final copy = _copy!;
     return _detailRow(
-      'Print copy',
+      l10n.verifyPrintCopyLabel,
       Wrap(
         spacing: 8,
         runSpacing: 6,
@@ -816,6 +828,7 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
   }
 
   Widget _buildUseSection({required bool hasToken}) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -832,22 +845,24 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.edit_document, size: 18, color: _blue),
-              SizedBox(width: 8),
+              const Icon(Icons.edit_document, size: 18, color: _blue),
+              const SizedBox(width: 8),
               Text(
-                'Mark document as used',
-                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+                l10n.verifyMarkUsedTitle,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 10),
           if (hasToken)
-            const Text(
-              'A verification token was read from the QR code. '
-              'Using the document now will add one use to its record.',
-              style: TextStyle(
+            Text(
+              l10n.verifyTokenReadHint,
+              style: const TextStyle(
                 fontSize: 12.5,
                 color: Colors.grey,
                 height: 1.45,
@@ -860,15 +875,15 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
                 color: _blue.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Row(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.info_outline, size: 18, color: _blue),
-                  SizedBox(width: 8),
+                  const Icon(Icons.info_outline, size: 18, color: _blue),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Scan the QR code on the document to read its verification token. A token is required before this document can be marked as used.',
-                      style: TextStyle(
+                      l10n.verifyScanTokenHint,
+                      style: const TextStyle(
                         fontSize: 12.5,
                         color: Color(0xFF37474F),
                         height: 1.45,
@@ -886,6 +901,7 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
   }
 
   Widget _buildUseButton({required bool enabled}) {
+    final l10n = AppLocalizations.of(context);
     final canUse = enabled && !_isUsing && !_isLoading;
     return SizedBox(
       width: double.infinity,
@@ -913,7 +929,7 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
               )
             : const Icon(Icons.check_circle_outline, size: 20),
         label: Text(
-          _isUsing ? 'Recording use…' : 'Use Document',
+          _isUsing ? l10n.verifyRecordingUse : l10n.verifyUseDocumentButton,
           style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
         ),
       ),
@@ -921,6 +937,7 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
   }
 
   Widget _buildInvalidResult(String message) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -940,9 +957,9 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
             child: const Icon(Icons.cancel, color: Colors.white, size: 36),
           ),
           const SizedBox(height: 14),
-          const Text(
-            'Verification Failed',
-            style: TextStyle(
+          Text(
+            l10n.verifyFailedTitle,
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w800,
               color: Colors.red,
@@ -1049,6 +1066,7 @@ class _QrScanScreenState extends State<_QrScanScreen>
   }
 
   ({IconData icon, String title, String message}) _cameraProblem(Object error) {
+    final l10n = AppLocalizations.of(context);
     final code = error is MobileScannerException
         ? error.errorCode
         : MobileScannerErrorCode.genericError;
@@ -1056,27 +1074,21 @@ class _QrScanScreenState extends State<_QrScanScreen>
     if (code == MobileScannerErrorCode.permissionDenied) {
       return (
         icon: Icons.no_photography_outlined,
-        title: 'Camera permission denied',
-        message:
-            'Allow camera access for this app in your device settings to '
-            'scan QR codes. You can still type the Document ID instead.',
+        title: l10n.verifyCameraPermissionDenied,
+        message: l10n.verifyCameraPermissionDeniedMessage,
       );
     }
     if (code == MobileScannerErrorCode.unsupported) {
       return (
         icon: Icons.videocam_off_outlined,
-        title: 'No camera available',
-        message:
-            'This device cannot open a camera for scanning. '
-            'You can still type the Document ID instead.',
+        title: l10n.verifyNoCameraAvailable,
+        message: l10n.verifyNoCameraMessage,
       );
     }
     return (
       icon: Icons.error_outline,
-      title: 'Camera unavailable',
-      message:
-          'Scanning could not start here. '
-          'You can still type the Document ID instead.',
+      title: l10n.verifyCameraUnavailable,
+      message: l10n.verifyCameraUnavailableMessage,
     );
   }
 
@@ -1123,6 +1135,7 @@ class _QrScanScreenState extends State<_QrScanScreen>
   }
 
   Widget _buildTopBar() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -1142,9 +1155,9 @@ class _QrScanScreenState extends State<_QrScanScreen>
                 onPressed: _close,
               ),
               const SizedBox(width: 4),
-              const Text(
-                'Scan Document QR',
-                style: TextStyle(
+              Text(
+                l10n.verifyScanDocumentQrTitle,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -1158,6 +1171,7 @@ class _QrScanScreenState extends State<_QrScanScreen>
   }
 
   Widget _buildBottomBar() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -1172,10 +1186,10 @@ class _QrScanScreenState extends State<_QrScanScreen>
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
           child: Column(
             children: [
-              const Text(
-                'Position the QR code inside the frame',
+              Text(
+                l10n.verifyPositionQrHint,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white70, fontSize: 13),
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
               ),
               const SizedBox(height: 14),
               Row(
@@ -1186,7 +1200,7 @@ class _QrScanScreenState extends State<_QrScanScreen>
                   OutlinedButton.icon(
                     onPressed: _close,
                     icon: const Icon(Icons.keyboard_alt_outlined, size: 18),
-                    label: const Text('Enter ID instead'),
+                    label: Text(l10n.verifyEnterIdInstead),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
                       side: const BorderSide(color: Colors.white54),
@@ -1361,6 +1375,7 @@ class _QrScanScreenState extends State<_QrScanScreen>
   }
 
   Widget _buildProblemView(Object error) {
+    final l10n = AppLocalizations.of(context);
     final problem = _cameraProblem(error);
     return Container(
       color: const Color(0xFF0B1220),
@@ -1400,7 +1415,7 @@ class _QrScanScreenState extends State<_QrScanScreen>
           const SizedBox(height: 22),
           FilledButton.tonal(
             onPressed: _close,
-            child: const Text('Enter Document ID instead'),
+            child: Text(l10n.verifyEnterDocumentIdInstead),
           ),
         ],
       ),

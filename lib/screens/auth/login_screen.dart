@@ -5,6 +5,7 @@ import 'package:guin_app/config/routes.dart';
 import 'package:guin_app/utils/validators.dart';
 import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/utils/constants.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,8 +31,9 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final authProvider = context.read<AuthProvider>();
+    final l10n = AppLocalizations.of(context);
 
-    Helpers.showLoadingDialog(context, 'Logging in...');
+    Helpers.showLoadingDialog(context, l10n.authLoggingIn);
 
     final success = await authProvider.signIn(
       _emailController.text.trim(),
@@ -45,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final userProfile = authProvider.userProfile;
 
       if (userProfile == null) {
-        Helpers.showErrorSnackBar(context, 'Profile not found');
+        Helpers.showErrorSnackBar(context, l10n.authProfileNotFound);
         return;
       }
 
@@ -60,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacementNamed(context, AppRoutes.citizenDashboard);
       }
 
-      Helpers.showSuccessSnackBar(context, 'Welcome back!');
+      Helpers.showSuccessSnackBar(context, l10n.authWelcomeBackSnackbar);
     } else {
       Helpers.showErrorSnackBar(
         context,
@@ -71,6 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: Column(
@@ -120,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'E-Document Management System',
+                      l10n.authAppSubtitle,
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.white.withValues(alpha: 0.85),
@@ -143,8 +146,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
-                      'Welcome Back!',
+                    Text(
+                      l10n.authWelcomeBackTitle,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
@@ -152,8 +155,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Sign in to your account to continue.',
+                    Text(
+                      l10n.authSignInSubtitle,
                       style: TextStyle(
                         fontSize: 14,
                         color: AppColors.textSecondary,
@@ -166,10 +169,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       validator: Validators.validateEmail,
-                      decoration: const InputDecoration(
-                        labelText: 'Email Address',
+                      decoration: InputDecoration(
+                        labelText: l10n.commonEmail,
                         prefixIcon: Icon(Icons.email_outlined),
-                        hintText: 'Enter your email',
+                        hintText: l10n.authEmailHint,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -180,9 +183,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: _obscurePassword,
                       validator: Validators.validatePassword,
                       decoration: InputDecoration(
-                        labelText: 'Password',
+                        labelText: l10n.commonPassword,
                         prefixIcon: const Icon(Icons.lock_outlined),
-                        hintText: 'Enter your password',
+                        hintText: l10n.authPasswordHint,
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword
@@ -210,8 +213,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           elevation: 3,
                         ),
-                        child: const Text(
-                          'Sign In',
+                        child: Text(
+                          l10n.authSignInButton,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -226,8 +229,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
-                          "Don't have an account? ",
+                        Text(
+                          l10n.authNoAccountPrompt,
                           style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 14,
@@ -236,8 +239,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         GestureDetector(
                           onTap: () =>
                               Navigator.pushNamed(context, AppRoutes.register),
-                          child: const Text(
-                            'Register',
+                          child: Text(
+                            l10n.authRegisterLink,
                             style: TextStyle(
                               color: Color(0xFF1976D2),
                               fontSize: 14,

@@ -1,0 +1,88 @@
+{
+  "utilEmailInvalid": { "en": "Please enter a valid email", "fil": "Mangyaring maglagay ng wastong email", "ceb": "Palihog isulod ang balidong email" },
+
+  "utilPasswordMinLength": { "en": "Password must be at least 6 characters", "fil": "Ang password ay dapat may hindi bababa sa 6 na character", "ceb": "Ang password kinahanglan labing menos 6 ka karakter" },
+
+  "utilConfirmPasswordRequired": { "en": "Please confirm your password", "fil": "Mangyaring kumpirmahin ang iyong password", "ceb": "Palihog kumpirmaha ang imong password" },
+
+  "utilThisField": { "en": "This field", "fil": "Ang field na ito", "ceb": "Kini nga field" },
+
+  "utilThisFieldRequired": { "en": "This field is required", "fil": "Kailangan ang field na ito", "ceb": "Kinahanglan kini nga field" },
+
+  "utilFieldNameRequired": { "en": "{fieldName} is required", "fil": "Kailangan ang {fieldName}", "ceb": "Kinahanglan ang {fieldName}" },
+  "@utilFieldNameRequired": { "placeholders": { "fieldName": { "type": "String", "example": "Last name" } } },
+
+  "utilUsernameMinLength": { "en": "Username must be at least 3 characters", "fil": "Ang username ay dapat may hindi bababa sa 3 character", "ceb": "Ang username kinahanglan labing menos 3 ka karakter" },
+
+  "utilUsernameInvalidChars": { "en": "Username can only contain letters, numbers, and underscores", "fil": "Ang username ay maaari lamang maglaman ng mga titik, numero, at underscore", "ceb": "Ang username mahimo lamang adunay mga letra, numero, ug underscore" },
+
+  "utilAgeRequired": { "en": "Age is required", "fil": "Kailangan ang edad", "ceb": "Kinahanglan ang edad" },
+
+  "utilAgeInvalid": { "en": "Please enter a valid age", "fil": "Mangyaring maglagay ng wastong edad", "ceb": "Palihog isulod ang balidong edad" },
+
+  "utilAgeRange": { "en": "Please enter a valid age between 1 and 150", "fil": "Mangyaring maglagay ng wastong edad sa pagitan ng 1 at 150", "ceb": "Palihog isulod ang balidong edad tali sa 1 ug 150" },
+
+  "utilPhoneInvalid": { "en": "Please enter a valid Philippine mobile number", "fil": "Mangyaring maglagay ng wastong mobile number sa Pilipinas", "ceb": "Palihog isulod ang balidong mobile number sa Pilipinas" },
+
+  "utilFullNameRequired": { "en": "Full name is required", "fil": "Kailangan ang buong pangalan", "ceb": "Kinahanglan ang tibuok nga ngalan" },
+
+  "utilFullNameMinLength": { "en": "Full name must be at least 2 characters", "fil": "Ang buong pangalan ay dapat may hindi bababa sa 2 character", "ceb": "Ang tibuok nga ngalan kinahanglan labing menos 2 ka karakter" },
+
+  "utilFullNameInvalidChars": { "en": "Full name can only contain letters and spaces", "fil": "Ang buong pangalan ay maaari lamang maglaman ng mga titik at espasyo", "ceb": "Ang tibuok nga ngalan mahimo lamang adunay mga letra ug espasyo" },
+
+  "utilAddressMinLength": { "en": "Please enter a complete address (at least 10 characters)", "fil": "Mangyaring maglagay ng kumpletong address (hindi bababa sa 10 character)", "ceb": "Palihog isulod ang kompletong address (labing menos 10 ka karakter)" },
+
+  "utilPurposeRequired": { "en": "Purpose is required", "fil": "Kailangan ang layunin", "ceb": "Kinahanglan ang katuyoan" },
+
+  "utilDetailsMinLength": { "en": "Please provide more details (at least 10 characters)", "fil": "Mangyaring magbigay ng higit pang detalye (hindi bababa sa 10 character)", "ceb": "Palihog paghatag og dugang nga mga detalye (labing menos 10 ka karakter)" },
+
+  "utilRejectionReasonRequired": { "en": "Rejection reason is required", "fil": "Kailangan ang dahilan ng pagtanggi", "ceb": "Kinahanglan ang rason sa pagsalikway" },
+
+  "utilYearsAgo": { "en": "{count, plural, =1{1 year ago} other{{count} years ago}}", "fil": "{count, plural, =1{1 taon ang nakalipas} other{{count} taon ang nakalipas}}", "ceb": "{count, plural, =1{1 ka tuig ang nakalabay} other{{count} ka tuig ang nakalabay}}" },
+  "@utilYearsAgo": { "placeholders": { "count": { "type": "num", "example": "3" } } },
+
+  "utilMonthsAgo": { "en": "{count, plural, =1{1 month ago} other{{count} months ago}}", "fil": "{count, plural, =1{1 buwan ang nakalipas} other{{count} buwan ang nakalipas}}", "ceb": "{count, plural, =1{1 ka bulan ang nakalabay} other{{count} ka bulan ang nakalabay}}" },
+  "@utilMonthsAgo": { "placeholders": { "count": { "type": "num", "example": "3" } } },
+
+  "utilDaysAgo": { "en": "{count, plural, =1{1 day ago} other{{count} days ago}}", "fil": "{count, plural, =1{1 araw ang nakalipas} other{{count} araw ang nakalipas}}", "ceb": "{count, plural, =1{1 ka adlaw ang nakalabay} other{{count} ka adlaw ang nakalabay}}" },
+  "@utilDaysAgo": { "placeholders": { "count": { "type": "num", "example": "3" } } },
+
+  "utilHoursAgo": { "en": "{count, plural, =1{1 hour ago} other{{count} hours ago}}", "fil": "{count, plural, =1{1 oras ang nakalipas} other{{count} oras ang nakalipas}}", "ceb": "{count, plural, =1{1 ka oras ang nakalabay} other{{count} ka oras ang nakalabay}}" },
+  "@utilHoursAgo": { "placeholders": { "count": { "type": "num", "example": "3" } } },
+
+  "utilMinutesAgo": { "en": "{count, plural, =1{1 minute ago} other{{count} minutes ago}}", "fil": "{count, plural, =1{1 minuto ang nakalipas} other{{count} minuto ang nakalipas}}", "ceb": "{count, plural, =1{1 ka minuto ang nakalabay} other{{count} ka minuto ang nakalabay}}" },
+  "@utilMinutesAgo": { "placeholders": { "count": { "type": "num", "example": "3" } } },
+
+  "utilJustNow": { "en": "Just now", "fil": "Kakalipas lang", "ceb": "Karong lang" },
+
+  "utilErrorUnknown": { "en": "An unknown error occurred", "fil": "May hindi kilalang error na naganap", "ceb": "Adunay wala mailhi nga sayop nga nahitabo" },
+
+  "utilErrorUsernameExists": { "en": "Username already exists", "fil": "Umiiral na ang username", "ceb": "Naana na ang username" },
+
+  "utilErrorEmailExists": { "en": "Email already exists", "fil": "Umiiral na ang email", "ceb": "Naana na ang email" },
+
+  "utilErrorRecordExists": { "en": "This record already exists", "fil": "Umiiral na ang talaang ito", "ceb": "Naana na kini nga rekord" },
+
+  "utilErrorEmailInvalid": { "en": "Invalid email address", "fil": "Hindi wastong email address", "ceb": "Dili balido nga email address" },
+
+  "utilErrorPasswordInvalid": { "en": "Invalid password. Must be at least 6 characters", "fil": "Hindi wastong password. Dapat may hindi bababa sa 6 na character", "ceb": "Dili balido nga password. Kinahanglan labing menos 6 ka karakter" },
+
+  "utilErrorOffline": { "en": "You appear to be offline. Check your connection and try again", "fil": "Mukhang offline ka. Suriin ang iyong koneksyon at subukan muli", "ceb": "Morag offline ka. Susiha ang imong koneksyon ug sulayi pag-usab" },
+
+  "utilErrorUnauthorized": { "en": "You are not authorized to perform this action", "fil": "Hindi ka awtorisadong gawin ang pagkilos na ito", "ceb": "Wala ka'y awtoridad sa pagbuhat niini nga aksyon" },
+
+  "utilErrorNotFound": { "en": "Record not found", "fil": "Hindi mahanap ang talaan", "ceb": "Wala makit-an ang rekord" },
+
+  "utilErrorEmailRegistered": { "en": "This email is already registered", "fil": "Nakarehistro na ang email na ito", "ceb": "Narehistro na kini nga email" },
+
+  "utilErrorGeneric": { "en": "An error occurred. Please try again", "fil": "May naganap na error. Mangyaring subukan muli", "ceb": "Adunay nahitabo nga sayop. Palihog sulayi pag-usab" },
+
+  "utilSizeBytes": { "en": "{bytes} B", "fil": "{bytes} B", "ceb": "{bytes} B" },
+  "@utilSizeBytes": { "placeholders": { "bytes": { "type": "num", "example": "482" } } },
+
+  "utilSizeKB": { "en": "{value} KB", "fil": "{value} KB", "ceb": "{value} KB" },
+  "@utilSizeKB": { "placeholders": { "value": { "type": "String", "example": "1.20" } } },
+
+  "utilSizeMB": { "en": "{value} MB", "fil": "{value} MB", "ceb": "{value} MB" },
+  "@utilSizeMB": { "placeholders": { "value": { "type": "String", "example": "3.45" } } }
+}

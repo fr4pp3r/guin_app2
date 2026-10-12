@@ -1,0 +1,279 @@
+# Localization plan — admin_manage.json
+
+Scope: admin screens — manage users, create user, pending users, document fees, document formats, settings.
+Format: `file:line — "<original literal>" → keyName` (or `→ common*` / `(kept)` / `(excluded)`).
+
+Reused existing keys (defined elsewhere, do not redefine): commonCancel, commonSave, commonSaveChanges,
+commonReject, commonApprove, commonDelete, commonEdit, commonUpdate, commonBack, commonNext,
+commonOptional, commonRequired, commonEmail, commonPassword, commonUsername, commonPhoneNumber,
+commonPlaceOfBirth, commonCivilStatus, commonGender, commonMale, commonFemale, commonOther,
+commonSingle, commonMarried, commonWidowed, commonDivorced, commonRejectionReason,
+commonPleaseProvideReason, commonRole, commonProfilePhoto, commonValidId, commonUpload.
+
+Keys shared within this part (defined once, referenced from both files): auserCreateUser,
+auserApproveUserTitle, auserRejectUserTitle, auserRejectingName, auserRegisteredAt, auserChangeRole.
+
+## lib/screens/admin/manage_users_screen.dart
+- manage_users_screen.dart:47 — "Approve User" → auserApproveUserTitle
+- manage_users_screen.dart:48 — "Approve ${user.fullName}?" → auserApproveConfirm
+- manage_users_screen.dart:53 — "Approving..." → auserApproving
+- manage_users_screen.dart:58 — "User approved" → auserApprovedSnackbar
+- manage_users_screen.dart:72 — "Reject User" → auserRejectUserTitle
+- manage_users_screen.dart:76 — "Rejecting: ${user.fullName}" → auserRejectingName
+- manage_users_screen.dart:82 — "Rejection Reason" → commonRejectionReason
+- manage_users_screen.dart:83 — "Provide a reason..." → auserRejectReasonHint
+- manage_users_screen.dart:91 — "Cancel" → commonCancel
+- manage_users_screen.dart:96 — "Please provide a reason" → commonPleaseProvideReason
+- manage_users_screen.dart:102 — "Reject" → commonReject
+- manage_users_screen.dart:110 — "Rejecting..." → auserRejecting
+- manage_users_screen.dart:118 — "Registration rejected" → auserRegistrationRejected
+- manage_users_screen.dart:132-139 — roles list ['citizen'..'admin'] → (excluded — role identifiers)
+- manage_users_screen.dart:145 — "Change Role" → auserChangeRole
+- manage_users_screen.dart:157 — "Role" → commonRole
+- manage_users_screen.dart:162 — AppRoles.displayName(r) → (excluded — role label from service)
+- manage_users_screen.dart:173 — "Cancel" → commonCancel
+- manage_users_screen.dart:177 — "Update" → commonUpdate
+- manage_users_screen.dart:185 — "Updating role..." → auserUpdatingRole
+- manage_users_screen.dart:193 — "Role updated to ${AppRoles.displayName(selectedRole)}" → auserRoleUpdated
+- manage_users_screen.dart:206 — "You cannot delete your own account" → auserCannotDeleteSelf
+- manage_users_screen.dart:211 — "Delete User" → auserDeleteUserTitle
+- manage_users_screen.dart:212 — "Permanently delete ${user.fullName}? This cannot be undone." → auserDeleteConfirm
+- manage_users_screen.dart:216 — "Deleting..." → auserDeleting
+- manage_users_screen.dart:222 — "User deleted" → auserUserDeleted
+- manage_users_screen.dart:255 — "Manage Users" → auserTitle
+- manage_users_screen.dart:274 — "Pending (${userProvider.pendingUsers.length})" → auserTabPending
+- manage_users_screen.dart:278 — "All Users (${userProvider.allUsers.length})" → auserTabAllUsers
+- manage_users_screen.dart:287 — "Create User" → auserCreateUser
+- manage_users_screen.dart:310 — "No pending registrations" → auserNoPendingRegistrations
+- manage_users_screen.dart:383 — "${user.age} years old · ${user.gender}" → auserAgeGenderInfo
+- manage_users_screen.dart:389 — "Registered: ${Helpers.formatDate(user.createdAt)}" → auserRegisteredAt
+- manage_users_screen.dart:396 — "${KycIdTypes.label(user.kycIdType)}: ${user.kycIdNumber ?? "N/A"}" → (excluded — dynamic composition/separator; ID label + number from model)
+- manage_users_screen.dart:403 — "ID issued: ${Helpers.formatDate(user.idIssuedAt!)}" → auserIdIssuedAt
+- manage_users_screen.dart:409 — "ID expires: ${Helpers.formatDate(user.idExpiryAt!)}" → auserIdExpiresAt
+- manage_users_screen.dart:418 — "Liveness verified" → auserLivenessVerified
+- manage_users_screen.dart:418 — "Liveness verified on ${Helpers.formatDate(...)}" (conditional suffix) → auserLivenessVerifiedOn
+- manage_users_screen.dart:427 — "Indigency reason: ${user.indigencyReason}" → auserIndigencyReason
+- manage_users_screen.dart:443 — "Reject" → commonReject
+- manage_users_screen.dart:458 — "Approve" → commonApprove
+- manage_users_screen.dart:484 — "AI pre-checked" → auserKycAiPrechecked
+- manage_users_screen.dart:490 — "Indigent — guarantor verification required" → auserKycIndigentBypass
+- manage_users_screen.dart:496 — "Guarantor-backed" → auserKycGuarantorBacked
+- manage_users_screen.dart:536 — "Certificate of Indigency" → (kept — official certificate title)
+- manage_users_screen.dart:536 — "ID" → (kept — official ID name)
+- manage_users_screen.dart:543 — "Profile photo" → commonProfilePhoto
+- manage_users_screen.dart:546 — "$idLabel — front" → auserKycPhotoFront
+- manage_users_screen.dart:554 — "$idLabel — back" → auserKycPhotoBack
+- manage_users_screen.dart:611 — "AI advisory summary" → auserAiAdvisorySummary
+- manage_users_screen.dart:618 — "AI-assisted advisory — final review by the barangay." → auserAiAdvisoryNote
+- manage_users_screen.dart:665 — "ID authenticity" → auserKycIdAuthenticity
+- manage_users_screen.dart:678 — "ID type detected" → auserKycIdTypeDetected
+- manage_users_screen.dart:681 — "Type match" → auserKycTypeMatch
+- manage_users_screen.dart:681 — "Matches declared type" → auserKycMatchesDeclared
+- manage_users_screen.dart:681 — "Does not match declared type" → auserKycDoesNotMatchDeclared
+- manage_users_screen.dart:690 — "Selfie quality" → auserKycSelfieQuality
+- manage_users_screen.dart:699 — "Liveness signal" → auserKycLivenessSignal
+- manage_users_screen.dart:707 — "Liveness notes" → auserKycLivenessNotes
+- manage_users_screen.dart:721 — "Recommendation" → auserKycRecommendation
+- manage_users_screen.dart:736 — "• $r" → (excluded — bullet separator + dynamic reason from model)
+- manage_users_screen.dart:752 — "Check version" → auserKycCheckVersion
+- manage_users_screen.dart:785 — "Looks authentic" → auserKycLooksAuthentic
+- manage_users_screen.dart:787 — "Suspicious — needs closer look" → auserKycSuspicious
+- manage_users_screen.dart:789 — "Unreadable" → auserKycUnreadable
+- manage_users_screen.dart:791 — "Uncertain" → auserKycUncertain
+- manage_users_screen.dart:800 — "Barangay ID" → (kept — official ID name)
+- manage_users_screen.dart:802 — "Driver's License" → (kept — official ID name)
+- manage_users_screen.dart:804 — "Passport" → (kept — official ID name)
+- manage_users_screen.dart:806 — "National ID" → (kept — official ID name)
+- manage_users_screen.dart:808 — "UMID" → (kept — official ID name)
+- manage_users_screen.dart:810 — "PRC ID" → (kept — official ID name)
+- manage_users_screen.dart:812 — "SSS ID" → (kept — official ID name)
+- manage_users_screen.dart:814 — "PhilHealth ID" → (kept — official ID name)
+- manage_users_screen.dart:816 — "Postal ID" → (kept — official ID name)
+- manage_users_screen.dart:818 — "Voter's ID" → (kept — official ID name)
+- manage_users_screen.dart:820 — "Other" → commonOther
+- manage_users_screen.dart:822 — "Unknown" → auserUnknown
+- manage_users_screen.dart:832 — "Good quality" → auserKycGoodQuality
+- manage_users_screen.dart:834 — "Poor quality" → auserKycPoorQuality
+- manage_users_screen.dart:836 — "No face detected" → auserKycNoFaceDetected
+- manage_users_screen.dart:838 — "Uncertain" → auserKycUncertain
+- manage_users_screen.dart:846 — "Live-looking" → auserKycLiveLooking
+- manage_users_screen.dart:848 — "Spoof suspected" → auserKycSpoofSuspected
+- manage_users_screen.dart:850 — "Uncertain" → auserKycUncertain
+- manage_users_screen.dart:859 — "Name check" → auserKycNameCheck
+- manage_users_screen.dart:862 — "Birth date check" → auserKycBirthDateCheck
+- manage_users_screen.dart:864 — "Address check" → auserKycAddressCheck
+- manage_users_screen.dart:866 — "Gender check" → auserKycGenderCheck
+- manage_users_screen.dart:873 — "Matches" → auserKycMatches
+- manage_users_screen.dart:874 — "Does not match" → auserKycDoesNotMatch
+- manage_users_screen.dart:875 — "Unverifiable" → auserKycUnverifiable
+- manage_users_screen.dart:882 — "Looks OK — advisory only" → auserKycLooksOk
+- manage_users_screen.dart:884 — "Needs review — advisory only" → auserKycNeedsReview
+- manage_users_screen.dart:915 — "Search by name, email, username..." → auserSearchHint
+- manage_users_screen.dart:938-947 — role filter list ['all'..'admin'] → (excluded — role identifiers)
+- manage_users_screen.dart:953 — "All" → auserAll
+- manage_users_screen.dart:980 — "No users found" → auserNoUsersFound
+- manage_users_screen.dart:1105 — "Change Role" → auserChangeRole
+- manage_users_screen.dart:1115 — "Delete" → commonDelete
+
+## lib/screens/admin/create_user_screen.dart
+- create_user_screen.dart:110 — "Please select date of birth" → acreatePleaseSelectDob
+- create_user_screen.dart:143 — "Creating user..." → acreateCreatingUser
+- create_user_screen.dart:174 — "User \"$fullName\" created successfully" → acreateUserCreated
+- create_user_screen.dart:182 — "An error occurred. Please try again" → (excluded — sentinel compared against Helpers.parseSupabaseError output)
+- create_user_screen.dart:190 — "Account" → acreateStepAccount
+- create_user_screen.dart:190 — "Personal" → acreateStepPersonal
+- create_user_screen.dart:190 — "Address & Docs" → acreateStepAddressDocs
+- create_user_screen.dart:223 — "Create New User" → acreateTitle
+- create_user_screen.dart:232 — "Step ${_currentStep + 1}/${steps.length}" → acreateStepProgress
+- create_user_screen.dart:279 — "${stepIdx + 1}" → (excluded — step number)
+- create_user_screen.dart:297 — steps[_currentStep] → (see :190 step labels)
+- create_user_screen.dart:355 — "Back" → commonBack
+- create_user_screen.dart:375 — "Create User" → auserCreateUser
+- create_user_screen.dart:375 — "Next" → commonNext
+- create_user_screen.dart:408 — "Given Name *" → acreateGivenNameLabel
+- create_user_screen.dart:410 — "Middle Name" → acreateMiddleNameLabel
+- create_user_screen.dart:412 — "Last Name *" → acreateLastNameLabel
+- create_user_screen.dart:414 — "Username" → commonUsername
+- create_user_screen.dart:418 — "Email" → commonEmail
+- create_user_screen.dart:422 — "Required" → commonRequired
+- create_user_screen.dart:423 — "Invalid email" → acreateInvalidEmail
+- create_user_screen.dart:432 — "Password" → commonPassword
+- create_user_screen.dart:448 — "Minimum 6 characters" → acreatePasswordMinLength
+- create_user_screen.dart:454 — "Role" → commonRole
+- create_user_screen.dart:464 — AppRoles.displayName(r) → (excluded — role label from service)
+- create_user_screen.dart:487 — "Phone Number" → commonPhoneNumber
+- create_user_screen.dart:494 — "Age" → acreateAge
+- create_user_screen.dart:499 — "Place of Birth" → commonPlaceOfBirth
+- create_user_screen.dart:516 — "Date of Birth (tap to select)" → acreateDobTapToSelect
+- create_user_screen.dart:517 — "DOB: ${_dob!.year}-..." → acreateDobSelected
+- create_user_screen.dart:530 — "Civil Status" → commonCivilStatus
+- create_user_screen.dart:537 — "Single" → commonSingle; "Married" → commonMarried; "Widowed" → commonWidowed; "Divorced" → commonDivorced
+- create_user_screen.dart:546 — "Gender" → commonGender
+- create_user_screen.dart:553 — "Male" → commonMale; "Female" → commonFemale; "Other" → commonOther
+- create_user_screen.dart:575 — "Home Address" → acreateHomeAddress
+- create_user_screen.dart:583 — "Profile Photo" → commonProfilePhoto
+- create_user_screen.dart:592 — "Valid ID" → commonValidId
+- create_user_screen.dart:651 — "Tap to upload photo" → acreateTapToUploadPhoto
+- create_user_screen.dart:658 — "Optional" → commonOptional
+- create_user_screen.dart:721 — "ID Front" → acreateIdFront
+- create_user_screen.dart:721 — "ID Back" → acreateIdBack
+- create_user_screen.dart:728 — "Optional" → commonOptional
+- create_user_screen.dart:771 — "Change" → acreateChange
+- create_user_screen.dart:801 — "Required" → commonRequired
+
+## lib/screens/admin/pending_users_screen.dart
+- pending_users_screen.dart:32 — "Approve User" → auserApproveUserTitle (reuse — defined under manage_users)
+- pending_users_screen.dart:33 — "Are you sure you want to approve ${user.fullName}?" → apendApproveConfirm
+- pending_users_screen.dart:39 — "Approving user..." → apendApprovingUser
+- pending_users_screen.dart:47 — "User approved successfully" → apendUserApproved
+- pending_users_screen.dart:62 — "Reject User" → auserRejectUserTitle (reuse — defined under manage_users)
+- pending_users_screen.dart:67 — "Rejecting: ${user.fullName}" → auserRejectingName (reuse — defined under manage_users)
+- pending_users_screen.dart:73 — "Rejection Reason" → commonRejectionReason
+- pending_users_screen.dart:74 — "Please provide a reason for rejection..." → apendRejectReasonHint
+- pending_users_screen.dart:82 — "Cancel" → commonCancel
+- pending_users_screen.dart:87 — "Please provide a reason" → commonPleaseProvideReason
+- pending_users_screen.dart:93 — "Reject" → commonReject
+- pending_users_screen.dart:102 — "Rejecting user..." → apendRejectingUser
+- pending_users_screen.dart:113 — "User registration rejected" → apendUserRejected
+- pending_users_screen.dart:131 — "Pending Users" → apendTitle
+- pending_users_screen.dart:160 — "No pending users" → apendNoPending
+- pending_users_screen.dart:227 — "${user.age} years old" → apendYearsOld
+- pending_users_screen.dart:233 — "Registered: ${Helpers.formatDate(user.createdAt)}" → auserRegisteredAt (reuse — defined under manage_users)
+- pending_users_screen.dart:245 — "Reject" → commonReject
+- pending_users_screen.dart:275 — "Approve" → commonApprove
+
+## lib/screens/admin/document_fees_screen.dart
+- document_fees_screen.dart:71 — "Document Fees" → afeeTitle
+- document_fees_screen.dart:79 — "Manage fees per document type" → afeeSubtitle
+- document_fees_screen.dart:114 — "No document fees found" → afeeNoFees
+- document_fees_screen.dart:184 — _formatDocumentType(fee.documentType) → (excluded — document type label from AutomationConstants)
+- document_fees_screen.dart:193 — fee.description! → (excluded — DB value)
+- document_fees_screen.dart:213 — "Fee Amount" → afeeAmount
+- document_fees_screen.dart:218 — "₱${fee.feeAmount.toStringAsFixed(2)}" → (excluded — formatted currency)
+- document_fees_screen.dart:256 — "Edit" → commonEdit
+- document_fees_screen.dart:302 — "Edit ${_formatDocumentType(fee.documentType)}" → afeeEditDialogTitle
+- document_fees_screen.dart:322 — "Fee Amount" → afeeAmount
+- document_fees_screen.dart:323 — "₱ " → (excluded — currency symbol prefix)
+- document_fees_screen.dart:330 — "Please enter an amount" → afeeEnterAmount
+- document_fees_screen.dart:334 — "Please enter a valid amount" → afeeEnterValidAmount
+- document_fees_screen.dart:344 — "Description (Optional)" → afeeDescriptionOptional
+- document_fees_screen.dart:356 — "Cancel" → commonCancel
+- document_fees_screen.dart:379 — "Save" → commonSave
+- document_fees_screen.dart:399 — "Updating fee..." → afeeUpdating
+- document_fees_screen.dart:410 — "Fee updated successfully" → afeeUpdated
+
+## lib/screens/admin/document_formats_screen.dart
+- document_formats_screen.dart:61 — "Document Formats" → afmtTitle
+- document_formats_screen.dart:69 — "Preview and manage document templates" → afmtSubtitle
+- document_formats_screen.dart:120 — "Preview Document Templates" → afmtPreviewTitle
+- document_formats_screen.dart:129 — "Generate sample PDFs to preview how documents will look when issued to citizens." → afmtPreviewDesc
+- document_formats_screen.dart:156 — "Available Document Formats" → afmtAvailableSection
+- document_formats_screen.dart:168 — "Barangay Clearance" → (kept — official document title)
+- document_formats_screen.dart:169-170 — "Certificate of residence and good moral character" → afmtBarangayClearanceDesc
+- document_formats_screen.dart:176 — "Certificate of Indigency" → (kept — official certificate title)
+- document_formats_screen.dart:177 — "Certificate for low-income families" → afmtIndigencyDesc
+- document_formats_screen.dart:183 — "Community Tax Certificate (Cedula)" → (kept — official certificate title)
+- document_formats_screen.dart:184 — "Annual community tax certificate" → afmtCedulaDesc
+- document_formats_screen.dart:190 — "Barangay ID Card" → (kept — official document title)
+- document_formats_screen.dart:191-192 — "Official barangay identification card (Front & Back)" → afmtBarangayIdDesc
+- document_formats_screen.dart:198 — "Barangay Business Clearance" → (kept — official document title)
+- document_formats_screen.dart:199-200 — "Clearance for business permits and renewals" → afmtBusinessClearanceDesc
+- document_formats_screen.dart:206 — "Barangay Certification" → (kept — official document title)
+- document_formats_screen.dart:207-208 — "General certification of employment and salary" → afmtCertificationDesc
+- document_formats_screen.dart:214 — "Certificate of Good Moral Character" → (kept — official certificate title)
+- document_formats_screen.dart:215-216 — "Certificate attesting good moral character" → afmtGoodMoralDesc
+- document_formats_screen.dart:222 — "Certificate of Residency" → (kept — official certificate title)
+- document_formats_screen.dart:223 — "Proof of residency in the barangay" → afmtResidencyDesc
+- document_formats_screen.dart:229 — "Oath of Undertaking" → (kept — official document title)
+- document_formats_screen.dart:230-231 — "First-time jobseeker oath under R.A. 11261" → afmtOathUndertakingDesc
+- document_formats_screen.dart:344 — "Preview" → afmtPreviewButton
+- document_formats_screen.dart:373 — "PDF preview is not available on web. Please use mobile or desktop app." → afmtWebUnavailable
+- document_formats_screen.dart:405 — "Sample purpose for preview" → (keep — sample data)
+- document_formats_screen.dart:406-418 — sample documentData (Filipino, Software Developer, TIN, etc.) → (keep — sample data)
+- document_formats_screen.dart:432-436 — "Juan Dela Cruz", "123 Sample Street, Purok 1", "Single" → (keep — sample data)
+- document_formats_screen.dart:443-447 — "Maria Santos", "456 Example Road, Purok 2", "Married" → (keep — sample data)
+- document_formats_screen.dart:454-460 — "Pedro Reyes", "789 Demo Avenue, Purok 3", "January 15, 1990", "Manila, Philippines", "Male" → (keep — sample data)
+- document_formats_screen.dart:468-474 — "Ana Garcia", "321 Test Lane, Purok 4", "March 20, 1995", "09123456789", "Jose Garcia", "09987654321", "O+" → (keep — sample data)
+- document_formats_screen.dart:482-485, 493-496, 504-507, 515-518, 526-529 — sample names/addresses → (keep — sample data)
+- document_formats_screen.dart:546 — "Preview generated: ${pdfFile.path.split('/').last}" → afmtPreviewGenerated
+- document_formats_screen.dart:567 — "Error generating preview: $e" → afmtPreviewError
+
+## lib/screens/admin/settings_screen.dart
+- settings_screen.dart:79 — "Failed to load configuration" → asetLoadFailed
+- settings_screen.dart:91 — "Configuration not loaded" → asetConfigNotLoaded
+- settings_screen.dart:95 — "Saving settings..." → asetSaving
+- settings_screen.dart:121 — "Settings updated successfully" → asetUpdated
+- settings_screen.dart:135 — "Uploading logo..." → asetUploadingLogo
+- settings_screen.dart:156 — "Could not read file" → asetCouldNotReadFile
+- settings_screen.dart:162 — "Could not read file: no path available" → asetCouldNotReadFileNoPath
+- settings_screen.dart:192 — "Logo uploaded successfully" → asetLogoUploaded
+- settings_screen.dart:198 — "Upload failed: ${Helpers.parseSupabaseError(e.toString())}" → asetUploadFailed
+- settings_screen.dart:253 — "Settings" → asetTitle
+- settings_screen.dart:261 — "Configure barangay information" → asetSubtitle
+- settings_screen.dart:276 — "Edit Settings" → asetEditSettingsTooltip
+- settings_screen.dart:296 — "GCash Payment Information" → asetGcashSection
+- settings_screen.dart:321 — "GCash Account Name *" → asetGcashAccountName
+- settings_screen.dart:322 — "Juan Dela Cruz" → (kept — example name hint)
+- settings_screen.dart:331 — "GCash name is required" → asetGcashNameRequired
+- settings_screen.dart:342 — "GCash Number *" → asetGcashNumber
+- settings_screen.dart:343 — "09171234567" → (kept — example phone number)
+- settings_screen.dart:352 — "GCash number is required" → asetGcashNumberRequired
+- settings_screen.dart:357 — "Invalid Philippine mobile number" → asetInvalidPhMobile
+- settings_screen.dart:371 — "Barangay Information" → asetBarangaySection
+- settings_screen.dart:396 — "Barangay Name *" → asetBarangayName
+- settings_screen.dart:397 — "Barangay San Antonio" → (kept — example name)
+- settings_screen.dart:406 — "Barangay name is required" → asetBarangayNameRequired
+- settings_screen.dart:417 — "Barangay Address *" → asetBarangayAddress
+- settings_screen.dart:418 — "Complete address" → asetCompleteAddressHint
+- settings_screen.dart:427 — "Barangay address is required" → asetBarangayAddressRequired
+- settings_screen.dart:437 — "Barangay Captain" → asetBarangayCaptain
+- settings_screen.dart:438 — "Optional" → commonOptional
+- settings_screen.dart:453 — "Contact Number" → asetContactNumber
+- settings_screen.dart:454 — "Optional" → commonOptional
+- settings_screen.dart:473 — "Barangay Logo URL" → asetBarangayLogoUrl
+- settings_screen.dart:474 — "https://example.com/logo.png" → (kept — example URL)
+- settings_screen.dart:487 — "Upload" → commonUpload
+- settings_screen.dart:503 — "Email Address" → commonEmail
+- settings_screen.dart:504 — "Optional" → commonOptional
+- settings_screen.dart:545 — "Cancel" → commonCancel
+- settings_screen.dart:584 — "Save Changes" → commonSaveChanges

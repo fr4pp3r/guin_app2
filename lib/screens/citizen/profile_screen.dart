@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:guin_app/providers/auth_provider.dart';
+import 'package:guin_app/providers/locale_provider.dart';
 import 'package:guin_app/models/user_profile.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -93,7 +95,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
-        Helpers.showErrorSnackBar(context, 'Failed to pick image');
+        final l10n = AppLocalizations.of(context);
+        Helpers.showErrorSnackBar(context, l10n.authFailedPickImage);
       }
     }
   }
@@ -113,7 +116,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
-        Helpers.showErrorSnackBar(context, 'Failed to pick ID image');
+        final l10n = AppLocalizations.of(context);
+        Helpers.showErrorSnackBar(context, l10n.profileFailedPickIdImage);
       }
     }
   }
@@ -134,21 +138,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _saveChanges() async {
     if (!_formKey.currentState!.validate()) return;
+    final l10n = AppLocalizations.of(context);
     if (_selectedDateOfBirth == null) {
-      Helpers.showErrorSnackBar(context, 'Please select date of birth');
+      Helpers.showErrorSnackBar(context, l10n.authPleaseSelectDob);
       return;
     }
 
     final confirm = await Helpers.showConfirmDialog(
       context,
-      title: 'Save Changes',
-      message:
-          'Are you sure you want to save these changes? They will be subject to admin review.',
+      title: l10n.commonSaveChanges,
+      message: l10n.profileSaveChangesConfirm,
     );
 
     if (!confirm || !mounted) return;
 
-    Helpers.showLoadingDialog(context, 'Saving changes...');
+    Helpers.showLoadingDialog(context, l10n.profileSavingChanges);
 
     final authProvider = context.read<AuthProvider>();
     final age = _calculateAge(_selectedDateOfBirth!);
@@ -174,7 +178,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (success) {
       Helpers.showSuccessSnackBar(
         context,
-        'Profile updated successfully. Changes are subject to admin review.',
+        l10n.profileUpdateSuccess,
       );
       setState(() {
         _isEditMode = false;
@@ -186,12 +190,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         context,
         authProvider.error != null
             ? Helpers.parseSupabaseError(authProvider.error)
-            : 'Failed to update profile',
+            : l10n.profileUpdateFailed,
       );
     }
   }
 
   Future<void> _showChangePasswordDialog() async {
+    final l10n = AppLocalizations.of(context);
     final currentPasswordController = TextEditingController();
     final newPasswordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
@@ -202,7 +207,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Change Password'),
+              title: Text(l10n.profileChangePassword),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -211,7 +216,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       controller: currentPasswordController,
                       obscureText: _obscureCurrentPassword,
                       decoration: InputDecoration(
-                        labelText: 'Current Password',
+                        labelText: l10n.profileCurrentPassword,
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -233,7 +238,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       controller: newPasswordController,
                       obscureText: _obscureNewPassword,
                       decoration: InputDecoration(
-                        labelText: 'New Password',
+                        labelText: l10n.profileNewPassword,
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -254,7 +259,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       controller: confirmPasswordController,
                       obscureText: _obscureConfirmPassword,
                       decoration: InputDecoration(
-                        labelText: 'Confirm New Password',
+                        labelText: l10n.profileConfirmNewPassword,
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -277,21 +282,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext, false),
-                  child: const Text('Cancel'),
+                  child: Text(l10n.commonCancel),
                 ),
                 ElevatedButton(
                   onPressed: () {
                     if (currentPasswordController.text.isEmpty) {
                       Helpers.showErrorSnackBar(
                         context,
-                        'Please enter current password',
+                        l10n.profileCurrentPasswordRequired,
                       );
                       return;
                     }
                     if (newPasswordController.text.length < 6) {
                       Helpers.showErrorSnackBar(
                         context,
-                        'New password must be at least 6 characters',
+                        l10n.profilePasswordMinLength(6),
                       );
                       return;
                     }
@@ -299,13 +304,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         confirmPasswordController.text) {
                       Helpers.showErrorSnackBar(
                         context,
-                        'Passwords do not match',
+                        l10n.authPasswordsDoNotMatch,
                       );
                       return;
                     }
                     Navigator.pop(dialogContext, true);
                   },
-                  child: const Text('Update'),
+                  child: Text(l10n.commonUpdate),
                 ),
               ],
             );
@@ -316,7 +321,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (result != true || !mounted) return;
 
-    Helpers.showLoadingDialog(context, 'Updating password...');
+    Helpers.showLoadingDialog(context, l10n.profileUpdatingPassword);
 
     final authProvider = context.read<AuthProvider>();
     final success = await authProvider.updatePassword(
@@ -328,11 +333,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Helpers.dismissDialog(context);
 
     if (success) {
-      Helpers.showSuccessSnackBar(context, 'Password updated successfully');
+      Helpers.showSuccessSnackBar(context, l10n.profilePasswordUpdated);
     } else {
       Helpers.showErrorSnackBar(
         context,
-        authProvider.error ?? 'Failed to update password',
+        authProvider.error ?? l10n.profilePasswordUpdateFailed,
       );
     }
   }
@@ -352,6 +357,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final authProvider = context.watch<AuthProvider>();
     final userProfile = authProvider.userProfile;
 
@@ -359,7 +365,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return Scaffold(
         backgroundColor: const Color(0xFFF5F7FA),
         appBar: AppBar(
-          title: const Text('Profile'),
+          title: Text(l10n.profileTitle),
           backgroundColor: const Color(0xFF1565C0),
           foregroundColor: Colors.white,
         ),
@@ -411,10 +417,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           onPressed: () => Navigator.pop(context),
                         ),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'My Profile',
-                            style: TextStyle(
+                            l10n.profileMyProfile,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
@@ -433,9 +439,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               color: Colors.white,
                               size: 18,
                             ),
-                            label: const Text(
-                              'Edit',
-                              style: TextStyle(
+                            label: Text(
+                              l10n.commonEdit,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -449,7 +455,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onTap: _isEditMode
                           ? _pickProfilePhoto
                           : () => _viewImage(
-                                'Profile Photo',
+                                l10n.commonProfilePhoto,
                                 userProfile.profilePhotoUrl,
                                 _profilePhoto,
                               ),
@@ -556,92 +562,93 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildViewMode(UserProfile userProfile) {
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Personal Information Section
-        _buildSectionHeader('Personal Information', AppColors.primary),
+        _buildSectionHeader(l10n.authPersonalInfoTitle, AppColors.primary),
         const SizedBox(height: AppSizes.paddingM),
         _buildInfoCard([
           _buildInfoRow(
             icon: Icons.person_outline,
-            label: 'Full Name',
+            label: l10n.commonFullName,
             value: userProfile.fullName,
           ),
           _buildInfoRow(
             icon: Icons.email_outlined,
-            label: 'Email',
+            label: l10n.commonEmail,
             value: userProfile.email,
           ),
           _buildInfoRow(
             icon: Icons.alternate_email,
-            label: 'Username',
+            label: l10n.commonUsername,
             value: userProfile.username,
           ),
           _buildInfoRow(
             icon: Icons.phone_outlined,
-            label: 'Phone Number',
+            label: l10n.commonPhoneNumber,
             value: userProfile.phoneNumber,
           ),
           _buildInfoRow(
             icon: Icons.home_outlined,
-            label: 'Address',
+            label: l10n.commonAddress,
             value: userProfile.address,
           ),
         ]),
         const SizedBox(height: AppSizes.paddingL),
 
         // Additional Details Section
-        _buildSectionHeader('Additional Details', AppColors.secondary),
+        _buildSectionHeader(l10n.profileAdditionalDetails, AppColors.secondary),
         const SizedBox(height: AppSizes.paddingM),
         _buildInfoCard([
           _buildInfoRow(
             icon: Icons.cake_outlined,
-            label: 'Age',
-            value: '${userProfile.age} years old',
+            label: l10n.commonAge,
+            value: l10n.profileAgeYearsOld(userProfile.age),
           ),
           _buildInfoRow(
             icon: Icons.calendar_today,
-            label: 'Date of Birth',
+            label: l10n.commonDateOfBirth,
             value: Helpers.formatDate(userProfile.dateOfBirth),
           ),
           _buildInfoRow(
             icon: Icons.place_outlined,
-            label: 'Place of Birth',
+            label: l10n.commonPlaceOfBirth,
             value: userProfile.placeOfBirth,
           ),
           _buildInfoRow(
             icon: Icons.family_restroom,
-            label: 'Civil Status',
+            label: l10n.commonCivilStatus,
             value: userProfile.civilStatus,
           ),
           _buildInfoRow(
             icon: Icons.wc,
-            label: 'Gender',
+            label: l10n.commonGender,
             value: userProfile.gender,
           ),
         ]),
         const SizedBox(height: AppSizes.paddingL),
 
         // Documents Section
-        _buildSectionHeader('Documents', AppColors.accent),
+        _buildSectionHeader(l10n.commonDocuments, AppColors.accent),
         const SizedBox(height: AppSizes.paddingM),
         _buildInfoCard([
           _buildDocumentRow(
-            label: 'Profile Photo',
+            label: l10n.commonProfilePhoto,
             networkUrl: userProfile.profilePhotoUrl,
             onTap: () => _viewImage(
-              'Profile Photo',
+              l10n.commonProfilePhoto,
               userProfile.profilePhotoUrl,
               null,
             ),
           ),
           _buildDocumentRow(
-            label: 'Valid ID',
+            label: l10n.commonValidId,
             networkUrl: userProfile.validIdUrl,
             onTap: () => _viewImage(
-              'Valid ID',
+              l10n.commonValidId,
               userProfile.validIdUrl,
               null,
             ),
@@ -650,20 +657,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: AppSizes.paddingL),
 
         // Account Section
-        _buildSectionHeader('Account', AppColors.success),
+        _buildSectionHeader(l10n.authStepAccountLabel, AppColors.success),
         const SizedBox(height: AppSizes.paddingM),
         _buildInfoCard([
           _buildInfoRow(
             icon: Icons.badge_outlined,
-            label: 'Role',
+            label: l10n.commonRole,
             value: _getRoleDisplayName(userProfile.role),
           ),
           _buildInfoRow(
             icon: Icons.access_time,
-            label: 'Member Since',
+            label: l10n.commonMemberSince,
             value: Helpers.formatDate(userProfile.createdAt),
           ),
         ]),
+        const SizedBox(height: AppSizes.paddingL),
+
+        // Language Section
+        _buildLanguageSection(),
         const SizedBox(height: AppSizes.paddingL),
 
         // Change Password Button
@@ -672,7 +683,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: OutlinedButton.icon(
             onPressed: _showChangePasswordDialog,
             icon: const Icon(Icons.lock_outline),
-            label: const Text('Change Password'),
+            label: Text(l10n.profileChangePassword),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.primary,
               side: const BorderSide(color: AppColors.primary),
@@ -689,6 +700,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildEditMode(UserProfile userProfile) {
     final authProvider = context.read<AuthProvider>();
+    final l10n = AppLocalizations.of(context);
 
     return Form(
       key: _formKey,
@@ -696,46 +708,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Personal Information Section
-          _buildSectionHeader('Personal Information', AppColors.primary),
+          _buildSectionHeader(l10n.authPersonalInfoTitle, AppColors.primary),
           const SizedBox(height: AppSizes.paddingM),
           _buildFormCard([
             TextFormField(
               controller: _givenNameController,
-              decoration: const InputDecoration(
-                labelText: 'Given Name *',
-                prefixIcon: Icon(Icons.person_outline),
+              decoration: InputDecoration(
+                labelText: l10n.authGivenNameLabel,
+                prefixIcon: const Icon(Icons.person_outline),
               ),
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Given name is required' : null,
+                  (v == null || v.trim().isEmpty) ? l10n.authGivenNameRequired : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _middleNameController,
-              decoration: const InputDecoration(
-                labelText: 'Middle Name (optional)',
-                prefixIcon: Icon(Icons.person_outline),
+              decoration: InputDecoration(
+                labelText: l10n.authMiddleNameLabel,
+                prefixIcon: const Icon(Icons.person_outline),
               ),
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _lastNameController,
-              decoration: const InputDecoration(
-                labelText: 'Last Name *',
-                prefixIcon: Icon(Icons.person_outline),
+              decoration: InputDecoration(
+                labelText: l10n.authLastNameLabel,
+                prefixIcon: const Icon(Icons.person_outline),
               ),
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Last name is required' : null,
+                  (v == null || v.trim().isEmpty) ? l10n.authLastNameRequired : null,
             ),
             const SizedBox(height: 16),
             // Email (read-only)
             TextFormField(
               initialValue: userProfile.email,
               readOnly: true,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                prefixIcon: Icon(Icons.email_outlined),
+              decoration: InputDecoration(
+                labelText: l10n.commonEmail,
+                prefixIcon: const Icon(Icons.email_outlined),
                 filled: true,
-                fillColor: Color(0xFFF5F5F5),
+                fillColor: const Color(0xFFF5F5F5),
               ),
             ),
             const SizedBox(height: 16),
@@ -743,53 +755,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextFormField(
               initialValue: userProfile.username,
               readOnly: true,
-              decoration: const InputDecoration(
-                labelText: 'Username',
-                prefixIcon: Icon(Icons.alternate_email),
+              decoration: InputDecoration(
+                labelText: l10n.commonUsername,
+                prefixIcon: const Icon(Icons.alternate_email),
                 filled: true,
-                fillColor: Color(0xFFF5F5F5),
+                fillColor: const Color(0xFFF5F5F5),
               ),
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Phone Number',
-                prefixIcon: Icon(Icons.phone_outlined),
+              decoration: InputDecoration(
+                labelText: l10n.commonPhoneNumber,
+                prefixIcon: const Icon(Icons.phone_outlined),
               ),
               validator: (v) => (v == null || v.isEmpty)
-                  ? 'Phone number is required'
+                  ? l10n.authPhoneRequired
                   : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _addressController,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Complete Address',
-                prefixIcon: Icon(Icons.home_outlined),
+              decoration: InputDecoration(
+                labelText: l10n.authCompleteAddressLabel,
+                prefixIcon: const Icon(Icons.home_outlined),
                 alignLabelWithHint: true,
               ),
               validator: (v) =>
-                  (v == null || v.isEmpty) ? 'Address is required' : null,
+                  (v == null || v.isEmpty) ? l10n.authAddressRequired : null,
             ),
           ]),
           const SizedBox(height: AppSizes.paddingL),
 
           // Additional Details Section
-          _buildSectionHeader('Additional Details', AppColors.secondary),
+          _buildSectionHeader(l10n.profileAdditionalDetails, AppColors.secondary),
           const SizedBox(height: AppSizes.paddingM),
           _buildFormCard([
             // Age (read-only, auto-calapsed)
             TextFormField(
               initialValue: '${userProfile.age}',
               readOnly: true,
-              decoration: const InputDecoration(
-                labelText: 'Age (auto-calculated)',
-                prefixIcon: Icon(Icons.cake_outlined),
+              decoration: InputDecoration(
+                labelText: l10n.profileAgeAutoCalculated,
+                prefixIcon: const Icon(Icons.cake_outlined),
                 filled: true,
-                fillColor: Color(0xFFF5F5F5),
+                fillColor: const Color(0xFFF5F5F5),
               ),
             ),
             const SizedBox(height: 16),
@@ -800,8 +812,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: TextFormField(
                   decoration: InputDecoration(
                     labelText: _selectedDateOfBirth == null
-                        ? 'Date of Birth (tap to select)'
-                        : 'Date of Birth: ${Helpers.formatDate(_selectedDateOfBirth!)}',
+                        ? l10n.authDateOfBirthTapToSelect
+                        : l10n.profileDateOfBirthSelected(
+                            Helpers.formatDate(_selectedDateOfBirth!),
+                          ),
                     prefixIcon: const Icon(Icons.calendar_today),
                   ),
                 ),
@@ -810,20 +824,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _placeOfBirthController,
-              decoration: const InputDecoration(
-                labelText: 'Place of Birth',
-                prefixIcon: Icon(Icons.place_outlined),
+              decoration: InputDecoration(
+                labelText: l10n.commonPlaceOfBirth,
+                prefixIcon: const Icon(Icons.place_outlined),
               ),
               validator: (v) => (v == null || v.isEmpty)
-                  ? 'Place of birth is required'
+                  ? l10n.authPlaceOfBirthRequired
                   : null,
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: _selectedCivilStatus,
-              decoration: const InputDecoration(
-                labelText: 'Civil Status',
-                prefixIcon: Icon(Icons.family_restroom),
+              decoration: InputDecoration(
+                labelText: l10n.commonCivilStatus,
+                prefixIcon: const Icon(Icons.family_restroom),
               ),
               items: [
                 'Single',
@@ -841,9 +855,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: _selectedGender,
-              decoration: const InputDecoration(
-                labelText: 'Gender',
-                prefixIcon: Icon(Icons.wc),
+              decoration: InputDecoration(
+                labelText: l10n.commonGender,
+                prefixIcon: const Icon(Icons.wc),
               ),
               items: [
                 'Male',
@@ -860,18 +874,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: AppSizes.paddingL),
 
           // Documents Section
-          _buildSectionHeader('Documents', AppColors.accent),
+          _buildSectionHeader(l10n.commonDocuments, AppColors.accent),
           const SizedBox(height: AppSizes.paddingM),
           _buildFormCard([
             _buildImageUploadRow(
-              label: 'Profile Photo',
+              label: l10n.commonProfilePhoto,
               file: _profilePhoto,
               networkUrl: userProfile.profilePhotoUrl,
               onTap: _pickProfilePhoto,
             ),
             const SizedBox(height: 16),
             _buildImageUploadRow(
-              label: 'Valid ID',
+              label: l10n.commonValidId,
               file: _validId,
               networkUrl: userProfile.validIdUrl,
               onTap: _pickValidId,
@@ -880,28 +894,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: AppSizes.paddingL),
 
           // Account Section (read-only)
-          _buildSectionHeader('Account', AppColors.success),
+          _buildSectionHeader(l10n.authStepAccountLabel, AppColors.success),
           const SizedBox(height: AppSizes.paddingM),
           _buildFormCard([
             TextFormField(
               initialValue: _getRoleDisplayName(userProfile.role),
               readOnly: true,
-              decoration: const InputDecoration(
-                labelText: 'Role',
-                prefixIcon: Icon(Icons.badge_outlined),
+              decoration: InputDecoration(
+                labelText: l10n.commonRole,
+                prefixIcon: const Icon(Icons.badge_outlined),
                 filled: true,
-                fillColor: Color(0xFFF5F5F5),
+                fillColor: const Color(0xFFF5F5F5),
               ),
             ),
             const SizedBox(height: 16),
             TextFormField(
               initialValue: Helpers.formatDate(userProfile.createdAt),
               readOnly: true,
-              decoration: const InputDecoration(
-                labelText: 'Member Since',
-                prefixIcon: Icon(Icons.access_time),
+              decoration: InputDecoration(
+                labelText: l10n.commonMemberSince,
+                prefixIcon: const Icon(Icons.access_time),
                 filled: true,
-                fillColor: Color(0xFFF5F5F5),
+                fillColor: const Color(0xFFF5F5F5),
               ),
             ),
           ]),
@@ -927,7 +941,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('Cancel'),
+                  child: Text(l10n.commonCancel),
                 ),
               ),
               const SizedBox(width: 16),
@@ -952,9 +966,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text(
-                          'Save Changes',
-                          style: TextStyle(
+                      : Text(
+                          l10n.commonSaveChanges,
+                          style: const TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
                           ),
@@ -1078,12 +1092,133 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildLanguageSection() {
+    final l10n = AppLocalizations.of(context);
+    final currentCode = context.watch<LocaleProvider>().languageCode;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(l10n.languageSectionTitle, AppColors.primary),
+        const SizedBox(height: 6),
+        // Aligns with the header text (4px bar + 12px gap).
+        Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: Text(
+            l10n.languageSectionSubtitle,
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+              height: 1.35,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSizes.paddingM),
+        _buildInfoCard([
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Column(
+              children: [
+                _buildLanguageOption(
+                  name: l10n.languageEnglish,
+                  code: 'en',
+                  currentCode: currentCode,
+                ),
+                _buildLanguageOption(
+                  name: l10n.languageTagalog,
+                  code: 'fil',
+                  currentCode: currentCode,
+                ),
+                _buildLanguageOption(
+                  name: l10n.languageCebuano,
+                  code: 'ceb',
+                  currentCode: currentCode,
+                ),
+              ],
+            ),
+          ),
+        ]),
+      ],
+    );
+  }
+
+  Widget _buildLanguageOption({
+    required String name,
+    required String code,
+    required String currentCode,
+  }) {
+    final isActive = code == currentCode;
+
+    return Material(
+      color: isActive
+          ? AppColors.primary.withValues(alpha: 0.07)
+          : Colors.transparent,
+      child: InkWell(
+        onTap: () => _changeLanguage(code),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.paddingM,
+            vertical: AppSizes.paddingS + 4,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.translate,
+                size: 20,
+                color: isActive ? AppColors.primary : AppColors.textSecondary,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color:
+                        isActive ? AppColors.primary : AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              if (isActive)
+                const Icon(
+                  Icons.check,
+                  size: 20,
+                  color: AppColors.primary,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _changeLanguage(String code) {
+    context.read<LocaleProvider>().setLanguage(code);
+
+    // The confirmation has to be built with the locale that was just applied,
+    // so resolve it on the frame after MaterialApp picks up the new locale.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      final name = switch (code) {
+        'fil' => l10n.languageTagalog,
+        'ceb' => l10n.languageCebuano,
+        _ => l10n.languageEnglish,
+      };
+      Helpers.showSuccessSnackBar(context, l10n.languageChanged(name));
+    });
+    // Guarantee a frame runs so the callback above always fires, even when
+    // the locale (and therefore the tree) did not change.
+    WidgetsBinding.instance.scheduleFrame();
+  }
+
   Widget _buildDocumentRow({
     required String label,
     required String? networkUrl,
     required VoidCallback onTap,
   }) {
     final hasImage = networkUrl != null;
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSizes.paddingM,
@@ -1111,7 +1246,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  hasImage ? 'Tap to view' : 'Not uploaded',
+                  hasImage ? l10n.commonTapToView : l10n.commonNotUploaded,
                   style: TextStyle(
                     fontSize: 15,
                     color: hasImage
@@ -1126,7 +1261,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (hasImage)
             TextButton(
               onPressed: onTap,
-              child: const Text('View'),
+              child: Text(l10n.commonView),
             ),
         ],
       ),
@@ -1142,6 +1277,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final hasLocalFile = file != null;
     final hasNetworkImage = networkUrl != null;
     final hasAnyImage = hasLocalFile || hasNetworkImage;
+    final l10n = AppLocalizations.of(context);
 
     return GestureDetector(
       onTap: onTap,
@@ -1213,7 +1349,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Tap to upload',
+                    l10n.commonTapToUpload,
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey.shade500,
@@ -1226,22 +1362,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   String _getRoleDisplayName(String role) {
+    final l10n = AppLocalizations.of(context);
     switch (role) {
       case 'captain':
-        return 'Barangay Captain';
+        return l10n.roleCaptain;
       case 'secretary':
-        return 'Secretary';
+        return l10n.roleSecretary;
       case 'treasurer':
-        return 'Treasurer';
+        return l10n.roleTreasurer;
       case 'kagawad_representative':
-        return 'Kagawad Representative';
+        return l10n.roleKagawad;
       case 'barangay_tanod':
-        return 'Barangay Tanod';
+        return l10n.roleTanod;
       case 'admin':
-        return 'Administrator';
+        return l10n.roleAdmin;
       case 'citizen':
       default:
-        return 'Citizen';
+        return l10n.roleCitizen;
     }
   }
 }
@@ -1259,6 +1396,7 @@ class _FullScreenImageViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -1282,34 +1420,34 @@ class _FullScreenImageViewer extends StatelessWidget {
                           ),
                         );
                       },
-                      errorBuilder: (_, __, ___) => const Column(
+                      errorBuilder: (_, __, ___) => Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.broken_image,
                             color: Colors.white54,
                             size: 64,
                           ),
-                          SizedBox(height: 16),
+                          const SizedBox(height: 16),
                           Text(
-                            'Failed to load image',
-                            style: TextStyle(color: Colors.white54),
+                            l10n.profileFailedLoadImage,
+                            style: const TextStyle(color: Colors.white54),
                           ),
                         ],
                       ),
                     )
-                  : const Column(
+                  : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.image_not_supported,
                           color: Colors.white54,
                           size: 64,
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         Text(
-                          'No image available',
-                          style: TextStyle(color: Colors.white54),
+                          l10n.profileNoImageAvailable,
+                          style: const TextStyle(color: Colors.white54),
                         ),
                       ],
                     ),

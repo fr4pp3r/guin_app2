@@ -1,0 +1,250 @@
+# Localization plan — auth.json
+
+Scope: login, register, pending-approval, splash, verify-document, connectivity banner.
+Format: `file:line — "<original literal>" → keyName` (or `→ common*` / `(kept)` / `(excluded)`).
+
+Reused existing keys: commonBack, commonEmail, commonPassword, commonUsername, commonStatus,
+commonAddress, commonDocuments, commonGender, commonMale, commonFemale, commonOther,
+commonCivilStatus, commonSingle, commonMarried, commonWidowed, commonDivorced,
+commonPhoneNumber, commonDateOfBirth, commonPlaceOfBirth, commonProfilePhoto,
+commonRejectionReason, commonLogout, commonContinue, commonTapToUpload,
+offlineBanner, offlineBannerSuffix, offlineBannerSemantics.
+
+## lib/screens/auth/login_screen.dart
+- login_screen.dart:34 — "Logging in..." → authLoggingIn
+- login_screen.dart:48 — "Profile not found" → authProfileNotFound
+- login_screen.dart:63 — "Welcome back!" → authWelcomeBackSnackbar
+- login_screen.dart:113 — "CiteEase" → (kept)
+- login_screen.dart:123 — "E-Document Management System" → authAppSubtitle
+- login_screen.dart:147 — "Welcome Back!" → authWelcomeBackTitle
+- login_screen.dart:156 — "Sign in to your account to continue." → authSignInSubtitle
+- login_screen.dart:170 — "Email Address" → commonEmail
+- login_screen.dart:172 — "Enter your email" → authEmailHint
+- login_screen.dart:183 — "Password" → commonPassword
+- login_screen.dart:185 — "Enter your password" → authPasswordHint
+- login_screen.dart:214 — "Sign In" → authSignInButton
+- login_screen.dart:230 — "Don't have an account? " → authNoAccountPrompt
+- login_screen.dart:240 — "Register" → authRegisterLink
+
+## lib/screens/splash_screen.dart
+- splash_screen.dart:113 — "CiteEase" → (kept)
+- splash_screen.dart:132 — "E-Document Management System" → splashAppSubtitle
+- splash_screen.dart:163 — "Loading..." → splashLoading
+- splash_screen.dart:179 — "Powered by Barangay Digital Services" → splashPoweredBy
+
+## lib/screens/auth/pending_approval_screen.dart
+- pending_approval_screen.dart:65 — "Registration Rejected" → authRegistrationRejected
+- pending_approval_screen.dart:65 — "Pending Approval" → authPendingApprovalTitle
+- pending_approval_screen.dart:76 — "Your application has been declined by a barangay official." → authApplicationDeclined
+- pending_approval_screen.dart:77 — "Your registration is currently being reviewed." → authRegistrationUnderReview
+- pending_approval_screen.dart:135 — "Rejection Reason" → commonRejectionReason
+- pending_approval_screen.dart:146 — userProfile.rejectionReason (model value) → (excluded)
+- pending_approval_screen.dart:155 — "You may register again with the correct information." → authMayRegisterAgain
+- pending_approval_screen.dart:176 — "Register Again" → authRegisterAgain
+- pending_approval_screen.dart:225 — "What happens next?" → authWhatHappensNext
+- pending_approval_screen.dart:236 — "Verification" → authStepVerification
+- pending_approval_screen.dart:237 — "A barangay official reviews your documents and information." → authStepVerificationDesc
+- pending_approval_screen.dart:241 — "Notification" → authStepNotification
+- pending_approval_screen.dart:242 — "You'll receive a notification once your account is reviewed." → authStepNotificationDesc
+- pending_approval_screen.dart:246 — "Access Granted" → authStepAccessGranted
+- pending_approval_screen.dart:247 — "Upon approval, you can log in and request documents." → authStepAccessGrantedDesc
+- pending_approval_screen.dart:270 — "Processing may take 1–3 business days. Thank you for your patience." → authProcessingTime
+- pending_approval_screen.dart:296 — "Logout" → commonLogout
+
+## lib/screens/verify_document_screen.dart
+- verify_document_screen.dart:16-29 — _monthNames ('Jan'..'Dec') → (excluded — date-format constant, belongs to intl/DateFormat)
+- verify_document_screen.dart:123 — "Document not found or verification token is invalid." → verifyDocumentNotFound
+- verify_document_screen.dart:131 — "Verification error: $e" → verifyError
+- verify_document_screen.dart:150 — "Not a valid document QR. Scan the QR code printed on the barangay document, or type the Document ID above." → verifyInvalidQr
+- verify_document_screen.dart:188 — "Document used successfully. ${_usesLeft(remaining)}" → verifyDocumentUsedSuccess
+- verify_document_screen.dart:192 — "${DocumentAccessRules.describe(...)} — ${_reasonFor(...)}" → (excluded — dynamic composition/separator)
+- verify_document_screen.dart:200 — "Could not use this document: $e" → verifyCouldNotUse
+- verify_document_screen.dart:209 — "Uses remaining: Unlimited." → verifyUsesUnlimited
+- verify_document_screen.dart:210 — "No uses remaining." → verifyNoUsesRemaining
+- verify_document_screen.dart:211 — "Uses remaining: $remaining." → verifyUsesRemaining
+- verify_document_screen.dart:217 — "This document is authentic and valid." → verifyReasonAllowed
+- verify_document_screen.dart:219 — "No document matches this ID and token." → verifyReasonNotFound
+- verify_document_screen.dart:221 — "This document was revoked and must not be honored." → verifyReasonRevoked
+- verify_document_screen.dart:223 — "This document has passed its expiry date." → verifyReasonExpired
+- verify_document_screen.dart:225 — "This document has already been used." → verifyReasonUsed
+- verify_document_screen.dart:227 — "This document has reached its maximum number of uses." → verifyReasonUseLimit
+- verify_document_screen.dart:317 — "Verify Document" → verifyTitle
+- verify_document_screen.dart:349 — "Enter Document ID (e.g. BRGY-GUION-2025-000001)" → verifyDocumentIdHint
+- verify_document_screen.dart:397 — "Scan the QR on the document, or type the ID above." → verifyScanOrTypeHint
+- verify_document_screen.dart:430 — "Scan QR" → verifyScanQrButton
+- verify_document_screen.dart:532 — "Document Verification" → verifyEmptyStateTitle
+- verify_document_screen.dart:537 — "Scan the QR code on a barangay-issued document, or enter a document ID above, to check its authenticity." → verifyEmptyStateDesc
+- verify_document_screen.dart:545 — "Scan QR" → verifyScanQrButton
+- verify_document_screen.dart:598 — "Document Verified" → verifyDocumentVerified
+- verify_document_screen.dart:599 — DocumentAccessRules.describe(decision) → (excluded — dynamic)
+- verify_document_screen.dart:624 — "Document Type" → verifyDocTypeLabel
+- verify_document_screen.dart:631 — "Citizen Name" → verifyCitizenNameLabel
+- verify_document_screen.dart:638 — "Status" → commonStatus
+- verify_document_screen.dart:645 — _sentenceCase(v.status) → (excluded — model value)
+- verify_document_screen.dart:651 — _badge(DocumentAccessRules.describe(decision)) → (excluded — dynamic)
+- verify_document_screen.dart:657 — "Issued" → verifyIssuedLabel
+- verify_document_screen.dart:664 — "Expiry" → verifyExpiryLabel
+- verify_document_screen.dart:672 — "No expiry date" → verifyNoExpiry
+- verify_document_screen.dart:679 — "Expired" → verifyExpiredBadge
+- verify_document_screen.dart:679 — "Valid" → verifyValidBadge
+- verify_document_screen.dart:684 — "Usage" → verifyUsageLabel
+- verify_document_screen.dart:686 — "Single use" → verifySingleUseBadge
+- verify_document_screen.dart:686 — "Multi use" → verifyMultiUseBadge
+- verify_document_screen.dart:691 — "Uses Remaining" → verifyUsesRemainingLabel
+- verify_document_screen.dart:696 — "Unlimited" → verifyUnlimited
+- verify_document_screen.dart:704 — " of ${v.maxUses}" → verifyOfMaxUses
+- verify_document_screen.dart:725 — "Print copy" → verifyPrintCopyLabel
+- verify_document_screen.dart:731 — copy.copyLabel → (excluded — model value)
+- verify_document_screen.dart:733 — copy.serial → (excluded — model value)
+- verify_document_screen.dart:840 — "Mark document as used" → verifyMarkUsedTitle
+- verify_document_screen.dart:848 — "A verification token was read from the QR code. Using the document now will add one use to its record." → verifyTokenReadHint
+- verify_document_screen.dart:870 — "Scan the QR code on the document to read its verification token. A token is required before this document can be marked as used." → verifyScanTokenHint
+- verify_document_screen.dart:916 — "Recording use…" → verifyRecordingUse
+- verify_document_screen.dart:916 — "Use Document" → verifyUseDocumentButton
+- verify_document_screen.dart:944 — "Verification Failed" → verifyFailedTitle
+- verify_document_screen.dart:1031 — debugPrint('Scanner start failed: ...') → (excluded — debug log)
+- verify_document_screen.dart:1059 — "Camera permission denied" → verifyCameraPermissionDenied
+- verify_document_screen.dart:1060 — "Allow camera access for this app in your device settings to scan QR codes. You can still type the Document ID instead." → verifyCameraPermissionDeniedMessage
+- verify_document_screen.dart:1068 — "No camera available" → verifyNoCameraAvailable
+- verify_document_screen.dart:1069 — "This device cannot open a camera for scanning. You can still type the Document ID instead." → verifyNoCameraMessage
+- verify_document_screen.dart:1076 — "Camera unavailable" → verifyCameraUnavailable
+- verify_document_screen.dart:1077 — "Scanning could not start here. You can still type the Document ID instead." → verifyCameraUnavailableMessage
+- verify_document_screen.dart:1146 — "Scan Document QR" → verifyScanDocumentQrTitle
+- verify_document_screen.dart:1176 — "Position the QR code inside the frame" → verifyPositionQrHint
+- verify_document_screen.dart:1189 — "Enter ID instead" → verifyEnterIdInstead
+- verify_document_screen.dart:1403 — "Enter Document ID instead" → verifyEnterDocumentIdInstead
+
+## lib/widgets/connectivity_banner.dart
+- connectivity_banner.dart:91 — "You’re offline. Some actions need a connection." → offlineBannerSemantics
+- connectivity_banner.dart:123 — "You’re offline" → offlineBanner
+- connectivity_banner.dart:131 — " — some actions need a connection" → offlineBannerSuffix
+(Note: surrounding class/design doc-comments are developer prose — excluded.)
+
+## lib/screens/auth/register_screen.dart
+- register_screen.dart:121 — "Failed to pick image" → authFailedPickImage
+- register_screen.dart:131 — "Select Image Source" → authSelectImageSource
+- register_screen.dart:137 — "Camera" → authCameraOption
+- register_screen.dart:142 — "Gallery" → authGalleryOption
+- register_screen.dart:204 — "Camera unavailable — using gallery image. Liveness verification may be limited." → authCameraUnavailableGallery
+- register_screen.dart:214 — "Failed to pick image" → authFailedPickImage
+- register_screen.dart:259 — "Passwords do not match" → authPasswordsDoNotMatch
+- register_screen.dart:268 — "Please select date of birth" → authPleaseSelectDob
+- register_screen.dart:280 — "Please upload a profile photo" → authPleaseUploadProfilePhoto
+- register_screen.dart:287 — "Please capture a selfie for liveness verification" → authPleaseCaptureSelfie
+- register_screen.dart:295 — "Please select an ID type" → authPleaseSelectIdType
+- register_screen.dart:301 — "Please enter your ID number" → authPleaseEnterIdNumber
+- register_screen.dart:308 — "Please upload the front of your ID" → authPleaseUploadIdFront
+- register_screen.dart:318 — "Please describe your reason / situation" → authPleaseDescribeReason
+- register_screen.dart:326 — "Please select a guarantor" → authPleaseSelectGuarantor
+- register_screen.dart:334 — "Please enter your relationship to the guarantor" → authPleaseEnterGuarantorRelationship
+- register_screen.dart:387 — debugPrint('ID pre-check: image compression failed') → (excluded — debug log)
+- register_screen.dart:406 — debugPrint('ID pre-check failed: $e') → (excluded — debug log)
+- register_screen.dart:476 — "AI pre-check unavailable — registration will be reviewed manually." → authAiPrecheckUnavailable
+- register_screen.dart:477 — "Registration successful! Waiting for admin approval..." → authRegistrationSuccessful
+- register_screen.dart:486 — "Registration failed" → authRegistrationFailed
+- register_screen.dart:498 — "Account" → authStepAccountLabel
+- register_screen.dart:498 — "Personal" → authStepPersonalLabel
+- register_screen.dart:498 — "Address" → commonAddress
+- register_screen.dart:498 — "Documents" → commonDocuments
+- register_screen.dart:535 — "Create Account" → authCreateAccountTitle
+- register_screen.dart:544 — "Step ${_currentStep + 1}/4" → authStepProgress
+- register_screen.dart:657 — "Back" → commonBack
+- register_screen.dart:702 — "Checking your ID..." → authCheckingId
+- register_screen.dart:712 — "Submit Registration" → authSubmitRegistration
+- register_screen.dart:713 — "Continue" → commonContinue
+- register_screen.dart:738 — "Account Information" → authAccountInfoTitle
+- register_screen.dart:738 — "Set up your login credentials." → authAccountInfoSubtitle
+- register_screen.dart:744 — "Email Address" → commonEmail
+- register_screen.dart:748 — "Email is required" → authEmailRequired
+- register_screen.dart:749 — "Enter a valid email" → authEmailInvalid
+- register_screen.dart:757 — "Username" → commonUsername
+- register_screen.dart:761 — "Username is required" → authUsernameRequired
+- register_screen.dart:762 — "Must be at least 3 characters" → authUsernameMinLength
+- register_screen.dart:771 — "Password" → commonPassword
+- register_screen.dart:784 — "Password is required" → authPasswordRequired
+- register_screen.dart:785 — "Must be at least 6 characters" → authPasswordMinLength
+- register_screen.dart:794 — "Confirm Password" → authConfirmPasswordLabel
+- register_screen.dart:808 — "Please confirm password" → authConfirmPasswordRequired
+- register_screen.dart:826 — "Personal Information" → authPersonalInfoTitle
+- register_screen.dart:826 — "Tell us about yourself." → authPersonalInfoSubtitle
+- register_screen.dart:831 — "Given Name *" → authGivenNameLabel
+- register_screen.dart:833 — "First name" → authGivenNameHint
+- register_screen.dart:836 — "Given name is required" → authGivenNameRequired
+- register_screen.dart:842 — "Middle Name (optional)" → authMiddleNameLabel
+- register_screen.dart:844 — "Middle name or initial" → authMiddleNameHint
+- register_screen.dart:851 — "Last Name *" → authLastNameLabel
+- register_screen.dart:853 — "Surname" → authLastNameHint
+- register_screen.dart:856 — "Last name is required" → authLastNameRequired
+- register_screen.dart:873 — "Date of Birth (tap to select)" → authDateOfBirthTapToSelect
+- register_screen.dart:874 — "Date of Birth: ${day}/${month}/${year}" → authDateOfBirthSelected
+- register_screen.dart:884 — "Place of Birth" → commonPlaceOfBirth
+- register_screen.dart:888 — "Place of birth is required" → authPlaceOfBirthRequired
+- register_screen.dart:895 — "Gender" → commonGender
+- register_screen.dart:899 — "Male" → commonMale
+- register_screen.dart:900 — "Female" → commonFemale
+- register_screen.dart:901 — "Other" → commonOther
+- register_screen.dart:908 — "Civil Status" → commonCivilStatus
+- register_screen.dart:913 — "Single" → commonSingle
+- register_screen.dart:914 — "Married" → commonMarried
+- register_screen.dart:915 — "Widowed" → commonWidowed
+- register_screen.dart:916 — "Divorced" → commonDivorced
+- register_screen.dart:925 — "Phone Number" → commonPhoneNumber
+- register_screen.dart:929 — "Phone number is required" → authPhoneRequired
+- register_screen.dart:945 — "Address Information" → authAddressInfoTitle
+- register_screen.dart:945 — "Where do you currently reside?" → authAddressInfoSubtitle
+- register_screen.dart:960 — "Please provide your complete address within Barangay Guion." → authAddressNotice
+- register_screen.dart:972 — "Complete Address" → authCompleteAddressLabel
+- register_screen.dart:974 — "House No., Street, Purok, Barangay Guion" → authAddressHint
+- register_screen.dart:978 — "Address is required" → authAddressRequired
+- register_screen.dart:995 — "Identity Verification" → authIdentityVerificationTitle
+- register_screen.dart:996 — "Required for registration review." → authIdentityVerificationSubtitle
+- register_screen.dart:1003 — "Profile Photo" → commonProfilePhoto
+- register_screen.dart:1004 — "Clear selfie or portrait photo" → authProfilePhotoSubtitle
+- register_screen.dart:1084 — "I have no valid government ID (indigent)" → authIndigentOptionLabel
+- register_screen.dart:1092 — "A barangay official will review your registration with a guarantor." → authIndigentOptionSubtitle
+- register_screen.dart:1147 — "Live Selfie (Liveness)" → authLiveSelfieLabel
+- register_screen.dart:1155 — "Camera capture with guided challenge" → authLiveSelfieSubtitle
+- register_screen.dart:1173 — "Tap to Capture" → authTapToCapture
+- register_screen.dart:1220 — "Liveness selfie" → authLivenessSelfieBadge
+- register_screen.dart:1235 — "ID Type *" → authIdTypeLabel
+- register_screen.dart:1242 — KycIdTypes.labels[t] → (excluded — model value)
+- register_screen.dart:1247 — "Please select an ID type" → authPleaseSelectIdType
+- register_screen.dart:1255 — "ID Number *" → authIdNumberLabel
+- register_screen.dart:1257 — "Enter the ID number printed on your document" → authIdNumberHint
+- register_screen.dart:1260 — "ID number is required" → authIdNumberRequired
+- register_screen.dart:1282 — "Date Issued (optional)" → authDateIssuedOptional
+- register_screen.dart:1283 — "Issued: ${day}/${month}/${year}" → authIdIssuedSelected
+- register_screen.dart:1305 — "Expiry Date (optional)" → authExpiryDateOptional
+- register_screen.dart:1307 — "Expires: ${day}/${month}/${year}" → authIdExpirySelected
+- register_screen.dart:1323 — "ID (front) *" → authIdFrontLabel
+- register_screen.dart:1324 — "Front side — photo and details" → authIdFrontSubtitle
+- register_screen.dart:1332 — "ID (back)" → authIdBackLabel
+- register_screen.dart:1334 — "Back side — optional" → authIdBackSubtitle
+- register_screen.dart:1350 — "Reason / situation *" → authReasonSituationLabel
+- register_screen.dart:1351 — "e.g. no valid ID issued" → authReasonSituationHint
+- register_screen.dart:1356 — "Please describe your reason / situation" → authPleaseDescribeReason
+- register_screen.dart:1365 — "Relationship to Guarantor *" → authGuarantorRelationshipLabel
+- register_screen.dart:1366 — "e.g. neighbor, relative, barangay kagawad" → authGuarantorRelationshipHint
+- register_screen.dart:1370 — "Please enter your relationship to the guarantor" → authPleaseEnterGuarantorRelationship
+- register_screen.dart:1419 — "Select Guarantor *" → authSelectGuarantorLabel
+- register_screen.dart:1436 — "@${_selectedGuarantor!.username}" → (excluded — dynamic username)
+- register_screen.dart:1472 — "Your registration will be reviewed by a barangay official with your guarantor." → authInfoBoxIndigent
+- register_screen.dart:1473 — "Your ID and selfie are pre-checked automatically at submission. Anything the pre-check cannot confirm is reviewed by a barangay official." → authInfoBoxStandard
+- register_screen.dart:1574 — "Tap to Upload" → commonTapToUpload
+- register_screen.dart:1697 — "Tap to Upload" → commonTapToUpload
+- register_screen.dart:1758 — "Blink your eyes" → authChallengeBlink
+- register_screen.dart:1759 — "Turn your head left" → authChallengeTurnLeft
+- register_screen.dart:1760 — "Turn your head right" → authChallengeTurnRight
+- register_screen.dart:1761 — "Look up" → authChallengeLookUp
+- register_screen.dart:1762 — "Smile" → authChallengeSmile
+- register_screen.dart:1786 — "No camera available" → authNoCameraAvailable
+- register_screen.dart:1811 — "Camera error: $e" → authCameraError
+- register_screen.dart:1836 — "Capture failed: $e" → authCaptureFailed
+- register_screen.dart:1865 — "Liveness Verification" → authLivenessVerificationTitle
+- register_screen.dart:1925 — "Follow the challenge, then tap capture" → authFollowChallengeHint
+- register_screen.dart:1939 — "New challenge" → authNewChallenge
+- register_screen.dart:2019 — "Select Guarantor" → authSelectGuarantorDialogTitle
+- register_screen.dart:2026 — "Search by name or username..." → authGuarantorSearchHint
+- register_screen.dart:2038 — "No approved citizens found" → authNoApprovedCitizens
+- register_screen.dart:2055 — u.fullName → (excluded — model value)
+- register_screen.dart:2056 — "@${u.username}" → (excluded — dynamic username)

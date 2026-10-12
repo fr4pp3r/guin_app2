@@ -5,6 +5,7 @@ import 'package:guin_app/providers/user_provider.dart';
 import 'package:guin_app/providers/document_provider.dart';
 import 'package:guin_app/utils/role_access.dart';
 import 'package:guin_app/config/routes.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -111,6 +112,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
         automaticallyImplyLeading: false,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person_outline_rounded),
+            tooltip: 'My Profile',
+            onPressed: () => Navigator.of(context).pushNamed('/admin/profile'),
+          ),
           IconButton(
             icon: const Icon(Icons.logout_rounded),
             tooltip: 'Logout',

@@ -1,0 +1,77 @@
+{
+  "myRequestsTitle": { "en": "My Requests", "fil": "Aking mga Kahilingan", "ceb": "Akong mga Hangyo" },
+  "myRequestsSubtitle": { "en": "Track your document requests", "fil": "Subaybayan ang iyong mga kahilingan ng dokumento", "ceb": "Subaya ang imong mga hangyo sa dokumento" },
+  "myIncidentReportsTitle": { "en": "My Incident Reports", "fil": "Aking mga Ulat ng Insidente", "ceb": "Akong mga Report sa Insidente" },
+  "myReportsTitle": { "en": "My Reports", "fil": "Aking mga Ulat", "ceb": "Akong mga Report" },
+  "myReportsSubtitle": { "en": "Track your submitted reports", "fil": "Subaybayan ang iyong mga isinumiteng ulat", "ceb": "Subaya ang imong gisumite nga mga report" },
+  "notificationsTitle": { "en": "Notifications", "fil": "Mga Abiso", "ceb": "Mga Pahibalo" },
+  "notificationsSubtitle": { "en": "Stay updated on your requests", "fil": "Manatiling updated sa iyong mga kahilingan", "ceb": "Pagpabiling updated sa imong mga hangyo" },
+
+  "citizenWelcomeBack": { "en": "Welcome back!", "fil": "Maligayang pagbabalik!", "ceb": "Maayong pagbalik!" },
+  "citizenFallbackName": { "en": "User", "fil": "Gumagamit", "ceb": "Tiggamit" },
+  "citizenLogoutConfirm": { "en": "Are you sure you want to logout?", "fil": "Sigurado ka bang gusto mong mag-logout?", "ceb": "Sigurado ka bang gusto nimong mag-logout?" },
+
+  "citizenQuickActions": { "en": "Quick Actions", "fil": "Mabilis na Aksyon", "ceb": "Paspas nga mga Aksyon" },
+  "citizenRequestDocument": { "en": "Request Document", "fil": "Humiling ng Dokumento", "ceb": "Maghangyo og Dokumento" },
+  "citizenReportIncident": { "en": "Report Incident", "fil": "Iulat ang Insidente", "ceb": "Ireport ang Insidente" },
+  "citizenVerifyDocument": { "en": "Verify Document", "fil": "I-verify ang Dokumento", "ceb": "I-verify ang Dokumento" },
+
+  "citizenYourRequests": { "en": "Your Requests", "fil": "Iyong mga Kahilingan", "ceb": "Imong mga Hangyo" },
+  "citizenStatTotal": { "en": "Total", "fil": "Kabuuan", "ceb": "Kinatibuk-an" },
+  "citizenStatPending": { "en": "Pending", "fil": "Naghihintay", "ceb": "Nagpaabot" },
+  "citizenStatApproved": { "en": "Approved", "fil": "Aprubado", "ceb": "Aprobado" },
+
+  "citizenRecentRequests": { "en": "Recent Requests", "fil": "Mga Kamakailang Kahilingan", "ceb": "Mga Bag-ong Hangyo" },
+  "citizenViewAll": { "en": "View All", "fil": "Tingnan Lahat", "ceb": "Tan-awa Tanan" },
+  "citizenLoadingRequests": { "en": "Loading your requests...", "fil": "Naglo-load ang iyong mga kahilingan...", "ceb": "Gikarga ang imong mga hangyo..." },
+  "citizenNoRequests": { "en": "No requests yet", "fil": "Wala pang kahilingan", "ceb": "Wala pa'y hangyo" },
+  "citizenCreateFirstRequest": { "en": "Create your first document request", "fil": "Gumawa ng iyong unang kahilingan ng dokumento", "ceb": "Paghimo sa imong unang hangyo sa dokumento" },
+
+  "citizenRequestedLabel": { "en": "Requested: {date}", "fil": "Hiniling: {date}", "ceb": "Gihangyo: {date}" },
+  "@citizenRequestedLabel": { "placeholders": { "date": { "type": "String", "example": "Jan 5, 2026" } } },
+  "citizenRequestedAt": { "en": "Requested {date}", "fil": "Hiniling {date}", "ceb": "Gihangyo {date}" },
+  "@citizenRequestedAt": { "placeholders": { "date": { "type": "String", "example": "Jan 5, 2026" } } },
+
+  "citizenFilterAll": { "en": "All", "fil": "Lahat", "ceb": "Tanan" },
+  "citizenFilterPending": { "en": "Pending", "fil": "Naghihintay", "ceb": "Nagpaabot" },
+  "citizenFilterPayment": { "en": "Payment", "fil": "Bayad", "ceb": "Bayad" },
+  "citizenFilterApproved": { "en": "Approved", "fil": "Aprubado", "ceb": "Aprobado" },
+  "citizenFilterRejected": { "en": "Rejected", "fil": "Tinanggihan", "ceb": "Gisalikway" },
+
+  "citizenNoRequestsFound": { "en": "No requests found", "fil": "Walang nahanap na kahilingan", "ceb": "Walay nakit-an nga hangyo" },
+  "citizenNoFilteredRequestsFound": { "en": "No {filter} found", "fil": "Walang nahanap na {filter}", "ceb": "Walay nakit-an nga {filter}" },
+  "@citizenNoFilteredRequestsFound": { "placeholders": { "filter": { "type": "String", "example": "Pending" } } },
+  "citizenPullDownToRefresh": { "en": "Pull down to refresh", "fil": "Hilahin pababa upang i-refresh", "ceb": "Biraha paubos aron ma-refresh" },
+
+  "citizenViewDocument": { "en": "View Document", "fil": "Tingnan ang Dokumento", "ceb": "Tan-awa ang Dokumento" },
+  "citizenPaymentRequiredTitle": { "en": "Request Verified — Payment Required", "fil": "Na-verify ang Kahilingan — Kailangan ng Bayad", "ceb": "Na-verify ang Hangyo — Kinahanglan og Bayad" },
+  "citizenPayAmountPrompt": { "en": "Pay ₱{amount} to receive your document.", "fil": "Magbayad ng ₱{amount} upang matanggap ang iyong dokumento.", "ceb": "Magbayad og ₱{amount} aron madawat ang imong dokumento." },
+  "@citizenPayAmountPrompt": { "placeholders": { "amount": { "type": "num", "example": "25.00" } } },
+  "citizenUploadPaymentReceipt": { "en": "Upload Payment Receipt", "fil": "I-upload ang Resibo ng Bayad", "ceb": "I-upload ang Resibo sa Bayad" },
+  "citizenPaymentAwaitingVerification": { "en": "Payment receipt uploaded. Awaiting admin verification.", "fil": "Nai-upload na ang resibo ng bayad. Naghihintay ng beripikasyon ng admin.", "ceb": "Na-upload na ang resibo sa bayad. Nagpaabot sa beripikasyon sa admin." },
+  "citizenRequestUnderReview": { "en": "Your request is under review by our staff.", "fil": "Sinusuri ng aming kawani ang iyong kahilingan.", "ceb": "Gisusi sa among kawani ang imong hangyo." },
+
+  "citizenSavedRequestsHint": { "en": "Showing your last saved requests.", "fil": "Ipinapakita ang iyong huling na-save na mga kahilingan.", "ceb": "Gipakita ang imong kataposang na-save nga mga hangyo." },
+  "citizenSavedRequestsFrom": { "en": "Showing saved requests from {time}.", "fil": "Ipinapakita ang mga na-save na kahilingan mula {time}.", "ceb": "Gipakita ang mga na-save nga hangyo gikan {time}." },
+  "@citizenSavedRequestsFrom": { "placeholders": { "time": { "type": "String", "example": "2:14 PM" } } },
+  "citizenSavedReportsHint": { "en": "Showing your last saved reports.", "fil": "Ipinapakita ang iyong huling na-save na mga ulat.", "ceb": "Gipakita ang imong kataposang na-save nga mga report." },
+  "citizenSavedReportsFrom": { "en": "Showing saved reports from {time}.", "fil": "Ipinapakita ang mga na-save na ulat mula {time}.", "ceb": "Gipakita ang mga na-save nga report gikan {time}." },
+  "@citizenSavedReportsFrom": { "placeholders": { "time": { "type": "String", "example": "2:14 PM" } } },
+  "citizenYesterdayAt": { "en": "yesterday at {time}", "fil": "kahapon nang {time}", "ceb": "gahapon sa {time}" },
+  "@citizenYesterdayAt": { "placeholders": { "time": { "type": "String", "example": "2:14 PM" } } },
+  "citizenDateAtTime": { "en": "{date} at {time}", "fil": "{date} nang {time}", "ceb": "{date} sa {time}" },
+  "@citizenDateAtTime": { "placeholders": { "date": { "type": "String", "example": "Oct 10" }, "time": { "type": "String", "example": "2:14 PM" } } },
+
+  "citizenNoReports": { "en": "No incident reports yet", "fil": "Wala pang ulat ng insidente", "ceb": "Wala pa'y report sa insidente" },
+  "citizenNoReportsHint": { "en": "Tap the button below to submit a report", "fil": "Pindutin ang button sa ibaba upang magsumite ng ulat", "ceb": "Pindota ang button sa ubos aron magsumite og report" },
+  "citizenLoadReportsError": { "en": "Couldn't load your reports", "fil": "Hindi ma-load ang iyong mga ulat", "ceb": "Wala ma-load ang imong mga report" },
+  "citizenLoadReportsErrorMessage": { "en": "Your reports didn't load. Check your connection and try again.", "fil": "Hindi na-load ang iyong mga ulat. Suriin ang iyong koneksyon at subukan muli.", "ceb": "Wala ma-load ang imong mga report. Susiha ang imong koneksyon ug sulayi pag-usab." },
+
+  "notificationsMarkAllRead": { "en": "Mark all read", "fil": "Markahan lahat bilang nabasa", "ceb": "Markahi tanan nga nabasa" },
+  "notificationsLoadError": { "en": "Couldn't load notifications", "fil": "Hindi ma-load ang mga abiso", "ceb": "Wala ma-load ang mga pahibalo" },
+  "notificationsLoadErrorMessage": { "en": "Your notifications didn't load. Check your connection and try again.", "fil": "Hindi na-load ang iyong mga abiso. Suriin ang iyong koneksyon at subukan muli.", "ceb": "Wala ma-load ang imong mga pahibalo. Susiha ang imong koneksyon ug sulayi pag-usab." },
+  "notificationsEmpty": { "en": "No notifications yet", "fil": "Wala pang abiso", "ceb": "Wala pa'y pahibalo" },
+  "notificationsEmptyHint": { "en": "Notifications will appear here when you have activity", "fil": "Lalabas dito ang mga abiso kapag may aktibidad ka", "ceb": "Makita dinhi ang mga pahibalo kung naa kay kalihokan" },
+  "notificationsSectionNew": { "en": "New", "fil": "Bago", "ceb": "Bag-o" },
+  "notificationsSectionEarlier": { "en": "Earlier", "fil": "Mas maaga", "ceb": "Mas sayo" }
+}

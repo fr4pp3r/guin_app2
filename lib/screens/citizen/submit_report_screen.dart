@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/incident_report_provider.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/services/ai_incident_classifier.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
@@ -40,8 +41,9 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
     final title = _titleController.text.trim();
     final description = _descriptionController.text.trim();
     if (description.isEmpty) {
+      final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Type a short description first')),
+        SnackBar(content: Text(l10n.reportTypeDescriptionFirst)),
       );
       return;
     }
@@ -88,9 +90,10 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
         priority: _priority,
       );
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Incident report submitted successfully'),
+        SnackBar(
+          content: Text(l10n.reportSubmittedSuccess),
           backgroundColor: Colors.green,
         ),
       );
@@ -120,6 +123,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: Column(
@@ -155,21 +159,21 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                       size: 22,
                     ),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Submit Incident Report',
-                            style: TextStyle(
+                            l10n.reportTitle,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                           Text(
-                            'Report an incident to Barangay Guion',
-                            style: TextStyle(
+                            l10n.reportSubtitle,
+                            style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 12,
                             ),
@@ -191,37 +195,37 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
                 children: [
                   // Report type & priority row
-                  _sectionLabel('Report Details'),
+                  _sectionLabel(l10n.reportSectionDetails),
                   const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(
                         child: DropdownButtonFormField<String>(
                           value: _reportType,
-                          decoration: const InputDecoration(
-                            labelText: 'Type',
-                            prefixIcon: Icon(Icons.category_outlined),
+                          decoration: InputDecoration(
+                            labelText: l10n.reportTypeLabel,
+                            prefixIcon: const Icon(Icons.category_outlined),
                           ),
-                          items: const [
+                          items: [
                             DropdownMenuItem(
                               value: 'complaint',
-                              child: Text('Complaint'),
+                              child: Text(l10n.reportTypeComplaint),
                             ),
                             DropdownMenuItem(
                               value: 'disturbance',
-                              child: Text('Disturbance'),
+                              child: Text(l10n.reportTypeDisturbance),
                             ),
                             DropdownMenuItem(
                               value: 'threat',
-                              child: Text('Threat'),
+                              child: Text(l10n.reportTypeThreat),
                             ),
                             DropdownMenuItem(
                               value: 'emergency',
-                              child: Text('Emergency'),
+                              child: Text(l10n.reportTypeEmergency),
                             ),
                             DropdownMenuItem(
                               value: 'other',
-                              child: Text('Other'),
+                              child: Text(l10n.commonOther),
                             ),
                           ],
                           onChanged: (v) {
@@ -237,21 +241,33 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                         child: DropdownButtonFormField<String>(
                           value: _priority,
                           decoration: InputDecoration(
-                            labelText: 'Priority',
+                            labelText: l10n.reportPriorityLabel,
                             prefixIcon: Icon(
                               Icons.flag_outlined,
                               color: _priorityColor(_priority),
                             ),
                           ),
                           items: [
-                            _priorityItem('low', 'Low', Colors.green),
+                            _priorityItem(
+                              'low',
+                              l10n.reportPriorityLow,
+                              Colors.green,
+                            ),
                             _priorityItem(
                               'normal',
-                              'Normal',
+                              l10n.reportPriorityNormal,
                               AppColors.primary,
                             ),
-                            _priorityItem('high', 'High', Colors.orange),
-                            _priorityItem('urgent', 'Urgent', Colors.red),
+                            _priorityItem(
+                              'high',
+                              l10n.reportPriorityHigh,
+                              Colors.orange,
+                            ),
+                            _priorityItem(
+                              'urgent',
+                              l10n.reportPriorityUrgent,
+                              Colors.red,
+                            ),
                           ],
                           onChanged: (v) {
                             setState(() {
@@ -277,66 +293,68 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Icon(Icons.auto_awesome, size: 18),
-                        label: const Text('AI suggest category'),
+                        label: Text(l10n.reportAiSuggestCategory),
                       ),
                     ],
                   ),
                   if (_aiSuggestionApplied && _aiSuggestion != null) ...[
                     const SizedBox(height: 4),
-                    const Text(
-                      'Category and priority suggested by AI — you can still change them.',
-                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    Text(
+                      l10n.reportAiSuggestedNote,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _titleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Incident Title',
-                      prefixIcon: Icon(Icons.title),
-                      hintText: 'Brief, clear title',
+                    decoration: InputDecoration(
+                      labelText: l10n.reportIncidentTitleLabel,
+                      prefixIcon: const Icon(Icons.title),
+                      hintText: l10n.reportIncidentTitleHint,
                     ),
                     validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Title is required'
+                        ? l10n.reportTitleRequired
                         : null,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _locationController,
-                    decoration: const InputDecoration(
-                      labelText: 'Location',
-                      prefixIcon: Icon(Icons.location_on_outlined),
-                      hintText: 'Where did this happen?',
+                    decoration: InputDecoration(
+                      labelText: l10n.reportLocationLabel,
+                      prefixIcon: const Icon(Icons.location_on_outlined),
+                      hintText: l10n.reportLocationHint,
                     ),
                     validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Location is required'
+                        ? l10n.reportLocationRequired
                         : null,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _descriptionController,
                     maxLines: 5,
-                    decoration: const InputDecoration(
-                      labelText: 'Description',
-                      prefixIcon: Icon(Icons.description_outlined),
-                      hintText: 'Describe the incident in detail...',
+                    decoration: InputDecoration(
+                      labelText: l10n.reportDescriptionLabel,
+                      prefixIcon: const Icon(Icons.description_outlined),
+                      hintText: l10n.reportDescriptionHint,
                       alignLabelWithHint: true,
                     ),
                     validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Description is required'
+                        ? l10n.reportDescriptionRequired
                         : null,
                   ),
                   const SizedBox(height: 24),
 
                   // Privacy options
-                  _sectionLabel('Privacy Options'),
+                  _sectionLabel(l10n.reportSectionPrivacy),
                   const SizedBox(height: 8),
                   _optionTile(
                     icon: Icons.lock_outlined,
                     iconColor: Colors.orange,
-                    title: 'Mark as Sensitive',
-                    subtitle:
-                        'Use for threats or safety-risk reports requiring restricted access',
+                    title: l10n.reportMarkSensitive,
+                    subtitle: l10n.reportMarkSensitiveSubtitle,
                     value: _isSensitive,
                     onChanged: (v) => setState(() => _isSensitive = v),
                   ),
@@ -344,9 +362,8 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                   _optionTile(
                     icon: Icons.visibility_off_outlined,
                     iconColor: Colors.purple,
-                    title: 'Submit Anonymously',
-                    subtitle:
-                        'Your identity is hidden; all access is audited by admin',
+                    title: l10n.reportSubmitAnonymously,
+                    subtitle: l10n.reportSubmitAnonymouslySubtitle,
                     value: _isAnonymous,
                     onChanged: (v) => setState(() => _isAnonymous = v),
                   ),
@@ -374,7 +391,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                   )
                 : const Icon(Icons.send_outlined),
             label: Text(
-              _isSubmitting ? 'Submitting...' : 'Submit Report',
+              _isSubmitting ? l10n.reportSubmitting : l10n.reportSubmitButton,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
             style: ElevatedButton.styleFrom(

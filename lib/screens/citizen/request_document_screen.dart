@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/document_provider.dart';
 import 'package:guin_app/providers/barangay_provider.dart';
@@ -260,8 +261,9 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to pick receipt image')),
+          SnackBar(content: Text(l10n.reqDocFailedPickReceipt)),
         );
       }
     }
@@ -343,16 +345,17 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
 
   Future<void> _runAiCheck() async {
     if (_aiProcessing) return;
+    final l10n = AppLocalizations.of(context);
     if (_selectedDocumentType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select a document type first')),
+        SnackBar(content: Text(l10n.reqDocSelectTypeFirst)),
       );
       return;
     }
     final purpose = _effectivePurpose;
     if (purpose.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a purpose first')),
+        SnackBar(content: Text(l10n.reqDocEnterPurposeFirst)),
       );
       return;
     }
@@ -371,7 +374,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         _aiSuggestionApplied = true;
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('AI check unavailable')),
+          SnackBar(content: Text(l10n.reqDocAiUnavailable)),
         );
       }
     });
@@ -397,9 +400,10 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
       _aiSuggestionApplied = false;
       _aiSuggestion = null;
     });
+    final l10n = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Suggestions applied — review the fields and submit'),
+      SnackBar(
+        content: Text(l10n.reqDocSuggestionsApplied),
       ),
     );
   }
@@ -409,6 +413,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
     if (!_aiSuggestionApplied || suggestion == null) {
       return const SizedBox.shrink();
     }
+    final l10n = AppLocalizations.of(context);
     final hasFindings = suggestion.issues.isNotEmpty ||
         suggestion.suggestions.isNotEmpty ||
         suggestion.normalizedPurpose.trim().isNotEmpty;
@@ -422,11 +427,11 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (!hasFindings)
-              const Text('Details verified — submitting as entered')
+              Text(l10n.reqDocDetailsVerified)
             else ...[
-              const Text(
-                'Issues found',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              Text(
+                l10n.reqDocIssuesFound,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               if (suggestion.issues.isNotEmpty)
@@ -438,9 +443,9 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                 ),
               if (suggestion.suggestions.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                const Text(
-                  'AI suggestions',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                Text(
+                  l10n.reqDocAiSuggestions,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
                 ...suggestion.suggestions.entries.map(
@@ -449,14 +454,14 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
               ],
               if (suggestion.normalizedPurpose.trim().isNotEmpty) ...[
                 const SizedBox(height: 8),
-                Text('Normalized purpose: ${suggestion.normalizedPurpose}'),
+                Text(l10n.reqDocNormalizedPurpose(suggestion.normalizedPurpose)),
               ],
               const SizedBox(height: 12),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: _applyAiSuggestions,
-                  child: const Text('Apply suggestions'),
+                  child: Text(l10n.reqDocApplySuggestions),
                 ),
               ),
             ],
@@ -467,17 +472,18 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
   }
 
   Future<void> _submitRequest() async {
+    final l10n = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
     if (_selectedDocumentType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a document type')),
+        SnackBar(content: Text(l10n.reqDocPleaseSelectType)),
       );
       return;
     }
     if (_selectedOption?.family == _FormFamily.cedula &&
         _cedulaBirthDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select your birth date')),
+        SnackBar(content: Text(l10n.reqDocPleaseSelectBirthDate)),
       );
       return;
     }
@@ -502,12 +508,10 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Request submitted! Please wait for admin verification.',
-          ),
+        SnackBar(
+          content: Text(l10n.reqDocRequestSubmitted),
           backgroundColor: Colors.green,
-          duration: Duration(seconds: 3),
+          duration: const Duration(seconds: 3),
         ),
       );
 
@@ -525,9 +529,10 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
   }
 
   Future<void> _uploadReceipt() async {
+    final l10n = AppLocalizations.of(context);
     if (_receiptImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select receipt image')),
+        SnackBar(content: Text(l10n.reqDocSelectReceiptImage)),
       );
       return;
     }
@@ -553,8 +558,8 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Receipt uploaded! Waiting for admin verification.'),
+        SnackBar(
+          content: Text(l10n.reqDocReceiptUploaded),
           backgroundColor: Colors.green,
         ),
       );
@@ -572,9 +577,10 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Request Document'),
+        title: Text(l10n.reqDocTitle),
         backgroundColor: Colors.blue,
       ),
       body: SingleChildScrollView(
@@ -586,9 +592,9 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
             children: [
               if (!_showPaymentSection) ...[
                 // Document Type Selection
-                const Text(
-                  'Select Document Type',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Text(
+                  l10n.reqDocSelectDocumentType,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 _buildDocumentTypeSection(),
@@ -600,14 +606,14 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                   TextFormField(
                     controller: _purposeController,
                     maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'Purpose',
-                      border: OutlineInputBorder(),
-                      hintText: 'Briefly describe the purpose of this request',
+                    decoration: InputDecoration(
+                      labelText: l10n.commonPurpose,
+                      border: const OutlineInputBorder(),
+                      hintText: l10n.reqDocPurposeHint,
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter the purpose';
+                        return l10n.reqDocPleaseEnterPurpose;
                       }
                       return null;
                     },
@@ -635,7 +641,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.auto_awesome),
-                    label: const Text('AI check details'),
+                    label: Text(l10n.reqDocAiCheckDetails),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -660,7 +666,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                                 ),
                               ),
                             )
-                          : const Text('Submit Request'),
+                          : Text(l10n.reqDocSubmitRequest),
                     );
                   },
                 ),
@@ -675,13 +681,14 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
 
   Widget _buildDocumentTypeSection() {
     final barangayProvider = context.watch<BarangayProvider>();
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: Text(
-            'Certificates & Clearances',
+            l10n.reqDocCertificatesClearances,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -700,9 +707,10 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
   }
 
   String _feeLabelFor(BarangayProvider provider, String type) {
+    final l10n = AppLocalizations.of(context);
     final fee = provider.getFeeByType(type);
-    if (fee == null || fee.feeAmount == 0) return 'Free';
-    return 'Fee: ₱${fee.feeAmount.toStringAsFixed(2)}';
+    if (fee == null || fee.feeAmount == 0) return l10n.reqDocFeeFree;
+    return l10n.reqDocFeeLabel(fee.feeAmount.toStringAsFixed(2));
   }
 
   Widget _buildDocumentTypeCard(
@@ -710,6 +718,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
     required String feeLabel,
   }) {
     final isSelected = _selectedDocumentType == option.type;
+    final l10n = AppLocalizations.of(context);
 
     return GestureDetector(
       onTap: () {
@@ -751,7 +760,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    option.description,
+                    _documentTypeDescription(option, l10n),
                     style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                   const SizedBox(height: 4),
@@ -773,6 +782,36 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
     );
   }
 
+  /// Localized description for a document type option. Official document
+  /// titles stay as-is; descriptions come from l10n.
+  String _documentTypeDescription(
+    _DocumentTypeOption option,
+    AppLocalizations l10n,
+  ) {
+    switch (option.type) {
+      case 'business_clearance':
+        return l10n.reqDocBusinessClearanceDesc;
+      case 'certification':
+        return l10n.reqDocCertificationDesc;
+      case 'barangay_clearance':
+        return l10n.reqDocBarangayClearanceDesc;
+      case 'oath_undertaking':
+        return l10n.reqDocOathUndertakingDesc;
+      case 'indigency':
+        return l10n.reqDocIndigencyDesc;
+      case 'good_moral':
+        return l10n.reqDocGoodMoralDesc;
+      case 'residency':
+        return l10n.reqDocResidencyDesc;
+      case 'cedula':
+        return l10n.reqDocCedulaDesc;
+      case 'barangay_id':
+        return l10n.reqDocBarangayIdDesc;
+      default:
+        return option.description;
+    }
+  }
+
   Widget _buildSelectedForm() {
     switch (_selectedOption?.family) {
       case _FormFamily.barangayId:
@@ -787,68 +826,74 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
   }
 
   Widget _buildBarangayIdFields() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Barangay ID Details',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        Text(
+          l10n.reqDocBarangayIdDetails,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _idFullNameController,
-          decoration: const InputDecoration(
-            labelText: 'Full Name',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.commonFullName,
+            border: const OutlineInputBorder(),
           ),
-          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+          validator: (value) =>
+              value?.isEmpty ?? true ? l10n.commonRequired : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _idAddressController,
-          decoration: const InputDecoration(
-            labelText: 'Address',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.commonAddress,
+            border: const OutlineInputBorder(),
           ),
-          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+          validator: (value) =>
+              value?.isEmpty ?? true ? l10n.commonRequired : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _idContactController,
           keyboardType: TextInputType.phone,
-          decoration: const InputDecoration(
-            labelText: 'Contact Number',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.commonPhoneNumber,
+            border: const OutlineInputBorder(),
           ),
-          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+          validator: (value) =>
+              value?.isEmpty ?? true ? l10n.commonRequired : null,
         ),
       ],
     );
   }
 
   Widget _buildIndigencyFields() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${_selectedOption?.title ?? 'Document'} Details',
+          l10n.reqDocDocumentDetails(_selectedOption?.title ?? 'Document'),
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _indigencyFullNameController,
-          decoration: const InputDecoration(
-            labelText: 'Name',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.commonFullName,
+            border: const OutlineInputBorder(),
           ),
-          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+          validator: (value) =>
+              value?.isEmpty ?? true ? l10n.commonRequired : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _indigencyAddressController,
-          decoration: const InputDecoration(
-            labelText: 'Address',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.commonAddress,
+            border: const OutlineInputBorder(),
           ),
         ),
         const SizedBox(height: 16),
@@ -858,9 +903,9 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
               child: TextFormField(
                 controller: _indigencyAgeController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Age',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.commonAge,
+                  border: const OutlineInputBorder(),
                 ),
               ),
             ),
@@ -868,9 +913,9 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
             Expanded(
               child: TextFormField(
                 controller: _indigencyCivilStatusController,
-                decoration: const InputDecoration(
-                  labelText: 'Civil Status',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.commonCivilStatus,
+                  border: const OutlineInputBorder(),
                 ),
               ),
             ),
@@ -879,46 +924,48 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _indigencyRequesterController,
-          decoration: const InputDecoration(
-            labelText: 'Requester',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.reqDocRequester,
+            border: const OutlineInputBorder(),
           ),
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _indigencyRequesterAddressController,
-          decoration: const InputDecoration(
-            labelText: "Requester's Address",
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.reqDocRequesterAddress,
+            border: const OutlineInputBorder(),
           ),
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _indigencyPurposeController,
           maxLines: 2,
-          decoration: const InputDecoration(
-            labelText: 'Purpose',
-            border: OutlineInputBorder(),
-            hintText: 'e.g., Medical assistance, Educational support',
+          decoration: InputDecoration(
+            labelText: l10n.commonPurpose,
+            border: const OutlineInputBorder(),
+            hintText: l10n.reqDocPurposeHintExample,
           ),
-          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+          validator: (value) =>
+              value?.isEmpty ?? true ? l10n.commonRequired : null,
         ),
       ],
     );
   }
 
   Widget _buildCedulaFields() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${_selectedOption?.title ?? 'Document'} Details',
+          l10n.reqDocDocumentDetails(_selectedOption?.title ?? 'Document'),
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         if (_selectedOption?.type == 'business_clearance') ...[
           Text(
-            'Type of Application',
+            l10n.reqDocTypeOfApplication,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -929,9 +976,9 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
           Align(
             alignment: Alignment.centerLeft,
             child: SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'NEW', label: Text('New')),
-                ButtonSegment(value: 'RENEW', label: Text('Renewal')),
+              segments: [
+                ButtonSegment(value: 'NEW', label: Text(l10n.reqDocNew)),
+                ButtonSegment(value: 'RENEW', label: Text(l10n.reqDocRenewal)),
               ],
               selected: {_businessStatus},
               onSelectionChanged: (selection) {
@@ -959,22 +1006,24 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
             Expanded(
               child: TextFormField(
                 controller: _cedulaLastNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Last Name',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.reqDocLastName,
+                  border: const OutlineInputBorder(),
                 ),
-                validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                validator: (value) =>
+                    value?.isEmpty ?? true ? l10n.commonRequired : null,
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: TextFormField(
                 controller: _cedulaFirstNameController,
-                decoration: const InputDecoration(
-                  labelText: 'First Name',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.reqDocFirstName,
+                  border: const OutlineInputBorder(),
                 ),
-                validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                validator: (value) =>
+                    value?.isEmpty ?? true ? l10n.commonRequired : null,
               ),
             ),
           ],
@@ -982,19 +1031,20 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _cedulaMiddleNameController,
-          decoration: const InputDecoration(
-            labelText: 'Middle Name',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.reqDocMiddleName,
+            border: const OutlineInputBorder(),
           ),
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _cedulaAddressController,
-          decoration: const InputDecoration(
-            labelText: 'Address',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.commonAddress,
+            border: const OutlineInputBorder(),
           ),
-          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+          validator: (value) =>
+              value?.isEmpty ?? true ? l10n.commonRequired : null,
         ),
         const SizedBox(height: 16),
         Row(
@@ -1002,12 +1052,17 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
             Expanded(
               child: DropdownButtonFormField<String>(
                 initialValue: _cedulaGender,
-                decoration: const InputDecoration(
-                  labelText: 'Gender',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.commonGender,
+                  border: const OutlineInputBorder(),
                 ),
                 items: _genders
-                    .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                    .map((g) => DropdownMenuItem(
+                          value: g,
+                          child: Text(
+                            g == 'Male' ? l10n.commonMale : l10n.commonFemale,
+                          ),
+                        ))
                     .toList(),
                 onChanged: (value) {
                   if (value == null) return;
@@ -1021,12 +1076,23 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
             Expanded(
               child: DropdownButtonFormField<String>(
                 initialValue: _cedulaCivilStatus,
-                decoration: const InputDecoration(
-                  labelText: 'Civil Status',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.commonCivilStatus,
+                  border: const OutlineInputBorder(),
                 ),
                 items: _civilStatuses
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                    .map((s) => DropdownMenuItem(
+                          value: s,
+                          child: Text(
+                            s == 'Single'
+                                ? l10n.commonSingle
+                                : s == 'Married'
+                                    ? l10n.commonMarried
+                                    : s == 'Widowed'
+                                        ? l10n.commonWidowed
+                                        : l10n.commonDivorced,
+                          ),
+                        ))
                     .toList(),
                 onChanged: (value) {
                   if (value == null) return;
@@ -1041,11 +1107,12 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _cedulaBirthPlaceController,
-          decoration: const InputDecoration(
-            labelText: 'Birth Place',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.commonPlaceOfBirth,
+            border: const OutlineInputBorder(),
           ),
-          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+          validator: (value) =>
+              value?.isEmpty ?? true ? l10n.commonRequired : null,
         ),
         const SizedBox(height: 16),
         InkWell(
@@ -1064,14 +1131,14 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
           },
           borderRadius: BorderRadius.circular(4),
           child: InputDecorator(
-            decoration: const InputDecoration(
-              labelText: 'Birth Date',
-              border: OutlineInputBorder(),
-              suffixIcon: Icon(Icons.calendar_today),
+            decoration: InputDecoration(
+              labelText: l10n.commonDateOfBirth,
+              border: const OutlineInputBorder(),
+              suffixIcon: const Icon(Icons.calendar_today),
             ),
             child: Text(
               _cedulaBirthDate == null
-                  ? 'Select birth date'
+                  ? l10n.reqDocSelectBirthDate
                   : '${_cedulaBirthDate!.day}/${_cedulaBirthDate!.month}/${_cedulaBirthDate!.year}',
             ),
           ),
@@ -1083,9 +1150,9 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
               child: TextFormField(
                 controller: _cedulaHeightController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Height (cm)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.reqDocHeight,
+                  border: const OutlineInputBorder(),
                 ),
               ),
             ),
@@ -1094,9 +1161,9 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
               child: TextFormField(
                 controller: _cedulaWeightController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Weight (kg)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.reqDocWeight,
+                  border: const OutlineInputBorder(),
                 ),
               ),
             ),
@@ -1114,26 +1181,26 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _cedulaOccupationController,
-          decoration: const InputDecoration(
-            labelText: 'Pinagkakakitaan (Trabaho/Negosyo)',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.reqDocOccupation,
+            border: const OutlineInputBorder(),
           ),
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _cedulaAnnualIncomeController,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Kabuuang Kita o Sweldo ng Nakaraang Taon',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.reqDocAnnualIncome,
+            border: const OutlineInputBorder(),
           ),
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _cedulaCitizenshipController,
-          decoration: const InputDecoration(
-            labelText: 'Citizenship',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.reqDocCitizenship,
+            border: const OutlineInputBorder(),
           ),
         ),
       ],
@@ -1144,15 +1211,16 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
     final barangayProvider = context.watch<BarangayProvider>();
     final config = barangayProvider.config;
     final fee = barangayProvider.getFeeByType(_selectedDocumentType!);
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Icon(Icons.check_circle, size: 64, color: Colors.green),
         const SizedBox(height: 16),
-        const Text(
-          'Request Created Successfully!',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        Text(
+          l10n.reqDocRequestCreatedSuccess,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
@@ -1162,30 +1230,30 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Payment Instructions',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Text(
+                  l10n.reqDocPaymentInstructions,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  '1. Send payment via GCash to:',
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                Text(
+                  l10n.reqDocSendPaymentGcash,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 8),
                 if (config != null) ...[
                   Text(
-                    '   Name: ${config.gcashName}',
+                    l10n.reqDocPaymentName(config.gcashName),
                     style: const TextStyle(fontSize: 16),
                   ),
                   Text(
-                    '   Number: ${config.gcashNumber}',
+                    l10n.reqDocPaymentNumber(config.gcashNumber),
                     style: const TextStyle(fontSize: 16),
                   ),
                 ],
                 const SizedBox(height: 8),
                 if (fee != null)
                   Text(
-                    '   Amount: ₱${fee.feeAmount.toStringAsFixed(2)}',
+                    l10n.reqDocPaymentAmount(fee.feeAmount.toStringAsFixed(2)),
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -1193,23 +1261,23 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                     ),
                   ),
                 const SizedBox(height: 16),
-                const Text(
-                  '2. Take a screenshot of the GCash receipt',
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                Text(
+                  l10n.reqDocScreenshotGcashReceipt,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  '3. Upload the receipt below',
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                Text(
+                  l10n.reqDocUploadReceiptBelow,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
               ],
             ),
           ),
         ),
         const SizedBox(height: 24),
-        const Text(
-          'Upload GCash Receipt',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        Text(
+          l10n.reqDocUploadGcashReceipt,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         GestureDetector(
@@ -1221,13 +1289,13 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: _receiptImage == null
-                ? const Center(
+                ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.receipt, size: 48, color: Colors.grey),
-                        SizedBox(height: 8),
-                        Text('Tap to upload receipt'),
+                        const Icon(Icons.receipt, size: 48, color: Colors.grey),
+                        const SizedBox(height: 8),
+                        Text(l10n.reqDocTapToUploadReceipt),
                       ],
                     ),
                   )
@@ -1254,7 +1322,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     )
-                  : const Text('Submit Payment Receipt'),
+                  : Text(l10n.reqDocSubmitPaymentReceipt),
             );
           },
         ),
@@ -1264,21 +1332,19 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
             final confirm = await showDialog<bool>(
               context: context,
               builder: (context) => AlertDialog(
-                title: const Text('Cancel Request'),
-                content: const Text(
-                  'Are you sure you want to cancel this request? This action cannot be undone.',
-                ),
+                title: Text(l10n.reqDocCancelRequest),
+                content: Text(l10n.reqDocCancelRequestConfirm),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context, false),
-                    child: const Text('No'),
+                    child: Text(l10n.commonNo),
                   ),
                   ElevatedButton(
                     onPressed: () => Navigator.pop(context, true),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
                     ),
-                    child: const Text('Yes, Cancel'),
+                    child: Text(l10n.reqDocYesCancel),
                   ),
                 ],
               ),
@@ -1305,8 +1371,8 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
 
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Request cancelled successfully'),
+                      SnackBar(
+                        content: Text(l10n.reqDocRequestCancelled),
                         backgroundColor: Colors.orange,
                       ),
                     );
@@ -1329,9 +1395,9 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
             padding: const EdgeInsets.symmetric(vertical: 16),
             side: const BorderSide(color: Colors.red),
           ),
-          child: const Text(
-            'Cancel Request',
-            style: TextStyle(color: Colors.red),
+          child: Text(
+            l10n.reqDocCancelRequest,
+            style: const TextStyle(color: Colors.red),
           ),
         ),
       ],

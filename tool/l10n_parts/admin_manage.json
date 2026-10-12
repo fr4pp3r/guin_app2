@@ -1,0 +1,891 @@
+{
+  "auserTitle": {
+    "en": "Manage Users",
+    "fil": "Pamahalaan ang mga User",
+    "ceb": "Pagdumala sa mga User"
+  },
+  "auserTabPending": {
+    "en": "Pending ({count})",
+    "fil": "Naghihintay ({count})",
+    "ceb": "Nagpaabot ({count})"
+  },
+  "@auserTabPending": {
+    "placeholders": {
+      "count": { "type": "num", "example": "3" }
+    }
+  },
+  "auserTabAllUsers": {
+    "en": "All Users ({count})",
+    "fil": "Lahat ng User ({count})",
+    "ceb": "Tanan nga mga User ({count})"
+  },
+  "@auserTabAllUsers": {
+    "placeholders": {
+      "count": { "type": "num", "example": "12" }
+    }
+  },
+  "auserCreateUser": {
+    "en": "Create User",
+    "fil": "Gumawa ng User",
+    "ceb": "Paghimo og User"
+  },
+  "auserApproveUserTitle": {
+    "en": "Approve User",
+    "fil": "Aprubahan ang User",
+    "ceb": "Aprobaha ang User"
+  },
+  "auserApproveConfirm": {
+    "en": "Approve {name}?",
+    "fil": "Aprubahan si {name}?",
+    "ceb": "Aprobaha si {name}?"
+  },
+  "@auserApproveConfirm": {
+    "placeholders": {
+      "name": { "type": "String", "example": "Juan Dela Cruz" }
+    }
+  },
+  "auserApproving": {
+    "en": "Approving...",
+    "fil": "Inaaprubahan...",
+    "ceb": "Giaprobahan..."
+  },
+  "auserApprovedSnackbar": {
+    "en": "User approved",
+    "fil": "Naaprubahan ang user",
+    "ceb": "Naaprobaran ang user"
+  },
+  "auserRejectUserTitle": {
+    "en": "Reject User",
+    "fil": "Tanggihan ang User",
+    "ceb": "Salikwaya ang User"
+  },
+  "auserRejectingName": {
+    "en": "Rejecting: {name}",
+    "fil": "Tinatanggihan: {name}",
+    "ceb": "Gisalikway: {name}"
+  },
+  "@auserRejectingName": {
+    "placeholders": {
+      "name": { "type": "String", "example": "Juan Dela Cruz" }
+    }
+  },
+  "auserRejectReasonHint": {
+    "en": "Provide a reason...",
+    "fil": "Magbigay ng dahilan...",
+    "ceb": "Hatagi og rason..."
+  },
+  "auserRejecting": {
+    "en": "Rejecting...",
+    "fil": "Tinatanggihan...",
+    "ceb": "Gisalikway..."
+  },
+  "auserRegistrationRejected": {
+    "en": "Registration rejected",
+    "fil": "Tinanggihan ang rehistrasyon",
+    "ceb": "Gisalikway ang rehistrasyon"
+  },
+  "auserChangeRole": {
+    "en": "Change Role",
+    "fil": "Palitan ang Tungkulin",
+    "ceb": "Usba ang Tahasan"
+  },
+  "auserUpdatingRole": {
+    "en": "Updating role...",
+    "fil": "Ina-update ang tungkulin...",
+    "ceb": "Gi-update ang tahasan..."
+  },
+  "auserRoleUpdated": {
+    "en": "Role updated to {role}",
+    "fil": "Na-update ang tungkulin sa {role}",
+    "ceb": "Na-update ang tahasan ngadto sa {role}"
+  },
+  "@auserRoleUpdated": {
+    "placeholders": {
+      "role": { "type": "String", "example": "Secretary" }
+    }
+  },
+  "auserCannotDeleteSelf": {
+    "en": "You cannot delete your own account",
+    "fil": "Hindi mo maaaring tanggalin ang iyong sariling account",
+    "ceb": "Dili nimo matangtang ang imong kaugalingong account"
+  },
+  "auserDeleteUserTitle": {
+    "en": "Delete User",
+    "fil": "Tanggalin ang User",
+    "ceb": "Tangtanga ang User"
+  },
+  "auserDeleteConfirm": {
+    "en": "Permanently delete {name}? This cannot be undone.",
+    "fil": "Permanenteng tatanggalin si {name}? Hindi na ito maibabalik.",
+    "ceb": "Permanenteng tangtangon si {name}? Dili na kini mauli."
+  },
+  "@auserDeleteConfirm": {
+    "placeholders": {
+      "name": { "type": "String", "example": "Juan Dela Cruz" }
+    }
+  },
+  "auserDeleting": {
+    "en": "Deleting...",
+    "fil": "Tinatanggal...",
+    "ceb": "Gitangtang..."
+  },
+  "auserUserDeleted": {
+    "en": "User deleted",
+    "fil": "Tinanggal ang user",
+    "ceb": "Natangtang ang user"
+  },
+  "auserNoPendingRegistrations": {
+    "en": "No pending registrations",
+    "fil": "Walang naghihintay na rehistrasyon",
+    "ceb": "Walay nagpaabot nga rehistrasyon"
+  },
+  "auserSearchHint": {
+    "en": "Search by name, email, username...",
+    "fil": "Maghanap ayon sa pangalan, email, username...",
+    "ceb": "Pangitaa pinaagi sa ngalan, email, username..."
+  },
+  "auserAll": {
+    "en": "All",
+    "fil": "Lahat",
+    "ceb": "Tanan"
+  },
+  "auserNoUsersFound": {
+    "en": "No users found",
+    "fil": "Walang nahanap na user",
+    "ceb": "Walay nakit-an nga user"
+  },
+  "auserAgeGenderInfo": {
+    "en": "{age} years old · {gender}",
+    "fil": "{age} taong gulang · {gender}",
+    "ceb": "{age} ka tuig ang edad · {gender}"
+  },
+  "@auserAgeGenderInfo": {
+    "placeholders": {
+      "age": { "type": "num", "example": "30" },
+      "gender": { "type": "String", "example": "Male" }
+    }
+  },
+  "auserRegisteredAt": {
+    "en": "Registered: {date}",
+    "fil": "Nakarehistro: {date}",
+    "ceb": "Narehistro: {date}"
+  },
+  "@auserRegisteredAt": {
+    "placeholders": {
+      "date": { "type": "String", "example": "Oct 5, 2026" }
+    }
+  },
+  "auserIdIssuedAt": {
+    "en": "ID issued: {date}",
+    "fil": "Inisyu ang ID: {date}",
+    "ceb": "Gi-isyu ang ID: {date}"
+  },
+  "@auserIdIssuedAt": {
+    "placeholders": {
+      "date": { "type": "String", "example": "Jan 12, 2025" }
+    }
+  },
+  "auserIdExpiresAt": {
+    "en": "ID expires: {date}",
+    "fil": "Mag-eexpire ang ID: {date}",
+    "ceb": "Mo-expire ang ID: {date}"
+  },
+  "@auserIdExpiresAt": {
+    "placeholders": {
+      "date": { "type": "String", "example": "Jan 12, 2030" }
+    }
+  },
+  "auserLivenessVerified": {
+    "en": "Liveness verified",
+    "fil": "Na-verify ang liveness",
+    "ceb": "Na-verify ang liveness"
+  },
+  "auserLivenessVerifiedOn": {
+    "en": "Liveness verified on {date}",
+    "fil": "Na-verify ang liveness noong {date}",
+    "ceb": "Na-verify ang liveness kaniadtong {date}"
+  },
+  "@auserLivenessVerifiedOn": {
+    "placeholders": {
+      "date": { "type": "String", "example": "Oct 5, 2026" }
+    }
+  },
+  "auserIndigencyReason": {
+    "en": "Indigency reason: {reason}",
+    "fil": "Dahilan ng pagiging maralita: {reason}",
+    "ceb": "Rason sa pagka-kabus: {reason}"
+  },
+  "@auserIndigencyReason": {
+    "placeholders": {
+      "reason": { "type": "String", "example": "No stable income" }
+    }
+  },
+  "auserKycAiPrechecked": {
+    "en": "AI pre-checked",
+    "fil": "Na-pre-check ng AI",
+    "ceb": "Gi-pre-check sa AI"
+  },
+  "auserKycIndigentBypass": {
+    "en": "Indigent — guarantor verification required",
+    "fil": "Maralita — kailangan ang beripikasyon ng tagapanagot",
+    "ceb": "Kabus — gikinahanglan ang beripikasyon sa mananabang"
+  },
+  "auserKycGuarantorBacked": {
+    "en": "Guarantor-backed",
+    "fil": "Suportado ng tagapanagot",
+    "ceb": "Gisuportahan sa mananabang"
+  },
+  "auserKycPhotoFront": {
+    "en": "{label} — front",
+    "fil": "{label} — harap",
+    "ceb": "{label} — atubangan"
+  },
+  "@auserKycPhotoFront": {
+    "placeholders": {
+      "label": { "type": "String", "example": "ID" }
+    }
+  },
+  "auserKycPhotoBack": {
+    "en": "{label} — back",
+    "fil": "{label} — likod",
+    "ceb": "{label} — likod"
+  },
+  "@auserKycPhotoBack": {
+    "placeholders": {
+      "label": { "type": "String", "example": "ID" }
+    }
+  },
+  "auserAiAdvisorySummary": {
+    "en": "AI advisory summary",
+    "fil": "Buod ng advisory ng AI",
+    "ceb": "Sumaryo sa advisory sa AI"
+  },
+  "auserAiAdvisoryNote": {
+    "en": "AI-assisted advisory — final review by the barangay.",
+    "fil": "Advisory na tinutulungan ng AI — ang huling pagsusuri ay ginagawa ng barangay.",
+    "ceb": "Advisory nga gitabangan sa AI — ang kataposang pagsusi gihimo sa barangay."
+  },
+  "auserKycIdAuthenticity": {
+    "en": "ID authenticity",
+    "fil": "Pagiging tunay ng ID",
+    "ceb": "Pagka-tinuod sa ID"
+  },
+  "auserKycIdTypeDetected": {
+    "en": "ID type detected",
+    "fil": "Uri ng ID na nakita",
+    "ceb": "Klase sa ID nga nakit-an"
+  },
+  "auserKycTypeMatch": {
+    "en": "Type match",
+    "fil": "Tugma ng uri",
+    "ceb": "Taktak sa klase"
+  },
+  "auserKycMatchesDeclared": {
+    "en": "Matches declared type",
+    "fil": "Tumutugma sa idineklarang uri",
+    "ceb": "Motakdo sa gideklarar nga klase"
+  },
+  "auserKycDoesNotMatchDeclared": {
+    "en": "Does not match declared type",
+    "fil": "Hindi tumutugma sa idineklarang uri",
+    "ceb": "Wala motakdo sa gideklarar nga klase"
+  },
+  "auserKycSelfieQuality": {
+    "en": "Selfie quality",
+    "fil": "Kalidad ng selfie",
+    "ceb": "Kalidad sa selfie"
+  },
+  "auserKycLivenessSignal": {
+    "en": "Liveness signal",
+    "fil": "Signal ng liveness",
+    "ceb": "Signal sa liveness"
+  },
+  "auserKycLivenessNotes": {
+    "en": "Liveness notes",
+    "fil": "Mga tala ng liveness",
+    "ceb": "Mga nota sa liveness"
+  },
+  "auserKycRecommendation": {
+    "en": "Recommendation",
+    "fil": "Rekomendasyon",
+    "ceb": "Rekomendasyon"
+  },
+  "auserKycCheckVersion": {
+    "en": "Check version",
+    "fil": "Bersyon ng pagsusuri",
+    "ceb": "Bersyon sa pagsusi"
+  },
+  "auserKycLooksAuthentic": {
+    "en": "Looks authentic",
+    "fil": "Mukhang tunay",
+    "ceb": "Morag tinuod"
+  },
+  "auserKycSuspicious": {
+    "en": "Suspicious — needs closer look",
+    "fil": "Kahina-hinala — kailangan ng masusing pagtingin",
+    "ceb": "Madudahon — kinahanglan og mas suod nga pagtan-aw"
+  },
+  "auserKycUnreadable": {
+    "en": "Unreadable",
+    "fil": "Hindi mabasa",
+    "ceb": "Dili mabasa"
+  },
+  "auserKycUncertain": {
+    "en": "Uncertain",
+    "fil": "Hindi tiyak",
+    "ceb": "Dili sigurado"
+  },
+  "auserUnknown": {
+    "en": "Unknown",
+    "fil": "Hindi alam",
+    "ceb": "Dili mahibal-an"
+  },
+  "auserKycGoodQuality": {
+    "en": "Good quality",
+    "fil": "Magandang kalidad",
+    "ceb": "Maayong kalidad"
+  },
+  "auserKycPoorQuality": {
+    "en": "Poor quality",
+    "fil": "Mahinang kalidad",
+    "ceb": "Dili maayo nga kalidad"
+  },
+  "auserKycNoFaceDetected": {
+    "en": "No face detected",
+    "fil": "Walang nakitang mukha",
+    "ceb": "Walay nakit-an nga nawong"
+  },
+  "auserKycLiveLooking": {
+    "en": "Live-looking",
+    "fil": "Mukhang live",
+    "ceb": "Morag live"
+  },
+  "auserKycSpoofSuspected": {
+    "en": "Spoof suspected",
+    "fil": "Pinaghihinalaang spoof",
+    "ceb": "Gidudahang spoof"
+  },
+  "auserKycNameCheck": {
+    "en": "Name check",
+    "fil": "Pagsusuri ng pangalan",
+    "ceb": "Pagsusi sa ngalan"
+  },
+  "auserKycBirthDateCheck": {
+    "en": "Birth date check",
+    "fil": "Pagsusuri ng petsa ng kapanganakan",
+    "ceb": "Pagsusi sa petsa sa pagkatawo"
+  },
+  "auserKycAddressCheck": {
+    "en": "Address check",
+    "fil": "Pagsusuri ng address",
+    "ceb": "Pagsusi sa address"
+  },
+  "auserKycGenderCheck": {
+    "en": "Gender check",
+    "fil": "Pagsusuri ng kasarian",
+    "ceb": "Pagsusi sa gender"
+  },
+  "auserKycMatches": {
+    "en": "Matches",
+    "fil": "Tumutugma",
+    "ceb": "Motakdo"
+  },
+  "auserKycDoesNotMatch": {
+    "en": "Does not match",
+    "fil": "Hindi tugma",
+    "ceb": "Wala motakdo"
+  },
+  "auserKycUnverifiable": {
+    "en": "Unverifiable",
+    "fil": "Hindi ma-verify",
+    "ceb": "Dili ma-verify"
+  },
+  "auserKycLooksOk": {
+    "en": "Looks OK — advisory only",
+    "fil": "Mukhang OK — advisory lamang",
+    "ceb": "Morag OK — advisory lamang"
+  },
+  "auserKycNeedsReview": {
+    "en": "Needs review — advisory only",
+    "fil": "Kailangan ng pagsusuri — advisory lamang",
+    "ceb": "Kinahanglan og pagsusi — advisory lamang"
+  },
+
+  "acreateTitle": {
+    "en": "Create New User",
+    "fil": "Gumawa ng Bagong User",
+    "ceb": "Paghimo og Bag-ong User"
+  },
+  "acreateStepAccount": {
+    "en": "Account",
+    "fil": "Account",
+    "ceb": "Account"
+  },
+  "acreateStepPersonal": {
+    "en": "Personal",
+    "fil": "Personal",
+    "ceb": "Personal"
+  },
+  "acreateStepAddressDocs": {
+    "en": "Address & Docs",
+    "fil": "Address at Mga Dokumento",
+    "ceb": "Address ug mga Dokumento"
+  },
+  "acreateStepProgress": {
+    "en": "Step {current}/{total}",
+    "fil": "Hakbang {current}/{total}",
+    "ceb": "Lakang {current}/{total}"
+  },
+  "@acreateStepProgress": {
+    "placeholders": {
+      "current": { "type": "num", "example": "1" },
+      "total": { "type": "num", "example": "3" }
+    }
+  },
+  "acreateCreatingUser": {
+    "en": "Creating user...",
+    "fil": "Gumagawa ng user...",
+    "ceb": "Gihimo ang user..."
+  },
+  "acreateUserCreated": {
+    "en": "User \"{name}\" created successfully",
+    "fil": "Matagumpay na nagawa ang user na \"{name}\"",
+    "ceb": "Malampusong nahimo ang user nga \"{name}\""
+  },
+  "@acreateUserCreated": {
+    "placeholders": {
+      "name": { "type": "String", "example": "Juan Dela Cruz" }
+    }
+  },
+  "acreatePleaseSelectDob": {
+    "en": "Please select date of birth",
+    "fil": "Piliin ang petsa ng kapanganakan",
+    "ceb": "Palihog pili og petsa sa pagkatawo"
+  },
+  "acreateGivenNameLabel": {
+    "en": "Given Name *",
+    "fil": "Pangalan *",
+    "ceb": "Ngalan *"
+  },
+  "acreateMiddleNameLabel": {
+    "en": "Middle Name",
+    "fil": "Gitnang Pangalan",
+    "ceb": "Tunga-tungang Ngalan"
+  },
+  "acreateLastNameLabel": {
+    "en": "Last Name *",
+    "fil": "Apelyido *",
+    "ceb": "Apelyido *"
+  },
+  "acreateInvalidEmail": {
+    "en": "Invalid email",
+    "fil": "Hindi wastong email",
+    "ceb": "Dili balido nga email"
+  },
+  "acreatePasswordMinLength": {
+    "en": "Minimum 6 characters",
+    "fil": "Hindi bababa sa 6 na character",
+    "ceb": "Labing menos 6 ka karakter"
+  },
+  "acreateAge": {
+    "en": "Age",
+    "fil": "Edad",
+    "ceb": "Edad"
+  },
+  "acreateDobTapToSelect": {
+    "en": "Date of Birth (tap to select)",
+    "fil": "Petsa ng Kapanganakan (i-tap upang piliin)",
+    "ceb": "Petsa sa Pagkatawo (i-tap aron pilion)"
+  },
+  "acreateDobSelected": {
+    "en": "DOB: {year}-{month}-{day}",
+    "fil": "DOB: {year}-{month}-{day}",
+    "ceb": "DOB: {year}-{month}-{day}"
+  },
+  "@acreateDobSelected": {
+    "placeholders": {
+      "year": { "type": "num", "example": "2000" },
+      "month": { "type": "num", "example": "1" },
+      "day": { "type": "num", "example": "5" }
+    }
+  },
+  "acreateHomeAddress": {
+    "en": "Home Address",
+    "fil": "Tirahan",
+    "ceb": "Address sa Balay"
+  },
+  "acreateTapToUploadPhoto": {
+    "en": "Tap to upload photo",
+    "fil": "I-tap upang i-upload ang larawan",
+    "ceb": "I-tap aron i-upload ang hulagway"
+  },
+  "acreateIdFront": {
+    "en": "ID Front",
+    "fil": "ID (harap)",
+    "ceb": "ID (atubangan)"
+  },
+  "acreateIdBack": {
+    "en": "ID Back",
+    "fil": "ID (likod)",
+    "ceb": "ID (likod)"
+  },
+  "acreateChange": {
+    "en": "Change",
+    "fil": "Palitan",
+    "ceb": "Ilisan"
+  },
+
+  "apendApproveConfirm": {
+    "en": "Are you sure you want to approve {name}?",
+    "fil": "Sigurado ka bang aprubahan si {name}?",
+    "ceb": "Sigurado ka nga aprobahan si {name}?"
+  },
+  "@apendApproveConfirm": {
+    "placeholders": {
+      "name": { "type": "String", "example": "Juan Dela Cruz" }
+    }
+  },
+  "apendApprovingUser": {
+    "en": "Approving user...",
+    "fil": "Inaaprubahan ang user...",
+    "ceb": "Giaprobahan ang user..."
+  },
+  "apendUserApproved": {
+    "en": "User approved successfully",
+    "fil": "Matagumpay na naaprubahan ang user",
+    "ceb": "Malampusong naaprobaran ang user"
+  },
+  "apendRejectReasonHint": {
+    "en": "Please provide a reason for rejection...",
+    "fil": "Mangyaring magbigay ng dahilan para sa pagtanggi...",
+    "ceb": "Palihog hatagi og rason sa pagsalikway..."
+  },
+  "apendRejectingUser": {
+    "en": "Rejecting user...",
+    "fil": "Tinatanggihan ang user...",
+    "ceb": "Gisalikway ang user..."
+  },
+  "apendUserRejected": {
+    "en": "User registration rejected",
+    "fil": "Tinanggihan ang rehistrasyon ng user",
+    "ceb": "Gisalikway ang rehistrasyon sa user"
+  },
+  "apendTitle": {
+    "en": "Pending Users",
+    "fil": "Naghihintay na mga User",
+    "ceb": "Nagpaabot nga mga User"
+  },
+  "apendNoPending": {
+    "en": "No pending users",
+    "fil": "Walang naghihintay na user",
+    "ceb": "Walay nagpaabot nga user"
+  },
+  "apendYearsOld": {
+    "en": "{age} years old",
+    "fil": "{age} taong gulang",
+    "ceb": "{age} ka tuig ang edad"
+  },
+  "@apendYearsOld": {
+    "placeholders": {
+      "age": { "type": "num", "example": "30" }
+    }
+  },
+
+  "afeeTitle": {
+    "en": "Document Fees",
+    "fil": "Mga Bayad sa Dokumento",
+    "ceb": "Mga Bayad sa Dokumento"
+  },
+  "afeeSubtitle": {
+    "en": "Manage fees per document type",
+    "fil": "Pamahalaan ang mga bayad sa bawat uri ng dokumento",
+    "ceb": "Pagdumala sa mga bayad sa matag klase sa dokumento"
+  },
+  "afeeNoFees": {
+    "en": "No document fees found",
+    "fil": "Walang nahanap na bayad sa dokumento",
+    "ceb": "Walay nakit-an nga bayad sa dokumento"
+  },
+  "afeeAmount": {
+    "en": "Fee Amount",
+    "fil": "Halaga ng Bayad",
+    "ceb": "Kantidad sa Bayad"
+  },
+  "afeeEditDialogTitle": {
+    "en": "Edit {type}",
+    "fil": "I-edit ang {type}",
+    "ceb": "Usba ang {type}"
+  },
+  "@afeeEditDialogTitle": {
+    "placeholders": {
+      "type": { "type": "String", "example": "Barangay Clearance" }
+    }
+  },
+  "afeeEnterAmount": {
+    "en": "Please enter an amount",
+    "fil": "Mangyaring maglagay ng halaga",
+    "ceb": "Palihog isulod ang kantidad"
+  },
+  "afeeEnterValidAmount": {
+    "en": "Please enter a valid amount",
+    "fil": "Mangyaring maglagay ng wastong halaga",
+    "ceb": "Palihog isulod ang balidong kantidad"
+  },
+  "afeeDescriptionOptional": {
+    "en": "Description (Optional)",
+    "fil": "Paglalarawan (Opsyonal)",
+    "ceb": "Deskripsyon (Opsyonal)"
+  },
+  "afeeUpdating": {
+    "en": "Updating fee...",
+    "fil": "Ina-update ang bayad...",
+    "ceb": "Gi-update ang bayad..."
+  },
+  "afeeUpdated": {
+    "en": "Fee updated successfully",
+    "fil": "Matagumpay na na-update ang bayad",
+    "ceb": "Malampusong na-update ang bayad"
+  },
+
+  "afmtTitle": {
+    "en": "Document Formats",
+    "fil": "Mga Format ng Dokumento",
+    "ceb": "Mga Format sa Dokumento"
+  },
+  "afmtSubtitle": {
+    "en": "Preview and manage document templates",
+    "fil": "I-preview at pamahalaan ang mga template ng dokumento",
+    "ceb": "I-preview ug pagdumala sa mga template sa dokumento"
+  },
+  "afmtPreviewTitle": {
+    "en": "Preview Document Templates",
+    "fil": "I-preview ang mga Template ng Dokumento",
+    "ceb": "I-preview ang mga Template sa Dokumento"
+  },
+  "afmtPreviewDesc": {
+    "en": "Generate sample PDFs to preview how documents will look when issued to citizens.",
+    "fil": "Gumawa ng sample na PDF upang makita kung paano magiging hitsura ang mga dokumento kapag inisyu sa mga mamamayan.",
+    "ceb": "Paghimo og sample nga PDF aron makita kung unsa ang hitsura sa mga dokumento kung i-isyu sa mga lumulupyo."
+  },
+  "afmtAvailableSection": {
+    "en": "Available Document Formats",
+    "fil": "Mga Available na Format ng Dokumento",
+    "ceb": "Mga Available nga Format sa Dokumento"
+  },
+  "afmtBarangayClearanceDesc": {
+    "en": "Certificate of residence and good moral character",
+    "fil": "Sertipiko ng paninirahan at mabuting asal",
+    "ceb": "Sertipiko sa pagpuyo ug maayong pamatasan"
+  },
+  "afmtIndigencyDesc": {
+    "en": "Certificate for low-income families",
+    "fil": "Sertipiko para sa mga pamilyang may mababang kita",
+    "ceb": "Sertipiko alang sa mga pamilya nga ubos ang kita"
+  },
+  "afmtCedulaDesc": {
+    "en": "Annual community tax certificate",
+    "fil": "Taunang sertipiko ng buwis sa komunidad",
+    "ceb": "Tinuig nga sertipiko sa buwis sa komunidad"
+  },
+  "afmtBarangayIdDesc": {
+    "en": "Official barangay identification card (Front & Back)",
+    "fil": "Opisyal na ID card ng barangay (Harap at Likod)",
+    "ceb": "Opisyal nga ID card sa barangay (Atubangan ug Likod)"
+  },
+  "afmtBusinessClearanceDesc": {
+    "en": "Clearance for business permits and renewals",
+    "fil": "Clearance para sa mga permit at pag-renew ng negosyo",
+    "ceb": "Clearance alang sa mga permiso ug pag-renew sa negosyo"
+  },
+  "afmtCertificationDesc": {
+    "en": "General certification of employment and salary",
+    "fil": "Pangkalahatang sertipikasyon ng empleyo at suweldo",
+    "ceb": "Kinatibuk-ang sertipikasyon sa empleyo ug suweldo"
+  },
+  "afmtGoodMoralDesc": {
+    "en": "Certificate attesting good moral character",
+    "fil": "Sertipikong nagpapatunay ng mabuting asal",
+    "ceb": "Sertipiko nga nagpamatuod sa maayong pamatasan"
+  },
+  "afmtResidencyDesc": {
+    "en": "Proof of residency in the barangay",
+    "fil": "Patunay ng paninirahan sa barangay",
+    "ceb": "Proweba sa pagpuyo sa barangay"
+  },
+  "afmtOathUndertakingDesc": {
+    "en": "First-time jobseeker oath under R.A. 11261",
+    "fil": "Panunumpa para sa unang beses na naghahanap ng trabaho ayon sa R.A. 11261",
+    "ceb": "Panumpa alang sa unang higayon nga nagpangita og trabaho ubos sa R.A. 11261"
+  },
+  "afmtPreviewButton": {
+    "en": "Preview",
+    "fil": "I-preview",
+    "ceb": "I-preview"
+  },
+  "afmtWebUnavailable": {
+    "en": "PDF preview is not available on web. Please use mobile or desktop app.",
+    "fil": "Hindi available ang preview ng PDF sa web. Mangyaring gamitin ang mobile o desktop app.",
+    "ceb": "Dili available ang preview sa PDF sa web. Palihog gamita ang mobile o desktop app."
+  },
+  "afmtPreviewGenerated": {
+    "en": "Preview generated: {file}",
+    "fil": "Nagawa ang preview: {file}",
+    "ceb": "Nahimo ang preview: {file}"
+  },
+  "@afmtPreviewGenerated": {
+    "placeholders": {
+      "file": { "type": "String", "example": "barangay_clearance.pdf" }
+    }
+  },
+  "afmtPreviewError": {
+    "en": "Error generating preview: {error}",
+    "fil": "Error sa paggawa ng preview: {error}",
+    "ceb": "Sayop sa paghimo sa preview: {error}"
+  },
+  "@afmtPreviewError": {
+    "placeholders": {
+      "error": { "type": "Object", "example": "PDF generation failed" }
+    }
+  },
+
+  "asetTitle": {
+    "en": "Settings",
+    "fil": "Mga Setting",
+    "ceb": "Mga Setting"
+  },
+  "asetSubtitle": {
+    "en": "Configure barangay information",
+    "fil": "I-configure ang impormasyon ng barangay",
+    "ceb": "I-configure ang impormasyon sa barangay"
+  },
+  "asetEditSettingsTooltip": {
+    "en": "Edit Settings",
+    "fil": "I-edit ang mga setting",
+    "ceb": "Usba ang mga setting"
+  },
+  "asetLoadFailed": {
+    "en": "Failed to load configuration",
+    "fil": "Nabigong i-load ang configuration",
+    "ceb": "Napakyas sa pag-load sa configuration"
+  },
+  "asetConfigNotLoaded": {
+    "en": "Configuration not loaded",
+    "fil": "Hindi na-load ang configuration",
+    "ceb": "Wala na-load ang configuration"
+  },
+  "asetSaving": {
+    "en": "Saving settings...",
+    "fil": "Ini-save ang mga setting...",
+    "ceb": "Gina-save ang mga setting..."
+  },
+  "asetUpdated": {
+    "en": "Settings updated successfully",
+    "fil": "Matagumpay na na-update ang mga setting",
+    "ceb": "Malampusong na-update ang mga setting"
+  },
+  "asetUploadingLogo": {
+    "en": "Uploading logo...",
+    "fil": "Ina-upload ang logo...",
+    "ceb": "Gina-upload ang logo..."
+  },
+  "asetCouldNotReadFile": {
+    "en": "Could not read file",
+    "fil": "Hindi mabasa ang file",
+    "ceb": "Dili mabasa ang file"
+  },
+  "asetCouldNotReadFileNoPath": {
+    "en": "Could not read file: no path available",
+    "fil": "Hindi mabasa ang file: walang available na path",
+    "ceb": "Dili mabasa ang file: walay available nga path"
+  },
+  "asetLogoUploaded": {
+    "en": "Logo uploaded successfully",
+    "fil": "Matagumpay na na-upload ang logo",
+    "ceb": "Malampusong na-upload ang logo"
+  },
+  "asetUploadFailed": {
+    "en": "Upload failed: {error}",
+    "fil": "Nabigo ang pag-upload: {error}",
+    "ceb": "Napakyas ang pag-upload: {error}"
+  },
+  "@asetUploadFailed": {
+    "placeholders": {
+      "error": { "type": "Object", "example": "Network error" }
+    }
+  },
+  "asetGcashSection": {
+    "en": "GCash Payment Information",
+    "fil": "Impormasyon sa Pagbabayad ng GCash",
+    "ceb": "Impormasyon sa Pagbayad sa GCash"
+  },
+  "asetGcashAccountName": {
+    "en": "GCash Account Name *",
+    "fil": "Pangalan ng GCash Account *",
+    "ceb": "Ngalan sa GCash Account *"
+  },
+  "asetGcashNameRequired": {
+    "en": "GCash name is required",
+    "fil": "Kailangan ang pangalan ng GCash",
+    "ceb": "Gikinahanglan ang ngalan sa GCash"
+  },
+  "asetGcashNumber": {
+    "en": "GCash Number *",
+    "fil": "Numero ng GCash *",
+    "ceb": "Numero sa GCash *"
+  },
+  "asetGcashNumberRequired": {
+    "en": "GCash number is required",
+    "fil": "Kailangan ang numero ng GCash",
+    "ceb": "Gikinahanglan ang numero sa GCash"
+  },
+  "asetInvalidPhMobile": {
+    "en": "Invalid Philippine mobile number",
+    "fil": "Hindi wastong numero ng mobile sa Pilipinas",
+    "ceb": "Dili balido nga mobile number sa Pilipinas"
+  },
+  "asetBarangaySection": {
+    "en": "Barangay Information",
+    "fil": "Impormasyon ng Barangay",
+    "ceb": "Impormasyon sa Barangay"
+  },
+  "asetBarangayName": {
+    "en": "Barangay Name *",
+    "fil": "Pangalan ng Barangay *",
+    "ceb": "Ngalan sa Barangay *"
+  },
+  "asetBarangayNameRequired": {
+    "en": "Barangay name is required",
+    "fil": "Kailangan ang pangalan ng barangay",
+    "ceb": "Gikinahanglan ang ngalan sa barangay"
+  },
+  "asetBarangayAddress": {
+    "en": "Barangay Address *",
+    "fil": "Address ng Barangay *",
+    "ceb": "Address sa Barangay *"
+  },
+  "asetCompleteAddressHint": {
+    "en": "Complete address",
+    "fil": "Kumpletong address",
+    "ceb": "Kompletong address"
+  },
+  "asetBarangayAddressRequired": {
+    "en": "Barangay address is required",
+    "fil": "Kailangan ang address ng barangay",
+    "ceb": "Gikinahanglan ang address sa barangay"
+  },
+  "asetBarangayCaptain": {
+    "en": "Barangay Captain",
+    "fil": "Kapitan ng Barangay",
+    "ceb": "Kapitan sa Barangay"
+  },
+  "asetContactNumber": {
+    "en": "Contact Number",
+    "fil": "Numero ng Kontak",
+    "ceb": "Numero sa Kontak"
+  },
+  "asetBarangayLogoUrl": {
+    "en": "Barangay Logo URL",
+    "fil": "URL ng Logo ng Barangay",
+    "ceb": "URL sa Logo sa Barangay"
+  }
+}

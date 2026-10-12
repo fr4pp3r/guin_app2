@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/config/routes.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -68,6 +69,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -128,8 +130,8 @@ class _SplashScreenState extends State<SplashScreen>
                           color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Text(
-                          'E-Document Management System',
+                        child: Text(
+                          l10n.splashAppSubtitle,
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.white,
@@ -160,7 +162,7 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Loading...',
+                        l10n.splashLoading,
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 13,
@@ -176,7 +178,7 @@ class _SplashScreenState extends State<SplashScreen>
               FadeTransition(
                 opacity: _fadeAnim,
                 child: Text(
-                  'Powered by Barangay Digital Services',
+                  l10n.splashPoweredBy,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.5),
                     fontSize: 11,

@@ -13,6 +13,7 @@ import 'package:guin_app/models/user_profile.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/image_compressor.dart';
 import 'package:guin_app/config/routes.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -117,29 +118,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to pick image')),
+          SnackBar(content: Text(l10n.authFailedPickImage)),
         );
       }
     }
   }
 
   Future<ImageSource?> _showImageSourceDialog() async {
+    final l10n = AppLocalizations.of(context);
     return showDialog<ImageSource>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Select Image Source'),
+        title: Text(l10n.authSelectImageSource),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: const Text('Camera'),
+              title: Text(l10n.authCameraOption),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: const Text('Gallery'),
+              title: Text(l10n.authGalleryOption),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
           ],
@@ -198,11 +201,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (pickedFile != null) {
         setState(() => _selfiePhoto = File(pickedFile.path));
         if (mounted) {
+          final l10n = AppLocalizations.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Camera unavailable — using gallery image. Liveness verification may be limited.',
-              ),
+            SnackBar(
+              content: Text(l10n.authCameraUnavailableGallery),
               backgroundColor: Colors.orange,
             ),
           );
@@ -210,8 +212,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to pick image')),
+          SnackBar(content: Text(l10n.authFailedPickImage)),
         );
       }
     }
@@ -249,6 +252,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _nextStep() {
+    final l10n = AppLocalizations.of(context);
     bool isValid = false;
     switch (_currentStep) {
       case 0:
@@ -256,7 +260,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (isValid &&
             _passwordController.text != _confirmPasswordController.text) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Passwords do not match')),
+            SnackBar(content: Text(l10n.authPasswordsDoNotMatch)),
           );
           return;
         }
@@ -265,7 +269,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         isValid = _personalFormKey.currentState?.validate() ?? false;
         if (isValid && _selectedDateOfBirth == null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please select date of birth')),
+            SnackBar(content: Text(l10n.authPleaseSelectDob)),
           );
           return;
         }
@@ -277,14 +281,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
         isValid = _documentsFormKey.currentState?.validate() ?? false;
         if (isValid && _profilePhoto == null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please upload a profile photo')),
+            SnackBar(content: Text(l10n.authPleaseUploadProfilePhoto)),
           );
           return;
         }
         if (isValid && _selfiePhoto == null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Please capture a selfie for liveness verification'),
+            SnackBar(
+              content: Text(l10n.authPleaseCaptureSelfie),
             ),
           );
           return;
@@ -292,20 +296,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (isValid && !_isIndigent) {
           if (_selectedIdType == null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Please select an ID type')),
+              SnackBar(content: Text(l10n.authPleaseSelectIdType)),
             );
             return;
           }
           if (_idNumberController.text.trim().isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Please enter your ID number')),
+              SnackBar(content: Text(l10n.authPleaseEnterIdNumber)),
             );
             return;
           }
           if (_validIdFront == null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Please upload the front of your ID'),
+              SnackBar(
+                content: Text(l10n.authPleaseUploadIdFront),
               ),
             );
             return;
@@ -314,24 +318,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (isValid && _isIndigent) {
           if (_indigencyReasonController.text.trim().isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Please describe your reason / situation'),
+              SnackBar(
+                content: Text(l10n.authPleaseDescribeReason),
               ),
             );
             return;
           }
           if (_selectedGuarantor == null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Please select a guarantor'),
+              SnackBar(
+                content: Text(l10n.authPleaseSelectGuarantor),
               ),
             );
             return;
           }
           if (_guarantorRelationshipController.text.trim().isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Please enter your relationship to the guarantor'),
+              SnackBar(
+                content: Text(l10n.authPleaseEnterGuarantorRelationship),
               ),
             );
             return;
@@ -412,6 +416,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _handleRegister() async {
     final authProvider = context.read<AuthProvider>();
+    final l10n = AppLocalizations.of(context);
 
     final now = DateTime.now();
     final age =
@@ -473,8 +478,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         SnackBar(
           content: Text(
             preCheckUnavailable
-                ? 'AI pre-check unavailable — registration will be reviewed manually.'
-                : 'Registration successful! Waiting for admin approval...',
+                ? l10n.authAiPrecheckUnavailable
+                : l10n.authRegistrationSuccessful,
           ),
           backgroundColor: preCheckUnavailable ? null : Colors.green,
         ),
@@ -483,7 +488,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.error ?? 'Registration failed'),
+          content: Text(
+            authProvider.error ?? l10n.authRegistrationFailed,
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -495,7 +502,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final steps = ['Account', 'Personal', 'Address', 'Documents'];
+    final l10n = AppLocalizations.of(context);
+    final steps = [
+      l10n.authStepAccountLabel,
+      l10n.authStepPersonalLabel,
+      l10n.commonAddress,
+      l10n.commonDocuments,
+    ];
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: Column(
@@ -530,9 +543,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             }
                           },
                         ),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Create Account',
+                            l10n.authCreateAccountTitle,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 18,
@@ -541,7 +554,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                         Text(
-                          'Step ${_currentStep + 1}/4',
+                          l10n.authStepProgress(_currentStep + 1, 4),
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.85),
                             fontSize: 13,
@@ -652,8 +665,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Back',
+                      child: Text(
+                        l10n.commonBack,
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -686,10 +699,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                             )
                           : _idPreCheckRunning
-                          ? const Row(
+                          ? Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                SizedBox(
+                                const SizedBox(
                                   width: 18,
                                   height: 18,
                                   child: CircularProgressIndicator(
@@ -697,9 +710,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     color: Colors.white,
                                   ),
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Text(
-                                  'Checking your ID...',
+                                  l10n.authCheckingId,
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 14,
@@ -709,8 +722,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             )
                           : Text(
                               _currentStep == 3
-                                  ? 'Submit Registration'
-                                  : 'Continue',
+                                  ? l10n.authSubmitRegistration
+                                  : l10n.commonContinue,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
@@ -728,6 +741,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildAccountStep() {
+    final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Form(
@@ -735,31 +749,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _stepTitle('Account Information', 'Set up your login credentials.'),
+            _stepTitle(
+              l10n.authAccountInfoTitle,
+              l10n.authAccountInfoSubtitle,
+            ),
             const SizedBox(height: 24),
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Email Address',
+              decoration: InputDecoration(
+                labelText: l10n.commonEmail,
                 prefixIcon: Icon(Icons.email_outlined),
               ),
               validator: (v) {
-                if (v == null || v.isEmpty) return 'Email is required';
-                if (!v.contains('@')) return 'Enter a valid email';
+                if (v == null || v.isEmpty) return l10n.authEmailRequired;
+                if (!v.contains('@')) return l10n.authEmailInvalid;
                 return null;
               },
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _usernameController,
-              decoration: const InputDecoration(
-                labelText: 'Username',
+              decoration: InputDecoration(
+                labelText: l10n.commonUsername,
                 prefixIcon: Icon(Icons.alternate_email),
               ),
               validator: (v) {
-                if (v == null || v.isEmpty) return 'Username is required';
-                if (v.length < 3) return 'Must be at least 3 characters';
+                if (v == null || v.isEmpty) return l10n.authUsernameRequired;
+                if (v.length < 3) return l10n.authUsernameMinLength(3);
                 return null;
               },
             ),
@@ -768,7 +785,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               controller: _passwordController,
               obscureText: _obscurePassword,
               decoration: InputDecoration(
-                labelText: 'Password',
+                labelText: l10n.commonPassword,
                 prefixIcon: const Icon(Icons.lock_outlined),
                 suffixIcon: IconButton(
                   icon: Icon(
@@ -781,8 +798,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               validator: (v) {
-                if (v == null || v.isEmpty) return 'Password is required';
-                if (v.length < 6) return 'Must be at least 6 characters';
+                if (v == null || v.isEmpty) return l10n.authPasswordRequired;
+                if (v.length < 6) return l10n.authPasswordMinLength(6);
                 return null;
               },
             ),
@@ -791,7 +808,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               controller: _confirmPasswordController,
               obscureText: _obscureConfirmPassword,
               decoration: InputDecoration(
-                labelText: 'Confirm Password',
+                labelText: l10n.authConfirmPasswordLabel,
                 prefixIcon: const Icon(Icons.lock_outlined),
                 suffixIcon: IconButton(
                   icon: Icon(
@@ -805,7 +822,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               validator: (v) {
-                if (v == null || v.isEmpty) return 'Please confirm password';
+                if (v == null || v.isEmpty) {
+                  return l10n.authConfirmPasswordRequired;
+                }
                 return null;
               },
             ),
@@ -816,6 +835,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildPersonalStep() {
+    final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Form(
@@ -823,37 +843,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _stepTitle('Personal Information', 'Tell us about yourself.'),
+            _stepTitle(
+              l10n.authPersonalInfoTitle,
+              l10n.authPersonalInfoSubtitle,
+            ),
             const SizedBox(height: 24),
             TextFormField(
               controller: _givenNameController,
-              decoration: const InputDecoration(
-                labelText: 'Given Name *',
+              decoration: InputDecoration(
+                labelText: l10n.authGivenNameLabel,
                 prefixIcon: Icon(Icons.person_outline),
-                hintText: 'First name',
+                hintText: l10n.authGivenNameHint,
               ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Given name is required' : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? l10n.authGivenNameRequired
+                  : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _middleNameController,
-              decoration: const InputDecoration(
-                labelText: 'Middle Name (optional)',
+              decoration: InputDecoration(
+                labelText: l10n.authMiddleNameLabel,
                 prefixIcon: Icon(Icons.person_outline),
-                hintText: 'Middle name or initial',
+                hintText: l10n.authMiddleNameHint,
               ),
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _lastNameController,
-              decoration: const InputDecoration(
-                labelText: 'Last Name *',
+              decoration: InputDecoration(
+                labelText: l10n.authLastNameLabel,
                 prefixIcon: Icon(Icons.person_outline),
-                hintText: 'Surname',
+                hintText: l10n.authLastNameHint,
               ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Last name is required' : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? l10n.authLastNameRequired
+                  : null,
             ),
             const SizedBox(height: 16),
             GestureDetector(
@@ -870,8 +895,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: TextFormField(
                   decoration: InputDecoration(
                     labelText: _selectedDateOfBirth == null
-                        ? 'Date of Birth (tap to select)'
-                        : 'Date of Birth: ${_selectedDateOfBirth!.day}/${_selectedDateOfBirth!.month}/${_selectedDateOfBirth!.year}',
+                        ? l10n.authDateOfBirthTapToSelect
+                        : l10n.authDateOfBirthSelected(
+                            _selectedDateOfBirth!.day,
+                            _selectedDateOfBirth!.month,
+                            _selectedDateOfBirth!.year,
+                          ),
                     prefixIcon: const Icon(Icons.calendar_today),
                   ),
                 ),
@@ -880,53 +909,75 @@ class _RegisterScreenState extends State<RegisterScreen> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _placeOfBirthController,
-              decoration: const InputDecoration(
-                labelText: 'Place of Birth',
+              decoration: InputDecoration(
+                labelText: l10n.commonPlaceOfBirth,
                 prefixIcon: Icon(Icons.place_outlined),
               ),
               validator: (v) => (v == null || v.isEmpty)
-                  ? 'Place of birth is required'
+                  ? l10n.authPlaceOfBirthRequired
                   : null,
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: _selectedGender,
-              decoration: const InputDecoration(
-                labelText: 'Gender',
+              decoration: InputDecoration(
+                labelText: l10n.commonGender,
                 prefixIcon: Icon(Icons.wc),
               ),
               items: [
-                'Male',
-                'Female',
-                'Other',
-              ].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                DropdownMenuItem(
+                  value: 'Male',
+                  child: Text(l10n.commonMale),
+                ),
+                DropdownMenuItem(
+                  value: 'Female',
+                  child: Text(l10n.commonFemale),
+                ),
+                DropdownMenuItem(
+                  value: 'Other',
+                  child: Text(l10n.commonOther),
+                ),
+              ],
               onChanged: (v) => setState(() => _selectedGender = v!),
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: _selectedCivilStatus,
-              decoration: const InputDecoration(
-                labelText: 'Civil Status',
+              decoration: InputDecoration(
+                labelText: l10n.commonCivilStatus,
                 prefixIcon: Icon(Icons.family_restroom),
               ),
               items: [
-                'Single',
-                'Married',
-                'Widowed',
-                'Divorced',
-              ].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                DropdownMenuItem(
+                  value: 'Single',
+                  child: Text(l10n.commonSingle),
+                ),
+                DropdownMenuItem(
+                  value: 'Married',
+                  child: Text(l10n.commonMarried),
+                ),
+                DropdownMenuItem(
+                  value: 'Widowed',
+                  child: Text(l10n.commonWidowed),
+                ),
+                DropdownMenuItem(
+                  value: 'Divorced',
+                  child: Text(l10n.commonDivorced),
+                ),
+              ],
               onChanged: (v) => setState(() => _selectedCivilStatus = v!),
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Phone Number',
+              decoration: InputDecoration(
+                labelText: l10n.commonPhoneNumber,
                 prefixIcon: Icon(Icons.phone_outlined),
               ),
-              validator: (v) =>
-                  (v == null || v.isEmpty) ? 'Phone number is required' : null,
+              validator: (v) => (v == null || v.isEmpty)
+                  ? l10n.authPhoneRequired
+                  : null,
             ),
           ],
         ),
@@ -935,6 +986,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildAddressStep() {
+    final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Form(
@@ -942,7 +994,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _stepTitle('Address Information', 'Where do you currently reside?'),
+            _stepTitle(
+              l10n.authAddressInfoTitle,
+              l10n.authAddressInfoSubtitle,
+            ),
             const SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.all(16),
@@ -951,14 +1006,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFF90CAF9)),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Color(0xFF1976D2), size: 20),
-                  SizedBox(width: 10),
+                  const Icon(
+                    Icons.info_outline,
+                    color: Color(0xFF1976D2),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Please provide your complete address within Barangay Guion.',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF1565C0)),
+                      l10n.authAddressNotice,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF1565C0),
+                      ),
                     ),
                   ),
                 ],
@@ -968,14 +1030,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
             TextFormField(
               controller: _addressController,
               maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Complete Address',
+              decoration: InputDecoration(
+                labelText: l10n.authCompleteAddressLabel,
                 prefixIcon: Icon(Icons.home_outlined),
-                hintText: 'House No., Street, Purok, Barangay Guion',
+                hintText: l10n.authAddressHint,
                 alignLabelWithHint: true,
               ),
-              validator: (v) =>
-                  (v == null || v.isEmpty) ? 'Address is required' : null,
+              validator: (v) => (v == null || v.isEmpty)
+                  ? l10n.authAddressRequired
+                  : null,
             ),
           ],
         ),
@@ -984,6 +1047,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildDocumentsStep() {
+    final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Form(
@@ -992,15 +1056,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _stepTitle(
-              'Identity Verification',
-              'Required for registration review.',
+              l10n.authIdentityVerificationTitle,
+              l10n.authIdentityVerificationSubtitle,
             ),
             const SizedBox(height: 24),
             _indigentOptionTile(),
             const SizedBox(height: 16),
             _uploadCard(
-              label: 'Profile Photo',
-              subtitle: 'Clear selfie or portrait photo',
+              label: l10n.commonProfilePhoto,
+              subtitle: l10n.authProfilePhotoSubtitle,
               icon: Icons.add_a_photo_outlined,
               file: _profilePhoto,
               onTap: _pickProfilePhoto,
@@ -1028,6 +1092,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _indigentOptionTile() {
+    final l10n = AppLocalizations.of(context);
     return GestureDetector(
       onTap: () => setState(() {
         _isIndigent = !_isIndigent;
@@ -1076,21 +1141,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
               size: 22,
             ),
             const SizedBox(width: 10),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'I have no valid government ID (indigent)',
-                    style: TextStyle(
+                    l10n.authIndigentOptionLabel,
+                    style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 13.5,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
-                    'A barangay official will review your registration with a guarantor.',
-                    style: TextStyle(
+                    l10n.authIndigentOptionSubtitle,
+                    style: const TextStyle(
                       fontSize: 11,
                       color: AppColors.textSecondary,
                     ),
@@ -1105,6 +1170,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _selfieCard() {
+    final l10n = AppLocalizations.of(context);
     return GestureDetector(
       onTap: _captureSelfie,
       child: Container(
@@ -1143,17 +1209,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Live Selfie (Liveness)',
-                    style: TextStyle(
+                  Text(
+                    l10n.authLiveSelfieLabel,
+                    style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Camera capture with guided challenge',
-                    style: TextStyle(
+                  Text(
+                    l10n.authLiveSelfieSubtitle,
+                    style: const TextStyle(
                       fontSize: 11,
                       color: AppColors.textSecondary,
                     ),
@@ -1169,9 +1235,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       color: const Color(0xFFE3F2FD),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      'Tap to Capture',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.authTapToCapture,
+                      style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFF1976D2),
                         fontWeight: FontWeight.w600,
@@ -1216,9 +1282,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         color: Colors.black54,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text(
-                        'Liveness selfie',
-                        style: TextStyle(color: Colors.white, fontSize: 11),
+                      child: Text(
+                        l10n.authLivenessSelfieBadge,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                        ),
                       ),
                     ),
                   ),
@@ -1229,10 +1298,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _idTypeDropdown() {
+    final l10n = AppLocalizations.of(context);
     return DropdownButtonFormField<String>(
       value: _selectedIdType,
-      decoration: const InputDecoration(
-        labelText: 'ID Type *',
+      decoration: InputDecoration(
+        labelText: l10n.authIdTypeLabel,
         prefixIcon: Icon(Icons.badge_outlined),
       ),
       items: KycIdTypes.values
@@ -1244,24 +1314,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
           )
           .toList(),
       onChanged: (v) => setState(() => _selectedIdType = v),
-      validator: (v) => v == null ? 'Please select an ID type' : null,
+      validator: (v) => v == null ? l10n.authPleaseSelectIdType : null,
     );
   }
 
   Widget _idNumberField() {
+    final l10n = AppLocalizations.of(context);
     return TextFormField(
       controller: _idNumberController,
-      decoration: const InputDecoration(
-        labelText: 'ID Number *',
+      decoration: InputDecoration(
+        labelText: l10n.authIdNumberLabel,
         prefixIcon: Icon(Icons.numbers),
-        hintText: 'Enter the ID number printed on your document',
+        hintText: l10n.authIdNumberHint,
       ),
-      validator: (v) =>
-          (v == null || v.trim().isEmpty) ? 'ID number is required' : null,
+      validator: (v) => (v == null || v.trim().isEmpty)
+          ? l10n.authIdNumberRequired
+          : null,
     );
   }
 
   Widget _idDatePickers() {
+    final l10n = AppLocalizations.of(context);
     return Row(
       children: [
         Expanded(
@@ -1279,8 +1352,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: TextFormField(
                 decoration: InputDecoration(
                   labelText: _idIssuedAt == null
-                      ? 'Date Issued (optional)'
-                      : 'Issued: ${_idIssuedAt!.day}/${_idIssuedAt!.month}/${_idIssuedAt!.year}',
+                      ? l10n.authDateIssuedOptional
+                      : l10n.authIdIssuedSelected(
+                          _idIssuedAt!.day,
+                          _idIssuedAt!.month,
+                          _idIssuedAt!.year,
+                        ),
                   prefixIcon: const Icon(Icons.event_available),
                 ),
               ),
@@ -1303,8 +1380,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: TextFormField(
                 decoration: InputDecoration(
                   labelText: _idExpiryAt == null
-                      ? 'Expiry Date (optional)'
-                      : 'Expires: ${_idExpiryAt!.day}/${_idExpiryAt!.month}/${_idExpiryAt!.year}',
+                      ? l10n.authExpiryDateOptional
+                      : l10n.authIdExpirySelected(
+                          _idExpiryAt!.day,
+                          _idExpiryAt!.month,
+                          _idExpiryAt!.year,
+                        ),
                   prefixIcon: const Icon(Icons.event_busy),
                 ),
               ),
@@ -1316,12 +1397,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _idSideCards() {
+    final l10n = AppLocalizations.of(context);
     return Row(
       children: [
         Expanded(
           child: _idSideCard(
-            label: 'ID (front) *',
-            subtitle: 'Front side — photo and details',
+            label: l10n.authIdFrontLabel,
+            subtitle: l10n.authIdFrontSubtitle,
             file: _validIdFront,
             onTap: () => _pickValidIdSide(front: true),
           ),
@@ -1329,8 +1411,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const SizedBox(width: 12),
         Expanded(
           child: _idSideCard(
-            label: 'ID (back)',
-            subtitle: 'Back side — optional',
+            label: l10n.authIdBackLabel,
+            subtitle: l10n.authIdBackSubtitle,
             file: _validIdBack,
             onTap: () => _pickValidIdSide(front: false),
           ),
@@ -1340,20 +1422,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _indigentSection() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextFormField(
           controller: _indigencyReasonController,
           maxLines: 3,
-          decoration: const InputDecoration(
-            labelText: 'Reason / situation *',
-            hintText: 'e.g. no valid ID issued',
+          decoration: InputDecoration(
+            labelText: l10n.authReasonSituationLabel,
+            hintText: l10n.authReasonSituationHint,
             prefixIcon: Icon(Icons.speaker_notes_outlined),
             alignLabelWithHint: true,
           ),
           validator: (v) => (v == null || v.trim().isEmpty)
-              ? 'Please describe your reason / situation'
+              ? l10n.authPleaseDescribeReason
               : null,
         ),
         const SizedBox(height: 16),
@@ -1361,13 +1444,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _guarantorRelationshipController,
-          decoration: const InputDecoration(
-            labelText: 'Relationship to Guarantor *',
-            hintText: 'e.g. neighbor, relative, barangay kagawad',
+          decoration: InputDecoration(
+            labelText: l10n.authGuarantorRelationshipLabel,
+            hintText: l10n.authGuarantorRelationshipHint,
             prefixIcon: Icon(Icons.people_outline),
           ),
           validator: (v) => (v == null || v.trim().isEmpty)
-              ? 'Please enter your relationship to the guarantor'
+              ? l10n.authPleaseEnterGuarantorRelationship
               : null,
         ),
       ],
@@ -1375,6 +1458,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _guarantorPicker() {
+    final l10n = AppLocalizations.of(context);
     return GestureDetector(
       onTap: () async {
         await _loadApprovedCitizens();
@@ -1415,9 +1499,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: _selectedGuarantor == null
-                  ? const Text(
-                      'Select Guarantor *',
-                      style: TextStyle(
+                  ? Text(
+                      l10n.authSelectGuarantorLabel,
+                      style: const TextStyle(
                         fontSize: 14,
                         color: AppColors.textSecondary,
                       ),
@@ -1450,6 +1534,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _infoBox() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -1469,8 +1554,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Expanded(
             child: Text(
               _isIndigent
-                  ? 'Your registration will be reviewed by a barangay official with your guarantor.'
-                  : 'Your ID and selfie are pre-checked automatically at submission. Anything the pre-check cannot confirm is reviewed by a barangay official.',
+                  ? l10n.authInfoBoxIndigent
+                  : l10n.authInfoBoxStandard,
               style: const TextStyle(
                 fontSize: 12,
                 color: Colors.orange,
@@ -1510,6 +1595,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     required File? file,
     required VoidCallback onTap,
   }) {
+    final l10n = AppLocalizations.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1570,9 +1656,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       color: const Color(0xFFE3F2FD),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      'Tap to Upload',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.commonTapToUpload,
+                      style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFF1976D2),
                         fontWeight: FontWeight.w600,
@@ -1620,6 +1706,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     required File? file,
     required VoidCallback onTap,
   }) {
+    final l10n = AppLocalizations.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1693,9 +1780,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       color: const Color(0xFFE3F2FD),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      'Tap to Upload',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.commonTapToUpload,
+                      style: const TextStyle(
                         fontSize: 11,
                         color: Color(0xFF1976D2),
                         fontWeight: FontWeight.w600,
@@ -1782,8 +1869,9 @@ class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
         if (mounted) {
+          final l10n = AppLocalizations.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No camera available')),
+            SnackBar(content: Text(l10n.authNoCameraAvailable)),
           );
           Navigator.pop(context);
         }
@@ -1807,8 +1895,9 @@ class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Camera error: $e')),
+          SnackBar(content: Text(l10n.authCameraError(e))),
         );
         Navigator.pop(context);
       }
@@ -1832,8 +1921,9 @@ class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _capturing = false);
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Capture failed: $e')),
+          SnackBar(content: Text(l10n.authCaptureFailed(e))),
         );
       }
     }
@@ -1845,8 +1935,25 @@ class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
     });
   }
 
+  String _localizedChallenge(String challenge, AppLocalizations l10n) {
+    switch (challenge) {
+      case 'Blink your eyes':
+        return l10n.authChallengeBlink;
+      case 'Turn your head left':
+        return l10n.authChallengeTurnLeft;
+      case 'Turn your head right':
+        return l10n.authChallengeTurnRight;
+      case 'Look up':
+        return l10n.authChallengeLookUp;
+      case 'Smile':
+        return l10n.authChallengeSmile;
+    }
+    return challenge;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
@@ -1860,10 +1967,10 @@ class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
                     icon: const Icon(Icons.close, color: Colors.white),
                     onPressed: () => Navigator.pop(context),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Liveness Verification',
-                      style: TextStyle(
+                      l10n.authLivenessVerificationTitle,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -1909,7 +2016,7 @@ class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
                         const SizedBox(width: 12),
                         Flexible(
                           child: Text(
-                            _challenge,
+                            _localizedChallenge(_challenge, l10n),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
@@ -1922,7 +2029,7 @@ class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Follow the challenge, then tap capture',
+                    l10n.authFollowChallengeHint,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 13,
@@ -1935,9 +2042,9 @@ class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
                       TextButton.icon(
                         onPressed: _newChallenge,
                         icon: const Icon(Icons.refresh, color: Colors.white70),
-                        label: const Text(
-                          'New challenge',
-                          style: TextStyle(color: Colors.white70),
+                        label: Text(
+                          l10n.authNewChallenge,
+                          style: const TextStyle(color: Colors.white70),
                         ),
                       ),
                       const SizedBox(width: 24),
@@ -2001,6 +2108,7 @@ class _GuarantorSearchDialogState extends State<_GuarantorSearchDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final filtered = widget.citizens.where((u) {
       if (_query.isEmpty) return true;
       final q = _query.toLowerCase();
@@ -2015,15 +2123,15 @@ class _GuarantorSearchDialogState extends State<_GuarantorSearchDialog> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            const Text(
-              'Select Guarantor',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            Text(
+              l10n.authSelectGuarantorDialogTitle,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _searchController,
-              decoration: const InputDecoration(
-                hintText: 'Search by name or username...',
+              decoration: InputDecoration(
+                hintText: l10n.authGuarantorSearchHint,
                 prefixIcon: Icon(Icons.search),
               ),
               onChanged: (v) => setState(() => _query = v),
@@ -2033,10 +2141,12 @@ class _GuarantorSearchDialogState extends State<_GuarantorSearchDialog> {
               child: widget.loading
                   ? const Center(child: CircularProgressIndicator())
                   : filtered.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text(
-                        'No approved citizens found',
-                        style: TextStyle(color: AppColors.textSecondary),
+                        l10n.authNoApprovedCitizens,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     )
                   : ListView.builder(

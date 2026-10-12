@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:guin_app/automation/print_copy_rules.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/models/document_print_copy.dart';
 import 'package:guin_app/models/document_request.dart';
 import 'package:guin_app/providers/auth_provider.dart';
@@ -103,7 +104,6 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
   @override
   void initState() {
     super.initState();
-    _viewerName = _resolveViewerName();
     _viewNonce = _generateNonce();
     _openedAtLabel = _formatStamp(DateTime.now());
     _integrityDetailsController = AnimationController(
@@ -117,7 +117,18 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
       reverseCurve: Curves.easeInCubic,
     );
     _setScreenshotProtection(protect: true);
-    _loadDocument();
+  }
+
+  bool _didInitLoad = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didInitLoad) {
+      _didInitLoad = true;
+      _viewerName = _resolveViewerName();
+      _loadDocument();
+    }
   }
 
   @override
@@ -140,7 +151,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
     final recordName = widget.request.userFullName?.trim();
     if (recordName != null && recordName.isNotEmpty) return recordName;
 
-    return 'Barangay Resident';
+    return AppLocalizations.of(context).viewerDefaultName;
   }
 
   /// Short random code so every open of this screen is individually traceable.
@@ -191,13 +202,11 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
   String get _documentUrl =>
       widget.request.finalDocumentUrl ?? widget.request.documentUrl ?? '';
 
-  String _storagePathFromUrl(String url) {
+  String _storagePathFromUrl(String url, AppLocalizations l10n) {
     final segments = Uri.parse(url).pathSegments;
     final documentsIndex = segments.indexOf('documents');
     if (documentsIndex == -1 || documentsIndex >= segments.length - 1) {
-      throw _ViewerMessageException(
-        'The document link for this request is not in the expected format.',
-      );
+      throw _ViewerMessageException(l10n.viewerLinkInvalidFormat);
     }
     return segments.sublist(documentsIndex + 1).join('/');
   }
@@ -213,6 +222,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
   }
 
   Future<void> _loadDocument() async {
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _isLoading = true;
       _loadErrorMessage = null;
@@ -221,14 +231,12 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
     try {
       final url = _documentUrl;
       if (url.isEmpty) {
-        throw _ViewerMessageException(
-          'No document file is attached to this request yet.',
-        );
+        throw _ViewerMessageException(l10n.viewerNoFileAttached);
       }
 
       final downloaded = await StorageService().downloadFile(
         bucket: 'documents',
-        path: _storagePathFromUrl(url),
+        path: _storagePathFromUrl(url, l10n),
       );
       final data = Uint8List.fromList(downloaded);
 
@@ -272,6 +280,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
   }
 
   Widget _buildHeader() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -319,9 +328,12 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                       ),
                     ),
                     const SizedBox(height: 2),
-                    const Text(
-                      'Official copy • view only',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    Text(
+                      l10n.viewerOfficialCopyViewOnly,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -338,14 +350,18 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                     color: Colors.white.withValues(alpha: 0.35),
                   ),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.lock_outline, size: 13, color: Colors.white),
-                    SizedBox(width: 5),
+                    const Icon(
+                      Icons.lock_outline,
+                      size: 13,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 5),
                     Text(
-                      'SECURE',
-                      style: TextStyle(
+                      l10n.viewerSecureBadge,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
@@ -363,6 +379,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
   }
 
   Widget _buildLoadingState() {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -378,19 +395,19 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
               ),
             ),
             const SizedBox(height: 22),
-            const Text(
-              'Preparing your document…',
-              style: TextStyle(
+            Text(
+              l10n.viewerPreparing,
+              style: const TextStyle(
                 fontSize: 15.5,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Verifying the file and applying your personal watermark.',
+            Text(
+              l10n.viewerVerifying,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12.5,
                 color: AppColors.textSecondary,
                 height: 1.4,
@@ -403,6 +420,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
   }
 
   Widget _buildErrorState() {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(28),
@@ -422,10 +440,10 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
               ),
             ),
             const SizedBox(height: 18),
-            const Text(
-              'We could not open this document',
+            Text(
+              l10n.viewerOpenErrorTitle,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 16.5,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
@@ -433,7 +451,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              _loadErrorMessage ?? 'Please try again in a moment.',
+              _loadErrorMessage ?? l10n.viewerTryAgainMoment,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 13,
@@ -445,9 +463,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
             ElevatedButton.icon(
               onPressed: _loadDocument,
               icon: const Icon(Icons.refresh, size: 18),
-              label: const Text(
-                'Try again',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              label: Text(
+                l10n.commonRetry,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primary,
@@ -464,9 +482,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Go back',
-                style: TextStyle(color: AppColors.textSecondary),
+              child: Text(
+                l10n.commonBack,
+                style: const TextStyle(color: AppColors.textSecondary),
               ),
             ),
           ],
@@ -476,6 +494,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
   }
 
   Widget _buildViewerContent() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       children: [
         Padding(
@@ -526,13 +545,13 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                               ),
                       errorBannerBuilder:
                           (context, error, stackTrace, documentRef) =>
-                              const Center(
+                              Center(
                                 child: Padding(
-                                  padding: EdgeInsets.all(24),
+                                  padding: const EdgeInsets.all(24),
                                   child: Text(
-                                    'This file could not be displayed.',
+                                    l10n.viewerFileNotDisplayed,
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 13,
                                       color: AppColors.textSecondary,
                                     ),
@@ -559,30 +578,28 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
   }
 
   _IntegrityInfo get _integrityInfo {
+    final l10n = AppLocalizations.of(context);
     switch (_integrity) {
       case _IntegrityStatus.verified:
-        return const _IntegrityInfo(
-          color: Color(0xFF2E7D32),
+        return _IntegrityInfo(
+          color: const Color(0xFF2E7D32),
           icon: Icons.verified_outlined,
-          title: 'Integrity verified — file matches record',
-          message:
-              'The file’s SHA-256 content hash matches the record held by the barangay. This confirms the file was not altered after release; scan the QR code to confirm authenticity with the barangay.',
+          title: l10n.viewerIntegrityVerifiedTitle,
+          message: l10n.viewerIntegrityVerifiedMessage,
         );
       case _IntegrityStatus.mismatched:
-        return const _IntegrityInfo(
+        return _IntegrityInfo(
           color: AppColors.error,
           icon: Icons.error_outline,
-          title: 'Integrity check failed — may be tampered with',
-          message:
-              'The hash of this file does not match the hash recorded at release. Request a fresh copy if in doubt.',
+          title: l10n.viewerIntegrityFailedTitle,
+          message: l10n.viewerIntegrityFailedMessage,
         );
       case _IntegrityStatus.unknown:
-        return const _IntegrityInfo(
-          color: Color(0xFF546E7A),
+        return _IntegrityInfo(
+          color: const Color(0xFF546E7A),
           icon: Icons.info_outline,
-          title: 'No integrity hash on record',
-          message:
-              'This document was issued without a stored checksum, so its authenticity cannot be confirmed here.',
+          title: l10n.viewerIntegrityUnknownTitle,
+          message: l10n.viewerIntegrityUnknownMessage,
         );
     }
   }
@@ -689,11 +706,12 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
 
   Widget _buildSummaryCard() {
     final request = widget.request;
+    final l10n = AppLocalizations.of(context);
     final issuedAt =
         request.releasedAt ?? request.approvedAt ?? request.requestedAt;
     final expired = request.isExpired;
     final usesRemaining = request.maxUses == null
-        ? 'Unlimited'
+        ? l10n.viewerUsesUnlimited
         : '${request.remainingUses}';
     final rawQrUrl = request.qrUrl?.trim();
     final storedQrUrl = (rawQrUrl == null || rawQrUrl.isEmpty) ? null : rawQrUrl;
@@ -745,7 +763,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Purpose: ${request.purpose}',
+                      l10n.viewerPurposeLine(request.purpose),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -786,14 +804,14 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
             children: [
               Expanded(
                 child: _summaryTile(
-                  label: 'DOCUMENT ID',
-                  value: request.documentId ?? 'Not yet issued',
+                  label: l10n.viewerDocumentIdLabel,
+                  value: request.documentId ?? l10n.viewerNotYetIssued,
                 ),
               ),
               const _TileSpacer(),
               Expanded(
                 child: _summaryTile(
-                  label: 'USES REMAINING',
+                  label: l10n.viewerUsesRemainingLabel,
                   value: usesRemaining,
                 ),
               ),
@@ -805,9 +823,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
             children: [
               Expanded(
                 child: _summaryTile(
-                  label: 'VALID UNTIL',
+                  label: l10n.viewerValidUntilLabel,
                   value: request.expiresAt == null
-                      ? 'No expiry'
+                      ? l10n.viewerNoExpiry
                       : Helpers.formatDate(request.expiresAt!),
                   valueColor: expired ? AppColors.error : AppColors.textPrimary,
                   badge: expired ? const _ExpiredBadge() : null,
@@ -816,7 +834,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
               const _TileSpacer(),
               Expanded(
                 child: _summaryTile(
-                  label: 'ISSUED ON',
+                  label: l10n.viewerIssuedOnLabel,
                   value: Helpers.formatDate(issuedAt),
                 ),
               ),
@@ -858,6 +876,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
   }
 
   Widget _buildViewQrAction(String qrUrl) {
+    final l10n = AppLocalizations.of(context);
     return Material(
       type: MaterialType.transparency,
       child: InkWell(
@@ -876,21 +895,21 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                 child: const Icon(Icons.qr_code_2, color: _primary, size: 18),
               ),
               const SizedBox(width: 11),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'View QR code',
-                      style: TextStyle(
+                      l10n.viewerViewQrCode,
+                      style: const TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
-                      'Open a larger code to scan',
-                      style: TextStyle(
+                      l10n.viewerOpenLargerQr,
+                      style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.textSecondary,
                       ),
@@ -915,6 +934,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
   Future<void> _showQrSheet(String qrUrl) async {
     if (!mounted) return;
 
+    final l10n = AppLocalizations.of(context);
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
@@ -951,10 +971,10 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Verification QR code',
-                        style: TextStyle(
+                        l10n.viewerVerificationQrTitle,
+                        style: const TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w800,
                           height: 1.3,
@@ -972,11 +992,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Scan this code with a camera to check this document with '
-                  'the barangay. It is shown here only — nothing is shared '
-                  'or saved.',
-                  style: TextStyle(
+                Text(
+                  l10n.viewerScanQrDescription,
+                  style: const TextStyle(
                     fontSize: 12.5,
                     color: AppColors.textSecondary,
                     height: 1.45,
@@ -999,17 +1017,17 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                       size: qrSize,
                       gapless: false,
                       backgroundColor: Colors.white,
-                      semanticsLabel: 'Verification QR code',
+                      semanticsLabel: l10n.viewerVerificationQrTitle,
                       errorStateBuilder: (context, error) => SizedBox(
                         width: qrSize,
                         height: qrSize,
-                        child: const Center(
+                        child: Center(
                           child: Padding(
-                            padding: EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(16),
                             child: Text(
-                              'This QR code could not be displayed.',
+                              l10n.viewerQrNotDisplayed,
                               textAlign: TextAlign.center,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 12.5,
                                 color: AppColors.textSecondary,
                               ),
@@ -1021,9 +1039,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'VERIFICATION LINK',
-                  style: TextStyle(
+                Text(
+                  l10n.viewerVerificationLinkLabel,
+                  style: const TextStyle(
                     fontSize: 9.5,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.7,
@@ -1055,9 +1073,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                         borderRadius: BorderRadius.circular(13),
                       ),
                     ),
-                    child: const Text(
-                      'Close',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.commonClose,
+                      style: const TextStyle(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w700,
                       ),
@@ -1114,6 +1132,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
 
   Widget _buildFooterNote() {
     final bottomInset = MediaQuery.of(context).padding.bottom;
+    final l10n = AppLocalizations.of(context);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 4, 16, 12 + bottomInset),
@@ -1128,7 +1147,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
           const SizedBox(width: 6),
           Flexible(
             child: Text(
-              'View-only in this app: every view is watermarked and screen capture is blocked where supported. For paper or a file, request a watermarked, serial-numbered printable copy.',
+              l10n.viewerFooterNote,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 11,
@@ -1153,12 +1172,11 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
   }
 
   String get _printCopyDisabledReason {
+    final l10n = AppLocalizations.of(context);
     if (widget.request.documentId == null) {
-      return 'A printable copy becomes available once your document ID is '
-          'issued.';
+      return l10n.viewerPrintCopyNeedsId;
     }
-    return 'A printable copy can be requested once this document is approved '
-        'for release.';
+    return l10n.viewerPrintCopyNeedsApproval;
   }
 
   String _isoDateLabel(DateTime date) {
@@ -1174,6 +1192,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
     final busy = _isRequestingCopy;
     final issued = _issuedCopy;
     final issuedBytes = _issuedPdfBytes;
+    final l10n = AppLocalizations.of(context);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -1196,10 +1215,10 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                 ),
               ),
               child: busy
-                  ? const Row(
+                  ? Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SizedBox(
+                        const SizedBox(
                           width: 17,
                           height: 17,
                           child: CircularProgressIndicator(
@@ -1207,24 +1226,24 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                             color: Colors.white,
                           ),
                         ),
-                        SizedBox(width: 11),
+                        const SizedBox(width: 11),
                         Text(
-                          'Preparing your printable copy…',
-                          style: TextStyle(
+                          l10n.viewerPreparingPrintCopy,
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
                     )
-                  : const Row(
+                  : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.print_outlined, size: 19),
-                        SizedBox(width: 9),
+                        const Icon(Icons.print_outlined, size: 19),
+                        const SizedBox(width: 9),
                         Text(
-                          'Request printable copy',
-                          style: TextStyle(
+                          l10n.viewerRequestPrintCopy,
+                          style: const TextStyle(
                             fontSize: 14.5,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.2,
@@ -1252,7 +1271,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
               onPressed: () => _showReadySheet(issued, issuedBytes),
               icon: const Icon(Icons.print_outlined, size: 16, color: _primary),
               label: Text(
-                '${issued.displayLabel} — print or save again',
+                l10n.viewerPrintOrSaveAgain(issued.displayLabel),
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -1268,15 +1287,13 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
   Future<void> _requestPrintCopy() async {
     if (_isRequestingCopy || !_canRequestPrintCopy) return;
 
+    final l10n = AppLocalizations.of(context);
     if (kIsWeb) {
       await _showInfoSheet(
         icon: Icons.print_disabled_outlined,
         tone: _primary,
-        title: 'Printing is not available here',
-        message:
-            'Printing and saving are available on mobile and desktop. Open '
-            'this document in the barangay app on your phone or computer to '
-            'get your printable copy.',
+        title: l10n.viewerPrintNotAvailableTitle,
+        message: l10n.viewerPrintNotAvailableMessage,
       );
       return;
     }
@@ -1288,6 +1305,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
 
   /// Plain-language confirmation shown before a copy is minted.
   Future<bool?> _showPrintCopyConfirmation() {
+    final l10n = AppLocalizations.of(context);
     return showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -1322,10 +1340,10 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                       ),
                     ),
                     const SizedBox(width: 13),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Request a printable copy?',
-                        style: TextStyle(
+                        l10n.viewerPrintCopyConfirmTitle,
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
                           height: 1.3,
@@ -1335,11 +1353,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Your copy is regenerated from the official record the '
-                  'barangay holds — the same approved document, with its '
-                  'signature and QR code.',
-                  style: TextStyle(
+                Text(
+                  l10n.viewerPrintCopyConfirmBody,
+                  style: const TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
                     height: 1.5,
@@ -1348,25 +1364,17 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                 const SizedBox(height: 14),
                 _copyBullet(
                   icon: Icons.badge_outlined,
-                  text:
-                      'Watermarked with your name and stamped with a unique '
-                      'serial number, so every printed copy can be traced '
-                      'back to you.',
+                  text: l10n.viewerPrintCopyBulletWatermark,
                 ),
                 _copyBullet(
                   icon: Icons.picture_as_pdf_outlined,
-                  text:
-                      'Printing and saving are allowed — you can print it or '
-                      'keep it as a PDF. Each document allows up to '
-                      '${PrintCopyRules.maxCopiesPerDocument} printable copies '
-                      'in total.',
+                  text: l10n.viewerPrintCopyBulletLimit(
+                    PrintCopyRules.maxCopiesPerDocument,
+                  ),
                 ),
                 _copyBullet(
                   icon: Icons.qr_code_scanner,
-                  text:
-                      'Scanning the QR code on the copy checks this '
-                      'document’s expiry, single-use and use limits — '
-                      'exactly like the original.',
+                  text: l10n.viewerPrintCopyBulletScan,
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
@@ -1381,9 +1389,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                         borderRadius: BorderRadius.circular(13),
                       ),
                     ),
-                    child: const Text(
-                      'Create my printable copy',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.viewerCreatePrintCopy,
+                      style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                       ),
@@ -1392,9 +1400,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                 ),
                 TextButton(
                   onPressed: () => Navigator.of(sheetContext).pop(false),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.commonCancel,
+                    style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1488,6 +1496,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
   Future<void> _showReadySheet(DocumentPrintCopy copy, Uint8List bytes) async {
     if (!mounted) return;
     final filename = _printCopyFilename(copy);
+    final l10n = AppLocalizations.of(context);
 
     await showModalBottomSheet<void>(
       context: context,
@@ -1551,9 +1560,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Your printable copy is ready',
-                                style: TextStyle(
+                              Text(
+                                l10n.viewerPrintCopyReady,
+                                style: const TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w800,
                                   height: 1.3,
@@ -1587,13 +1596,17 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Row(
+                          Row(
                             children: [
-                              Icon(Icons.qr_code_2, size: 16, color: _primary),
-                              SizedBox(width: 7),
+                              const Icon(
+                                Icons.qr_code_2,
+                                size: 16,
+                                color: _primary,
+                              ),
+                              const SizedBox(width: 7),
                               Text(
-                                'TRACEABLE, NUMBERED COPY',
-                                style: TextStyle(
+                                l10n.viewerTraceableNumberedCopy,
+                                style: const TextStyle(
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 0.7,
@@ -1604,11 +1617,11 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Serial ${copy.serial} — recorded as '
-                            '${copy.copyLabel} for $_viewerName. Scanning the '
-                            'QR code on this copy shows which copy was used, '
-                            'and this document’s expiry and use limits '
-                            'still apply.',
+                            l10n.viewerSerialNotice(
+                              copy.serial,
+                              copy.copyLabel,
+                              _viewerName,
+                            ),
                             style: const TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
@@ -1645,7 +1658,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                                     )
                                   : const Icon(Icons.print_outlined, size: 19),
                               label: Text(
-                                busyAction == 'print' ? 'Preparing…' : 'Print',
+                                busyAction == 'print'
+                                    ? l10n.viewerPreparingShort
+                                    : l10n.viewerPrint,
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
@@ -1696,7 +1711,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                                       size: 19,
                                     ),
                               label: Text(
-                                busyAction == 'save' ? 'Saving…' : 'Save PDF',
+                                busyAction == 'save'
+                                    ? l10n.viewerSaving
+                                    : l10n.viewerSavePdf,
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
@@ -1724,9 +1741,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                       onPressed: busyAction == null
                           ? () => Navigator.of(sheetContext).pop()
                           : null,
-                      child: const Text(
-                        'Done',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.viewerDone,
+                        style: const TextStyle(
                           color: AppColors.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1754,15 +1771,15 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
 
   ({IconData icon, Color tone, String title, String message})
   _printCopyErrorInfo(Object error) {
+    final l10n = AppLocalizations.of(context);
     if (error is StateError) {
       return (
         icon: Icons.print_disabled_outlined,
         tone: const Color(0xFFEF6C00),
-        title: 'Print limit reached',
-        message:
-            'This document already has its maximum of '
-            '${PrintCopyRules.maxCopiesPerDocument} printable copies. If you '
-            'need another one, please visit or call the barangay office.',
+        title: l10n.viewerPrintLimitTitle,
+        message: l10n.viewerPrintLimitMessage(
+          PrintCopyRules.maxCopiesPerDocument,
+        ),
       );
     }
     if (error is UnsupportedError ||
@@ -1771,27 +1788,22 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
       return (
         icon: Icons.devices_other_outlined,
         tone: _primary,
-        title: 'Not available on this device',
-        message:
-            'Printing and saving are available on mobile and desktop. Open '
-            'this document in the barangay app on your phone or computer to '
-            'get your printable copy.',
+        title: l10n.viewerNotAvailableTitle,
+        message: l10n.viewerPrintNotAvailableMessage,
       );
     }
     if (error is FileSystemException) {
       return (
         icon: Icons.folder_off_outlined,
         tone: const Color(0xFFEF6C00),
-        title: 'We could not prepare the file',
-        message:
-            'The PDF could not be saved on this device. Please try again in '
-            'a moment.',
+        title: l10n.viewerFilePrepareErrorTitle,
+        message: l10n.viewerFilePrepareErrorMessage,
       );
     }
     return (
       icon: Icons.error_outline,
       tone: AppColors.error,
-      title: 'We could not create your printable copy',
+      title: l10n.viewerCreateCopyErrorTitle,
       message: Helpers.parseSupabaseError(error),
     );
   }
@@ -1812,6 +1824,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
     required String message,
   }) async {
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
@@ -1880,9 +1893,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
                         borderRadius: BorderRadius.circular(13),
                       ),
                     ),
-                    child: const Text(
-                      'Got it',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.viewerGotIt,
+                      style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                       ),

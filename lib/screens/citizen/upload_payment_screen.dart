@@ -6,6 +6,7 @@ import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/document_provider.dart';
 import 'package:guin_app/providers/barangay_provider.dart';
 import 'package:guin_app/models/document_request.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/utils/helpers.dart';
 
 class UploadPaymentScreen extends StatefulWidget {
@@ -45,9 +46,10 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
   }
 
   Future<void> _uploadReceipt() async {
+    final l10n = AppLocalizations.of(context);
     if (_receiptImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select receipt image')),
+        SnackBar(content: Text(l10n.paySelectReceiptImage)),
       );
       return;
     }
@@ -65,10 +67,10 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Receipt uploaded! Waiting for admin verification.'),
+        SnackBar(
+          content: Text(l10n.payReceiptUploaded),
           backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
 
@@ -91,6 +93,7 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
   Widget build(BuildContext context) {
     final barangayProvider = context.watch<BarangayProvider>();
     final config = barangayProvider.config;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -133,21 +136,21 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
                           size: 22,
                         ),
                         const SizedBox(width: 10),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Upload Payment Receipt',
-                                style: TextStyle(
+                                l10n.payTitle,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 17,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
                               Text(
-                                'Complete your document request',
-                                style: TextStyle(
+                                l10n.paySubtitle,
+                                style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 12,
                                 ),
@@ -222,17 +225,17 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Row(
+                          Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.info_outline,
                                 size: 16,
                                 color: Color(0xFF1976D2),
                               ),
-                              SizedBox(width: 8),
+                              const SizedBox(width: 8),
                               Text(
-                                'Payment Instructions',
-                                style: TextStyle(
+                                l10n.payPaymentInstructions,
+                                style: const TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 15,
                                 ),
@@ -240,7 +243,7 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
                             ],
                           ),
                           const SizedBox(height: 14),
-                          _step('1', 'Send payment via GCash to:'),
+                          _step('1', l10n.payStepSendPayment),
                           const SizedBox(height: 10),
                           if (barangayProvider.isLoading)
                             const Center(child: CircularProgressIndicator())
@@ -311,9 +314,9 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
                               ),
                             )
                           else
-                            const Text(
-                              'Loading GCash details...',
-                              style: TextStyle(color: Colors.grey),
+                            Text(
+                              l10n.payLoadingGcash,
+                              style: const TextStyle(color: Colors.grey),
                             ),
                           const SizedBox(height: 12),
                           Row(
@@ -325,7 +328,10 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                'Amount: ₱${widget.request.paymentAmount.toStringAsFixed(2)}',
+                                l10n.payAmountLine(
+                                  widget.request.paymentAmount
+                                      .toStringAsFixed(2),
+                                ),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 15,
@@ -335,9 +341,9 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
                             ],
                           ),
                           const SizedBox(height: 14),
-                          _step('2', 'Screenshot your GCash confirmation'),
+                          _step('2', l10n.payStepScreenshot),
                           const SizedBox(height: 6),
-                          _step('3', 'Upload the screenshot below'),
+                          _step('3', l10n.payStepUploadBelow),
                         ],
                       ),
                     ),
@@ -346,9 +352,12 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
                   const SizedBox(height: 20),
 
                   // Receipt picker
-                  const Text(
-                    'GCash Receipt Screenshot',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  Text(
+                    l10n.payReceiptScreenshotLabel,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   GestureDetector(
@@ -390,17 +399,17 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 12),
-                                const Text(
-                                  'Tap to select screenshot',
-                                  style: TextStyle(
+                                Text(
+                                  l10n.payTapToSelectScreenshot,
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                     color: Colors.green,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                const Text(
-                                  'JPG, PNG accepted',
-                                  style: TextStyle(
+                                Text(
+                                  l10n.payImageFormatsAccepted,
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey,
                                   ),
@@ -432,18 +441,18 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
                                         color: Colors.black54,
                                         borderRadius: BorderRadius.circular(20),
                                       ),
-                                      child: const Row(
+                                      child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(
+                                          const Icon(
                                             Icons.edit_outlined,
                                             color: Colors.white,
                                             size: 14,
                                           ),
-                                          SizedBox(width: 4),
+                                          const SizedBox(width: 4),
                                           Text(
-                                            'Change',
-                                            style: TextStyle(
+                                            l10n.payChange,
+                                            style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 12,
                                             ),
@@ -485,8 +494,8 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
                                   ),
                             label: Text(
                               docProvider.isLoading
-                                  ? 'Uploading...'
-                                  : 'Submit Payment Receipt',
+                                  ? l10n.payUploading
+                                  : l10n.paySubmitPaymentReceipt,
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
@@ -516,9 +525,9 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
                                 borderRadius: BorderRadius.circular(14),
                               ),
                             ),
-                            child: const Text(
-                              'Cancel',
-                              style: TextStyle(color: Colors.grey),
+                            child: Text(
+                              l10n.commonCancel,
+                              style: const TextStyle(color: Colors.grey),
                             ),
                           ),
                         ),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'package:guin_app/providers/connectivity_provider.dart';
 import 'package:guin_app/utils/constants.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 /// App-wide "You're offline" indicator, wired once via `MaterialApp.builder`
 /// in `main.dart` so it floats above the Navigator and survives navigation on
@@ -86,9 +87,10 @@ class _OfflinePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Semantics(
       liveRegion: true,
-      label: 'You\u2019re offline. Some actions need a connection.',
+      label: l10n.offlineBannerSemantics,
       child: ExcludeSemantics(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -119,8 +121,8 @@ class _OfflinePill extends StatelessWidget {
                 child: Text.rich(
                   TextSpan(
                     children: [
-                      const TextSpan(
-                        text: 'You\u2019re offline',
+                      TextSpan(
+                        text: l10n.offlineBanner,
                         style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
@@ -128,7 +130,7 @@ class _OfflinePill extends StatelessWidget {
                         ),
                       ),
                       TextSpan(
-                        text: ' \u2014 some actions need a connection',
+                        text: l10n.offlineBannerSuffix,
                         style: TextStyle(
                           fontSize: 12.5,
                           height: 1.3,

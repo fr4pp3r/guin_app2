@@ -5,6 +5,7 @@ import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/incident_report_provider.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class MyReportsScreen extends StatefulWidget {
   const MyReportsScreen({super.key});
@@ -80,6 +81,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final reportsProvider = context.watch<IncidentReportProvider>();
 
     return Scaffold(
@@ -117,12 +119,12 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                       size: 22,
                     ),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'My Incident Reports',
+                            l10n.myIncidentReportsTitle,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 18,
@@ -130,7 +132,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                             ),
                           ),
                           Text(
-                            'Track your submitted reports',
+                            l10n.myReportsSubtitle,
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 12,
@@ -217,18 +219,18 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              const Text(
-                                'No incident reports yet',
-                                style: TextStyle(
+                              Text(
+                                l10n.citizenNoReports,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textSecondary,
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              const Text(
-                                'Tap the button below to submit a report',
-                                style: TextStyle(
+                              Text(
+                                l10n.citizenNoReportsHint,
+                                style: const TextStyle(
                                   fontSize: 13,
                                   color: AppColors.textSecondary,
                                 ),
@@ -396,9 +398,15 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                                       spacing: 6,
                                       children: [
                                         if (report.isAnonymous)
-                                          _badge('Anonymous', Colors.purple),
+                                          _badge(
+                                            l10n.commonAnonymous,
+                                            Colors.purple,
+                                          ),
                                         if (report.isSensitive)
-                                          _badge('Sensitive', Colors.orange),
+                                          _badge(
+                                            l10n.commonSensitive,
+                                            Colors.orange,
+                                          ),
                                       ],
                                     ),
                                   ],
@@ -422,9 +430,10 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   /// Soft amber "info" strip shown above the list while the reports on screen
   /// come from the local offline cache instead of the network.
   Widget _buildOfflineBanner(DateTime? savedAt) {
+    final l10n = AppLocalizations.of(context);
     final savedLine = savedAt == null
-        ? 'Showing your last saved reports.'
-        : 'Showing saved reports from ${_formatCacheTime(savedAt)}.';
+        ? l10n.citizenSavedReportsHint
+        : l10n.citizenSavedReportsFrom(_formatCacheTime(savedAt));
 
     return Container(
       width: double.infinity,
@@ -456,9 +465,9 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'You\u2019re offline',
-                  style: TextStyle(
+                Text(
+                  l10n.offlineBanner,
+                  style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -484,6 +493,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   /// Plain, locale-aware relative time for the cache timestamp:
   /// "2:14 PM" (today), "yesterday at 2:14 PM", "Oct 10 at 2:14 PM".
   String _formatCacheTime(DateTime savedAt) {
+    final l10n = AppLocalizations.of(context);
     final local = savedAt.toLocal();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -492,14 +502,15 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
     final dayDiff = today.difference(thatDay).inDays;
 
     if (dayDiff <= 0) return time;
-    if (dayDiff == 1) return 'yesterday at $time';
-    return '${DateFormat.MMMd().format(local)} at $time';
+    if (dayDiff == 1) return l10n.citizenYesterdayAt(time);
+    return l10n.citizenDateAtTime(DateFormat.MMMd().format(local), time);
   }
 
   /// Non-alarming "couldn't load" state shown when the last load failed and
   /// there is no cached copy to fall back on. Amber/neutral, never red, and
   /// the raw error text stays out of the UI.
   Widget _buildLoadErrorState() {
+    final l10n = AppLocalizations.of(context);
     return RefreshIndicator(
       onRefresh: _loadReports,
       child: ListView(
@@ -521,18 +532,18 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Couldn\u2019t load your reports',
-                  style: TextStyle(
+                Text(
+                  l10n.citizenLoadReportsError,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Your reports didn\u2019t load. Check your connection and try again.',
-                  style: TextStyle(
+                Text(
+                  l10n.citizenLoadReportsErrorMessage,
+                  style: const TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
                   ),
@@ -542,9 +553,9 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                 ElevatedButton.icon(
                   onPressed: _loadReports,
                   icon: const Icon(Icons.refresh_rounded, size: 18),
-                  label: const Text(
-                    'Retry',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                  label: Text(
+                    l10n.commonRetry,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.warning,

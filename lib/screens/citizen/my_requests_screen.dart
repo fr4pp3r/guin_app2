@@ -8,6 +8,7 @@ import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/screens/citizen/document_viewer_screen.dart';
 import 'package:guin_app/screens/citizen/upload_payment_screen.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 // ignore_for_file: unused_import
 
@@ -60,6 +61,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final documentProvider = context.watch<DocumentProvider>();
     final filteredRequests = _getFilteredRequests(documentProvider.myRequests);
 
@@ -98,12 +100,12 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                       size: 22,
                     ),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'My Requests',
+                            l10n.myRequestsTitle,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 18,
@@ -111,7 +113,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                             ),
                           ),
                           Text(
-                            'Track your document requests',
+                            l10n.myRequestsSubtitle,
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 12,
@@ -169,15 +171,15 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _chip('All', 'all'),
+                  _chip(l10n.citizenFilterAll, 'all'),
                   const SizedBox(width: 8),
-                  _chip('Pending', 'pending'),
+                  _chip(l10n.citizenFilterPending, 'pending'),
                   const SizedBox(width: 8),
-                  _chip('Payment', 'payment'),
+                  _chip(l10n.citizenFilterPayment, 'payment'),
                   const SizedBox(width: 8),
-                  _chip('Approved', 'approved'),
+                  _chip(l10n.citizenFilterApproved, 'approved'),
                   const SizedBox(width: 8),
-                  _chip('Rejected', 'rejected'),
+                  _chip(l10n.citizenFilterRejected, 'rejected'),
                 ],
               ),
             ),
@@ -208,7 +210,11 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'No ${_filter == 'all' ? 'requests' : _filter} found',
+                            _filter == 'all'
+                                ? l10n.citizenNoRequestsFound
+                                : l10n.citizenNoFilteredRequestsFound(
+                                    _filterLabel(l10n),
+                                  ),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -216,9 +222,9 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          const Text(
-                            'Pull down to refresh',
-                            style: TextStyle(
+                          Text(
+                            l10n.citizenPullDownToRefresh,
+                            style: const TextStyle(
                               fontSize: 13,
                               color: AppColors.textSecondary,
                             ),
@@ -242,9 +248,10 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
   /// Soft amber "info" strip shown above the list while the requests on screen
   /// come from the local offline cache instead of the network.
   Widget _buildOfflineBanner(DateTime? savedAt) {
+    final l10n = AppLocalizations.of(context);
     final savedLine = savedAt == null
-        ? 'Showing your last saved requests.'
-        : 'Showing saved requests from ${_formatCacheTime(savedAt)}.';
+        ? l10n.citizenSavedRequestsHint
+        : l10n.citizenSavedRequestsFrom(_formatCacheTime(savedAt));
 
     return Container(
       width: double.infinity,
@@ -276,9 +283,9 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'You\u2019re offline',
-                  style: TextStyle(
+                Text(
+                  l10n.offlineBanner,
+                  style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -304,6 +311,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
   /// Plain, locale-aware relative time for the cache timestamp:
   /// "2:14 PM" (today), "yesterday at 2:14 PM", "Oct 10 at 2:14 PM".
   String _formatCacheTime(DateTime savedAt) {
+    final l10n = AppLocalizations.of(context);
     final local = savedAt.toLocal();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -312,8 +320,25 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
     final dayDiff = today.difference(thatDay).inDays;
 
     if (dayDiff <= 0) return time;
-    if (dayDiff == 1) return 'yesterday at $time';
-    return '${DateFormat.MMMd().format(local)} at $time';
+    if (dayDiff == 1) return l10n.citizenYesterdayAt(time);
+    return l10n.citizenDateAtTime(DateFormat.MMMd().format(local), time);
+  }
+
+  /// Localized label for the active filter chip, used in the empty-state
+  /// message ("No Pending found", etc.).
+  String _filterLabel(AppLocalizations l10n) {
+    switch (_filter) {
+      case 'pending':
+        return l10n.citizenFilterPending;
+      case 'payment':
+        return l10n.citizenFilterPayment;
+      case 'approved':
+        return l10n.citizenFilterApproved;
+      case 'rejected':
+        return l10n.citizenFilterRejected;
+      default:
+        return l10n.citizenFilterAll;
+    }
   }
 
   Widget _chip(String label, String value) {
@@ -343,6 +368,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
   }
 
   Widget _buildRequestCard(DocumentRequest request) {
+    final l10n = AppLocalizations.of(context);
     final statusColor = _getStatusColor(request.requestStatus);
     final docIcon = _getDocumentIcon(request.documentType);
 
@@ -389,7 +415,9 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'Requested ${Helpers.formatDate(request.requestedAt)}',
+                        l10n.citizenRequestedAt(
+                          Helpers.formatDate(request.requestedAt),
+                        ),
                         style: const TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
@@ -425,9 +453,9 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Purpose',
-                  style: TextStyle(
+                Text(
+                  l10n.commonPurpose,
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textSecondary,
@@ -480,9 +508,9 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                     child: ElevatedButton.icon(
                       onPressed: () => _openDocumentViewer(request),
                       icon: const Icon(Icons.visibility_outlined, size: 18),
-                      label: const Text(
-                        'View Document',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                      label: Text(
+                        l10n.citizenViewDocument,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
@@ -519,9 +547,9 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                               size: 16,
                             ),
                             const SizedBox(width: 8),
-                            const Text(
-                              'Request Verified — Payment Required',
-                              style: TextStyle(
+                            Text(
+                              l10n.citizenPaymentRequiredTitle,
+                              style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13,
                                 color: Colors.green,
@@ -531,7 +559,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Pay ₱${request.paymentAmount.toStringAsFixed(2)} to receive your document.',
+                          l10n.citizenPayAmountPrompt(request.paymentAmount),
                           style: const TextStyle(fontSize: 12),
                         ),
                         const SizedBox(height: 10),
@@ -540,9 +568,11 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                           child: ElevatedButton.icon(
                             onPressed: () => _showPaymentDialog(request),
                             icon: const Icon(Icons.payment, size: 16),
-                            label: const Text(
-                              'Upload Payment Receipt',
-                              style: TextStyle(fontWeight: FontWeight.w600),
+                            label: Text(
+                              l10n.citizenUploadPaymentReceipt,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green,
@@ -579,10 +609,10 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                           size: 16,
                         ),
                         const SizedBox(width: 8),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Payment receipt uploaded. Awaiting admin verification.',
-                            style: TextStyle(fontSize: 12),
+                            l10n.citizenPaymentAwaitingVerification,
+                            style: const TextStyle(fontSize: 12),
                           ),
                         ),
                       ],
@@ -611,10 +641,10 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                           size: 16,
                         ),
                         const SizedBox(width: 8),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Your request is under review by our staff.',
-                            style: TextStyle(fontSize: 12),
+                            l10n.citizenRequestUnderReview,
+                            style: const TextStyle(fontSize: 12),
                           ),
                         ),
                       ],

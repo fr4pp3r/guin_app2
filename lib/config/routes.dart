@@ -21,6 +21,7 @@ import 'package:guin_app/screens/verify_document_screen.dart';
 import 'package:guin_app/screens/admin/incident_reports_screen.dart';
 import 'package:guin_app/screens/citizen/submit_report_screen.dart';
 import 'package:guin_app/screens/citizen/profile_screen.dart';
+import 'package:guin_app/screens/admin/profile_screen.dart';
 
 class AppRoutes {
   // Splash
@@ -53,6 +54,7 @@ class AppRoutes {
   static const String documentFees = '/admin/document-fees';
   static const String documentFormats = '/admin/document-formats';
   static const String captainApproval = '/admin/captain-approval';
+  static const String adminProfile = '/admin/profile';
 
   static Map<String, WidgetBuilder> get routes {
     return {
@@ -78,6 +80,7 @@ class AppRoutes {
       documentFees: (context) => const DocumentFeesScreen(),
       documentFormats: (context) => const DocumentFormatsScreen(),
       captainApproval: (context) => const CaptainApprovalScreen(),
+      adminProfile: (context) => const AdminProfileScreen(),
     };
   }
 
@@ -162,6 +165,10 @@ class AppRoutes {
       case AppRoutes.documentFormats:
         return MaterialPageRoute(
           builder: (context) => const DocumentFormatsScreen(),
+        );
+      case AppRoutes.adminProfile:
+        return MaterialPageRoute(
+          builder: (context) => const AdminProfileScreen(),
         );
       default:
         return MaterialPageRoute(

@@ -5,6 +5,7 @@ import 'package:guin_app/providers/notification_provider.dart';
 import 'package:guin_app/models/notification.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -87,6 +88,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: Column(
@@ -122,12 +124,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       size: 22,
                     ),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Notifications',
+                            l10n.notificationsTitle,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 18,
@@ -135,7 +137,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             ),
                           ),
                           Text(
-                            'Stay updated on your requests',
+                            l10n.notificationsSubtitle,
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 12,
@@ -155,9 +157,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             color: Colors.white,
                             size: 16,
                           ),
-                          label: const Text(
-                            'Mark all read',
-                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          label: Text(
+                            l10n.notificationsMarkAllRead,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
                           ),
                         );
                       },
@@ -205,18 +210,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              const Text(
-                                'Couldn\u2019t load notifications',
-                                style: TextStyle(
+                              Text(
+                                l10n.notificationsLoadError,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              const Text(
-                                'Your notifications didn\u2019t load. Check your connection and try again.',
-                                style: TextStyle(
+                              Text(
+                                l10n.notificationsLoadErrorMessage,
+                                style: const TextStyle(
                                   fontSize: 13,
                                   color: AppColors.textSecondary,
                                 ),
@@ -229,9 +234,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                   Icons.refresh_rounded,
                                   size: 18,
                                 ),
-                                label: const Text(
-                                  'Retry',
-                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                label: Text(
+                                  l10n.commonRetry,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.warning,
@@ -271,18 +278,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              const Text(
-                                'No notifications yet',
-                                style: TextStyle(
+                              Text(
+                                l10n.notificationsEmpty,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textSecondary,
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              const Text(
-                                'Notifications will appear here when you have activity',
-                                style: TextStyle(
+                              Text(
+                                l10n.notificationsEmptyHint,
+                                style: const TextStyle(
                                   fontSize: 13,
                                   color: AppColors.textSecondary,
                                 ),
@@ -306,7 +313,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                     children: [
                       if (unread.isNotEmpty) ...[
-                        _sectionHeader('New', unread.length),
+                        _sectionHeader(l10n.notificationsSectionNew, unread.length),
                         const SizedBox(height: 8),
                         ...unread.map(
                           (n) => _notificationCard(n, isUnread: true),
@@ -314,7 +321,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         const SizedBox(height: 16),
                       ],
                       if (read.isNotEmpty) ...[
-                        _sectionHeader('Earlier', null),
+                        _sectionHeader(l10n.notificationsSectionEarlier, null),
                         const SizedBox(height: 8),
                         ...read.map(
                           (n) => _notificationCard(n, isUnread: false),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/config/routes.dart';
 import 'package:guin_app/utils/constants.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class PendingApprovalScreen extends StatelessWidget {
   const PendingApprovalScreen({super.key});
@@ -12,6 +13,7 @@ class PendingApprovalScreen extends StatelessWidget {
     final authProvider = context.watch<AuthProvider>();
     final userProfile = authProvider.userProfile;
     final isRejected = userProfile?.rejectionReason != null;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -62,7 +64,9 @@ class PendingApprovalScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      isRejected ? 'Registration Rejected' : 'Pending Approval',
+                      isRejected
+                          ? l10n.authRegistrationRejected
+                          : l10n.authPendingApprovalTitle,
                       style: const TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w800,
@@ -73,8 +77,8 @@ class PendingApprovalScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       isRejected
-                          ? 'Your application has been declined by a barangay official.'
-                          : 'Your registration is currently being reviewed.',
+                          ? l10n.authApplicationDeclined
+                          : l10n.authRegistrationUnderReview,
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.white.withValues(alpha: 0.85),
@@ -131,8 +135,8 @@ class PendingApprovalScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              const Text(
-                                'Rejection Reason',
+                              Text(
+                                l10n.commonRejectionReason,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 15,
@@ -151,8 +155,8 @@ class PendingApprovalScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
-                            'You may register again with the correct information.',
+                          Text(
+                            l10n.authMayRegisterAgain,
                             style: TextStyle(
                               fontSize: 13,
                               color: AppColors.textSecondary,
@@ -172,8 +176,8 @@ class PendingApprovalScreen extends StatelessWidget {
                           AppRoutes.register,
                         ),
                         icon: const Icon(Icons.app_registration),
-                        label: const Text(
-                          'Register Again',
+                        label: Text(
+                          l10n.authRegisterAgain,
                           style: TextStyle(fontWeight: FontWeight.w700),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -221,8 +225,8 @@ class PendingApprovalScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              const Text(
-                                'What happens next?',
+                              Text(
+                                l10n.authWhatHappensNext,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 15,
@@ -233,18 +237,18 @@ class PendingApprovalScreen extends StatelessWidget {
                           const SizedBox(height: 18),
                           _step(
                             1,
-                            'Verification',
-                            'A barangay official reviews your documents and information.',
+                            l10n.authStepVerification,
+                            l10n.authStepVerificationDesc,
                           ),
                           _step(
                             2,
-                            'Notification',
-                            'You\'ll receive a notification once your account is reviewed.',
+                            l10n.authStepNotification,
+                            l10n.authStepNotificationDesc,
                           ),
                           _step(
                             3,
-                            'Access Granted',
-                            'Upon approval, you can log in and request documents.',
+                            l10n.authStepAccessGranted,
+                            l10n.authStepAccessGrantedDesc,
                           ),
                         ],
                       ),
@@ -267,7 +271,7 @@ class PendingApprovalScreen extends StatelessWidget {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'Processing may take 1–3 business days. Thank you for your patience.',
+                              l10n.authProcessingTime,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.blue.shade800,
@@ -292,8 +296,8 @@ class PendingApprovalScreen extends StatelessWidget {
                           );
                       },
                       icon: const Icon(Icons.logout),
-                      label: const Text(
-                        'Logout',
+                      label: Text(
+                        l10n.commonLogout,
                         style: TextStyle(fontWeight: FontWeight.w700),
                       ),
                       style: OutlinedButton.styleFrom(
