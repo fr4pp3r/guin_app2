@@ -52,6 +52,7 @@ dependencies:
   camera: ^0.11.0+2
   pdfrx: ^2.4.8
   no_screenshot: ^2.0.1
+  connectivity_plus: ^7.3.2
 
 dev_dependencies:
   flutter_test:

@@ -184,7 +184,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } else {
       Helpers.showErrorSnackBar(
         context,
-        authProvider.error ?? 'Failed to update profile',
+        authProvider.error != null
+            ? Helpers.parseSupabaseError(authProvider.error)
+            : 'Failed to update profile',
       );
     }
   }

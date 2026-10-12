@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
+import 'package:guin_app/models/user_profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionManager {
@@ -6,6 +10,7 @@ class SessionManager {
   static const String _keyUsername = 'user_username';
   static const String _keyRole = 'user_role';
   static const String _keyIsLoggedIn = 'is_logged_in';
+  static const String _keyProfileSnapshot = 'profile_snapshot';
 
   // Save user session
   static Future<void> saveSession({
@@ -52,6 +57,43 @@ class SessionManager {
     return prefs.getBool(_keyIsLoggedIn) ?? false;
   }
 
+  // Persist a local snapshot of the user's profile so the app can start (and
+  // show cached documents) while offline. Best-effort: never throws.
+  static Future<void> saveProfileSnapshot(UserProfile profile) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_keyProfileSnapshot, jsonEncode(profile.toJson()));
+    } catch (e) {
+      debugPrint('SessionManager.saveProfileSnapshot failed: $e');
+    }
+  }
+
+  // Read the last saved profile snapshot, or null when none is stored/corrupt.
+  static Future<UserProfile?> getProfileSnapshot() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_keyProfileSnapshot);
+      if (raw == null || raw.isEmpty) return null;
+
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) return null;
+
+      return UserProfile.fromJson(decoded);
+    } catch (e) {
+      debugPrint('SessionManager.getProfileSnapshot failed: $e');
+      return null;
+    }
+  }
+
+  static Future<void> clearProfileSnapshot() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_keyProfileSnapshot);
+    } catch (e) {
+      debugPrint('SessionManager.clearProfileSnapshot failed: $e');
+    }
+  }
+
   // Clear session (logout)
   static Future<void> clearSession() async {
     final prefs = await SharedPreferences.getInstance();
@@ -59,6 +101,7 @@ class SessionManager {
     await prefs.remove(_keyEmail);
     await prefs.remove(_keyUsername);
     await prefs.remove(_keyRole);
+    await prefs.remove(_keyProfileSnapshot);
     await prefs.setBool(_keyIsLoggedIn, false);
   }
 

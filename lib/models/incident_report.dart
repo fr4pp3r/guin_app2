@@ -41,6 +41,30 @@ class IncidentReport {
     required this.createdAt,
   });
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'report_number': reportNumber,
+      'submitted_by': submittedBy,
+      'report_type': reportType,
+      'title': title,
+      'description': description,
+      'location': location,
+      'incident_datetime': incidentDateTime.toIso8601String(),
+      'is_sensitive': isSensitive,
+      'is_anonymous': isAnonymous,
+      'identity_visibility': identityVisibility,
+      'priority': priority,
+      'status': status,
+      'received_by': receivedBy,
+      'assigned_to': assignedTo,
+      'escalated_to': escalatedTo,
+      'resolved_by': resolvedBy,
+      'resolution_summary': resolutionSummary,
+      'created_at': createdAt.toIso8601String(),
+    };
+  }
+
   factory IncidentReport.fromJson(Map<String, dynamic> json) {
     return IncidentReport(
       id: json['id'] as String,

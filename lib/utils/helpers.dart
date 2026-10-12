@@ -141,8 +141,17 @@ class Helpers {
       return 'Invalid password. Must be at least 6 characters';
     }
 
-    if (errorString.contains('network')) {
-      return 'Network error. Please check your connection';
+    // Offline / connectivity failures surface in several shapes
+    // (SocketException, ClientException, "Failed host lookup", timeouts) but
+    // mean the same thing to the user.
+    if (errorString.contains('socketexception') ||
+        errorString.contains('clientexception') ||
+        errorString.contains('failed host lookup') ||
+        errorString.contains('unable to resolve host') ||
+        errorString.contains('connection') ||
+        errorString.contains('network') ||
+        errorString.contains('timeout')) {
+      return 'You appear to be offline. Check your connection and try again';
     }
 
     if (errorString.contains('unauthorized') ||

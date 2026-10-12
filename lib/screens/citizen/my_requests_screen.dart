@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/document_provider.dart';
@@ -125,6 +126,41 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
             ),
           ),
 
+          // Offline / stale-data banner — visible only when the list is being
+          // served from the local cache (network fetch failed). When hidden it
+          // collapses to zero height, so it never affects the live layout.
+          AnimatedSize(
+            duration: const Duration(milliseconds: 240),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, -0.25),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: documentProvider.isFromCache
+                  ? Padding(
+                      key: const ValueKey('offline-banner'),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                      child: _buildOfflineBanner(
+                        documentProvider.cacheTimestamp,
+                      ),
+                    )
+                  : const SizedBox.shrink(key: ValueKey('offline-banner-absent')),
+            ),
+          ),
+
           // Filter chips
           Container(
             color: Colors.white,
@@ -201,6 +237,83 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
         ],
       ),
     );
+  }
+
+  /// Soft amber "info" strip shown above the list while the requests on screen
+  /// come from the local offline cache instead of the network.
+  Widget _buildOfflineBanner(DateTime? savedAt) {
+    final savedLine = savedAt == null
+        ? 'Showing your last saved requests.'
+        : 'Showing saved requests from ${_formatCacheTime(savedAt)}.';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8E1), // amber 50 — warm, never alarming
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.warning.withValues(alpha: 0.45),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withValues(alpha: 0.28),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.wifi_off_rounded,
+              size: 16,
+              color: Color(0xFFE65100),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'You\u2019re offline',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  savedLine,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.35,
+                    color: Color(0xFF616161),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Plain, locale-aware relative time for the cache timestamp:
+  /// "2:14 PM" (today), "yesterday at 2:14 PM", "Oct 10 at 2:14 PM".
+  String _formatCacheTime(DateTime savedAt) {
+    final local = savedAt.toLocal();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final thatDay = DateTime(local.year, local.month, local.day);
+    final time = DateFormat.jm().format(local);
+    final dayDiff = today.difference(thatDay).inDays;
+
+    if (dayDiff <= 0) return time;
+    if (dayDiff == 1) return 'yesterday at $time';
+    return '${DateFormat.MMMd().format(local)} at $time';
   }
 
   Widget _chip(String label, String value) {

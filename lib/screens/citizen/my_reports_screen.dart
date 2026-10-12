@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/incident_report_provider.dart';
@@ -79,6 +80,8 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final reportsProvider = context.watch<IncidentReportProvider>();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: Column(
@@ -142,6 +145,41 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
             ),
           ),
 
+          // Offline / stale-data banner — visible only when the list is being
+          // served from the local cache (network fetch failed). When hidden it
+          // collapses to zero height, so it never affects the live layout.
+          AnimatedSize(
+            duration: const Duration(milliseconds: 240),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, -0.25),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: reportsProvider.isFromCache
+                  ? Padding(
+                      key: const ValueKey('offline-banner'),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                      child: _buildOfflineBanner(
+                        reportsProvider.cacheTimestamp,
+                      ),
+                    )
+                  : const SizedBox.shrink(key: ValueKey('offline-banner-absent')),
+            ),
+          ),
+
           // Body
           Expanded(
             child: Consumer<IncidentReportProvider>(
@@ -151,6 +189,13 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                 }
 
                 if (provider.reports.isEmpty) {
+                  // Load failed with no cached copy to fall back on — show a
+                  // plain "couldn't load" state with a Retry action instead of
+                  // implying the citizen has no reports.
+                  if (provider.error != null && !provider.isFromCache) {
+                    return _buildLoadErrorState();
+                  }
+
                   return RefreshIndicator(
                     onRefresh: _loadReports,
                     child: ListView(
@@ -367,6 +412,149 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                   ),
                 );
               },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Soft amber "info" strip shown above the list while the reports on screen
+  /// come from the local offline cache instead of the network.
+  Widget _buildOfflineBanner(DateTime? savedAt) {
+    final savedLine = savedAt == null
+        ? 'Showing your last saved reports.'
+        : 'Showing saved reports from ${_formatCacheTime(savedAt)}.';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8E1), // amber 50 — warm, never alarming
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.warning.withValues(alpha: 0.45),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withValues(alpha: 0.28),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.wifi_off_rounded,
+              size: 16,
+              color: Color(0xFFE65100),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'You\u2019re offline',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  savedLine,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.35,
+                    color: Color(0xFF616161),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Plain, locale-aware relative time for the cache timestamp:
+  /// "2:14 PM" (today), "yesterday at 2:14 PM", "Oct 10 at 2:14 PM".
+  String _formatCacheTime(DateTime savedAt) {
+    final local = savedAt.toLocal();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final thatDay = DateTime(local.year, local.month, local.day);
+    final time = DateFormat.jm().format(local);
+    final dayDiff = today.difference(thatDay).inDays;
+
+    if (dayDiff <= 0) return time;
+    if (dayDiff == 1) return 'yesterday at $time';
+    return '${DateFormat.MMMd().format(local)} at $time';
+  }
+
+  /// Non-alarming "couldn't load" state shown when the last load failed and
+  /// there is no cached copy to fall back on. Amber/neutral, never red, and
+  /// the raw error text stays out of the UI.
+  Widget _buildLoadErrorState() {
+    return RefreshIndicator(
+      onRefresh: _loadReports,
+      child: ListView(
+        children: [
+          const SizedBox(height: 100),
+          Center(
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.cloud_off_outlined,
+                    size: 64,
+                    color: AppColors.warning,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Couldn\u2019t load your reports',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Your reports didn\u2019t load. Check your connection and try again.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: _loadReports,
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text(
+                    'Retry',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.warning,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

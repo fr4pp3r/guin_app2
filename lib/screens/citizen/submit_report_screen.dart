@@ -4,6 +4,7 @@ import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/incident_report_provider.dart';
 import 'package:guin_app/services/ai_incident_classifier.dart';
 import 'package:guin_app/utils/constants.dart';
+import 'package:guin_app/utils/helpers.dart';
 
 class SubmitReportScreen extends StatefulWidget {
   const SubmitReportScreen({super.key});
@@ -97,7 +98,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text(Helpers.parseSupabaseError(e)), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);

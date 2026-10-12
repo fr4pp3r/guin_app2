@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:guin_app/automation/release_payload.dart';
 import 'package:guin_app/models/document_request.dart';
 import 'package:guin_app/services/document_automation_service.dart';
+import 'package:guin_app/services/document_cache_service.dart';
 import 'package:guin_app/services/document_service.dart';
 import 'package:guin_app/utils/role_access.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -10,11 +11,14 @@ import 'package:guin_app/config/supabase_config.dart';
 
 class DocumentProvider with ChangeNotifier {
   final DocumentService _documentService = DocumentService();
+  final DocumentCacheService _cache = DocumentCacheService();
   late final DocumentAutomationService _automation =
       DocumentAutomationService(documentService: _documentService);
   RealtimeChannel? _documentsChannel;
 
   List<DocumentRequest> _myRequests = [];
+  bool _isFromCache = false;
+  DateTime? _cacheTimestamp;
   List<DocumentRequest> _allRequests = [];
   List<DocumentRequest> _pendingPayments = [];
   List<DocumentRequest> _pendingReviews = [];
@@ -31,7 +35,14 @@ class DocumentProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  // Citizen: Load their own requests
+  /// True when [myRequests] currently came from the offline cache, i.e. the
+  /// last network fetch failed and we fell back to saved data.
+  bool get isFromCache => _isFromCache;
+
+  /// When the cached data currently being shown was saved (null when live).
+  DateTime? get cacheTimestamp => _cacheTimestamp;
+
+  // Citizen: Load their own requests (network-first, offline cache fallback)
   Future<void> loadMyRequests(String userId) async {
     _isLoading = true;
     _error = null;
@@ -39,9 +50,30 @@ class DocumentProvider with ChangeNotifier {
 
     try {
       _myRequests = await _documentService.getUserRequests(userId);
+      _isFromCache = false;
+      _cacheTimestamp = null;
       _isLoading = false;
       notifyListeners();
+
+      // Write-through: keep the offline copy fresh. Must never break the load.
+      try {
+        await _cache.saveMyRequests(userId, _myRequests);
+      } catch (e) {
+        debugPrint('Caching my requests failed: $e');
+      }
     } catch (e) {
+      // Network/Supabase fetch failed — fall back to the last cached copy.
+      final cached = await _cache.loadMyRequests(userId);
+      if (cached != null) {
+        _myRequests = cached.requests;
+        _isFromCache = true;
+        _cacheTimestamp = cached.cachedAt;
+        _error = null;
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
       _error = e.toString();
       _isLoading = false;
       notifyListeners();

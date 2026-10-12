@@ -6,6 +6,7 @@ import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/document_provider.dart';
 import 'package:guin_app/providers/barangay_provider.dart';
 import 'package:guin_app/models/document_request.dart';
+import 'package:guin_app/utils/helpers.dart';
 
 class UploadPaymentScreen extends StatefulWidget {
   final DocumentRequest request;
@@ -79,7 +80,7 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error uploading receipt: ${e.toString()}'),
+          content: Text(Helpers.parseSupabaseError(e)),
           backgroundColor: Colors.red,
         ),
       );

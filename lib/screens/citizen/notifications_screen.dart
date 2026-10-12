@@ -178,6 +178,77 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
                 final notifications = provider.notifications;
 
+                // Load failed (e.g. offline) — show a plain "couldn't load"
+                // state rather than implying there are no notifications. The
+                // raw error text is deliberately not shown.
+                if (notifications.isEmpty && provider.errorMessage != null) {
+                  return RefreshIndicator(
+                    onRefresh: _load,
+                    child: ListView(
+                      children: [
+                        const SizedBox(height: 100),
+                        Center(
+                          child: Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(24),
+                                decoration: BoxDecoration(
+                                  color: AppColors.warning.withValues(
+                                    alpha: 0.12,
+                                  ),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.cloud_off_outlined,
+                                  size: 64,
+                                  color: AppColors.warning,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Couldn\u2019t load notifications',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Your notifications didn\u2019t load. Check your connection and try again.',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: _load,
+                                icon: const Icon(
+                                  Icons.refresh_rounded,
+                                  size: 18,
+                                ),
+                                label: const Text(
+                                  'Retry',
+                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.warning,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
                 if (notifications.isEmpty) {
                   return RefreshIndicator(
                     onRefresh: _load,

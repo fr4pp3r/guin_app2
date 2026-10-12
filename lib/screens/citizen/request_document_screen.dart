@@ -6,6 +6,7 @@ import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/document_provider.dart';
 import 'package:guin_app/providers/barangay_provider.dart';
 import 'package:guin_app/services/ai_document_processor.dart';
+import 'package:guin_app/utils/helpers.dart';
 
 /// Which shared fill-up form a document type uses.
 enum _FormFamily { cedula, indigency, barangayId }
@@ -516,7 +517,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: ${e.toString()}'),
+          content: Text(Helpers.parseSupabaseError(e)),
           backgroundColor: Colors.red,
         ),
       );
@@ -562,7 +563,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error uploading receipt: ${e.toString()}'),
+          content: Text(Helpers.parseSupabaseError(e)),
           backgroundColor: Colors.red,
         ),
       );
@@ -1315,7 +1316,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Error: ${e.toString()}'),
+                        content: Text(Helpers.parseSupabaseError(e)),
                         backgroundColor: Colors.red,
                       ),
                     );

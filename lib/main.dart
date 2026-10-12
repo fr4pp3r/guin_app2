@@ -9,6 +9,8 @@ import 'package:guin_app/providers/document_provider.dart';
 import 'package:guin_app/providers/notification_provider.dart';
 import 'package:guin_app/providers/barangay_provider.dart';
 import 'package:guin_app/providers/incident_report_provider.dart';
+import 'package:guin_app/providers/connectivity_provider.dart';
+import 'package:guin_app/widgets/connectivity_banner.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -63,6 +65,7 @@ class MainApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProvider(create: (_) => BarangayProvider()),
         ChangeNotifierProvider(create: (_) => IncidentReportProvider()),
+        ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
       ],
       child: MaterialApp(
         title: 'Barangay E-Document System',
@@ -71,6 +74,15 @@ class MainApp extends StatelessWidget {
         initialRoute: AppRoutes.splash,
         routes: AppRoutes.routes,
         onGenerateRoute: AppRoutes.onGenerateRoute,
+        // The builder wraps the app's Navigator, so the offline pill overlays
+        // every route and survives navigation. MediaQuery/Directionality are
+        // provided by MaterialApp above this builder.
+        builder: (context, child) => Stack(
+          children: [
+            child ?? const SizedBox.shrink(),
+            const ConnectivityBanner(),
+          ],
+        ),
       ),
     );
   }

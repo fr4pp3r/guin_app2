@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:guin_app/config/supabase_config.dart';
 import 'package:guin_app/models/user_profile.dart';
+import 'package:guin_app/services/document_cache_service.dart';
+import 'package:guin_app/services/incident_report_cache_service.dart';
 import 'package:guin_app/utils/password_hash.dart';
 import 'package:guin_app/utils/session_manager.dart';
 
@@ -126,6 +129,8 @@ class AuthService {
         username: userProfile.username,
         role: userProfile.role,
       );
+      // Keep a local profile snapshot for offline session restore.
+      await SessionManager.saveProfileSnapshot(userProfile);
 
       return userProfile;
     } catch (e) {
@@ -167,6 +172,8 @@ class AuthService {
         username: userProfile.username,
         role: userProfile.role,
       );
+      // Keep a local profile snapshot for offline session restore.
+      await SessionManager.saveProfileSnapshot(userProfile);
 
       return userProfile;
     } catch (e) {
@@ -177,6 +184,17 @@ class AuthService {
   // Sign out
   Future<void> signOut() async {
     try {
+      // Drop the user's cached documents so a different account on this device
+      // can never see them. Cache failures must not block sign-out.
+      final userId = await SessionManager.getUserId();
+      if (userId != null) {
+        try {
+          await DocumentCacheService().clearMyRequests(userId);
+          await IncidentReportCacheService().clearMyReports(userId);
+        } catch (e) {
+          debugPrint('Clearing cached data on sign-out failed: $e');
+        }
+      }
       await SessionManager.clearSession();
     } catch (e) {
       rethrow;
@@ -311,7 +329,11 @@ class AuthService {
     }
   }
 
-  // Restore session on app start
+  // Restore session on app start.
+  //
+  // Network-first, but tolerates being offline: if the profile can't be fetched
+  // because the server is unreachable, fall back to the last saved profile
+  // snapshot so the app stays logged in and cached documents remain viewable.
   Future<UserProfile?> restoreSession() async {
     try {
       final isLoggedIn = await SessionManager.isLoggedIn();
@@ -321,10 +343,24 @@ class AuthService {
       if (userId == null) return null;
 
       // Get fresh user profile from database
-      return await getUserProfile(userId);
-    } catch (e) {
-      // If session restore fails, clear session
+      final profile = await getUserProfile(userId);
+      if (profile != null) {
+        // Refresh the offline snapshot while live data is available.
+        await SessionManager.saveProfileSnapshot(profile);
+        return profile;
+      }
+
+      // Server reachable but the profile is genuinely gone — drop the session.
       await SessionManager.clearSession();
+      return null;
+    } catch (e) {
+      // Server unreachable — fall back to the saved profile snapshot.
+      debugPrint('restoreSession: profile fetch failed: $e');
+      final cached = await SessionManager.getProfileSnapshot();
+      if (cached != null) return cached;
+
+      // Nothing to fall back to. Keep the session flag so a later online launch
+      // can still restore it.
       return null;
     }
   }

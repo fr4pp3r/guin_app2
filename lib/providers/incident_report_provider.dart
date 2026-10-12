@@ -1,28 +1,59 @@
 import 'package:flutter/foundation.dart';
 import 'package:guin_app/models/incident_report.dart';
+import 'package:guin_app/services/incident_report_cache_service.dart';
 import 'package:guin_app/services/incident_report_service.dart';
 
 class IncidentReportProvider with ChangeNotifier {
   final IncidentReportService _service = IncidentReportService();
+  final IncidentReportCacheService _cache = IncidentReportCacheService();
 
   List<IncidentReport> _reports = [];
   bool _isLoading = false;
   String? _error;
+  bool _isFromCache = false;
+  DateTime? _cacheTimestamp;
 
   List<IncidentReport> get reports => _reports;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  bool get isFromCache => _isFromCache;
+  DateTime? get cacheTimestamp => _cacheTimestamp;
 
+  // Load the citizen's own reports: network-first, with an offline cache
+  // fallback so previously loaded reports stay viewable without connectivity.
   Future<void> loadMyReports(String userId) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
+
     try {
       _reports = await _service.getMyReports(userId);
+      _isFromCache = false;
+      _cacheTimestamp = null;
+      _isLoading = false;
+      notifyListeners();
+
+      // Write-through: keep the offline copy fresh. Must never break the load.
+      try {
+        await _cache.saveMyReports(userId, _reports);
+      } catch (e) {
+        debugPrint('Caching incident reports failed: $e');
+      }
     } catch (e) {
+      // Network fetch failed — fall back to the last cached copy.
+      final cached = await _cache.loadMyReports(userId);
+      if (cached != null) {
+        _reports = cached.reports;
+        _isFromCache = true;
+        _cacheTimestamp = cached.cachedAt;
+        _error = null;
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      // No cache available: surface the error for the UI to show a retry state.
       _error = e.toString();
-      rethrow;
-    } finally {
       _isLoading = false;
       notifyListeners();
     }
