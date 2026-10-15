@@ -21,6 +21,7 @@ import {
 import documentProcessor from "./handlers/document_processor.ts";
 import incidentClassifier from "./handlers/incident_classifier.ts";
 import idVerifier from "./handlers/id_verifier.ts";
+import receiptParser from "./handlers/receipt_parser.ts";
 
 const JWT_SECRET = Deno.env.get("SUPABASE_JWT_SECRET") ?? "";
 
@@ -55,6 +56,7 @@ const routes: Record<string, TaskHandler> = {
   "document-processor": documentProcessor,
   "incident-classifier": incidentClassifier,
   "id-verifier": idVerifier,
+  "receipt-parser": receiptParser,
   ping: () => Promise.resolve(jsonResponse(200, { ok: true })),
 };
 

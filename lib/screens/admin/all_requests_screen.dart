@@ -4,6 +4,7 @@ import 'package:guin_app/providers/document_provider.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/models/document_request.dart';
 import 'package:guin_app/screens/citizen/document_viewer_screen.dart';
+import 'package:guin_app/config/routes.dart';
 import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/utils/role_access.dart';
 import 'package:guin_app/utils/constants.dart';
@@ -432,6 +433,30 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
                     ),
                   ),
                 ],
+                if (request.eReceiptUrl != null) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _openERecceiptViewer(request),
+                      icon: const Icon(Icons.receipt_long, size: 17),
+                      label: const Text(
+                        'View E-Receipt',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF1976D2),
+                        side: const BorderSide(color: Color(0xFF1976D2)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -541,6 +566,13 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
   void _openDocumentViewer(DocumentRequest request) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => DocumentViewerScreen(request: request)),
+    );
+  }
+
+  void _openERecceiptViewer(DocumentRequest request) {
+    Navigator.of(context).pushNamed(
+      AppRoutes.eReceipt,
+      arguments: request,
     );
   }
 

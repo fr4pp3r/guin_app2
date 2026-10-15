@@ -5,6 +5,7 @@
 > notice explaining why they should not be trusted. Every claim below was verified against
 > the actual source code, SQL scripts, and configuration in this repo (verified 2026-09-26).
 > If code and docs disagree, the code wins — and this document should be corrected.
+> Last updated: 2026-10-13 (comprehensive feature audit).
 
 ---
 
@@ -47,9 +48,14 @@ Supported document types (from `lib/models/document_request.dart` and the PDF se
 | `document_type`     | Display name                    |
 | ------------------- | ------------------------------- |
 | `barangay_clearance`| Barangay Clearance              |
+| `business_clearance`| Barangay Business Clearance     |
+| `certification`     | Barangay Certification          |
+| `oath_undertaking`  | Oath of Undertaking             |
 | `indigency`         | Certificate of Indigency        |
+| `good_moral`        | Certificate of Good Moral Character |
+| `residency`         | Certificate of Residency         |
+| `cedula`            | Community Tax Certificate (Cedula)|
 | `barangay_id`       | Barangay ID                     |
-| `cedula`            | Community Tax Certificate       |
 
 ---
 
@@ -59,7 +65,7 @@ Supported document types (from `lib/models/document_request.dart` and the PDF se
 | ----------- | ------------------------------------------------------------- |
 | Framework   | Flutter / Dart — `sdk: ^3.10.1` in `pubspec.yaml`              |
 | Backend     | Supabase (PostgreSQL, Storage)                                 |
-| State mgmt  | `provider` (`ChangeNotifier`) — 6 providers registered in `main.dart` |
+| State mgmt  | `provider` (`ChangeNotifier`) — 8 providers registered in `main.dart` |
 | PDF         | `pdf: ^3.11.1`                                                  |
 | Files       | `file_picker`, `open_filex`, `path_provider`, `image_picker`, `image_cropper` |
 | Crypto      | `crypto` (SHA-256 password hashing, document verification hashes) |
@@ -73,28 +79,31 @@ Supported document types (from `lib/models/document_request.dart` and the PDF se
 
 ## 3. Architecture
 
-Standard Flutter layered structure. **63 Dart files** under `lib/`.
+Standard Flutter layered structure. **94 Dart files** under `lib/`.
 
 ```
 lib/
-├── main.dart                     # Entry point: Supabase init + MultiProvider
+├── main.dart                     # Entry point: Supabase init + 8 providers
 ├── config/
-│   ├── routes.dart               # AppRoutes: all named routes (167 lines)
+│   ├── routes.dart               # AppRoutes: all named routes (175 lines)
 │   ├── supabase_config.dart      # .env loader (see Known Gaps #1)
 │   └── theme.dart                # Material 3 theme
-├── models/                       # 8 data models
-├── providers/                    # 6 ChangeNotifier state containers
+├── models/                       # 11 data models
+├── providers/                    # 8 ChangeNotifier state containers
 ├── screens/
 │   ├── splash_screen.dart
 │   ├── verify_document_screen.dart
 │   ├── auth/                     # login, register, pending_approval
-│   ├── citizen/                  # dashboard, request_document, my_requests,
+│   ├── citizen/                  # dashboard, request_document, my_requests, profile,
 │   │                             # notifications, submit_report, my_reports
 │   │                             # (+ upload_payment_screen — dead, see §13.3)
 │   └── admin/                    # dashboard, manage_users, create_user, pending_requests,
-│                                 # pending_payments, captain_approval, all_requests,
+│                                 # pending_payments, captain_approval, all_requests, profile,
 │                                 # settings, document_fees, document_formats, incident_reports
-├── services/                     # Backend/data access (Supabase queries)
+├── services/                     # Backend/data access (Supabase queries, AI, cache)
+├── automation/                   # Pure-Dart pipeline rules, validators, PDF payloads
+├── widgets/                      # Shared widgets (connectivity_banner)
+├── l10n/                         # i18n (English, Filipino, Cebuano)
 └── utils/                        # password hashing, sessions, validators, helpers, roles
 ```
 
@@ -231,8 +240,69 @@ All generators accept an optional `profilePhotoUrl`, downloaded over HTTP and em
 `pw.MemoryImage`. Templates pull live `barangay_config` values (name, address, captain, logo).
 `buildSignatureBlock()` renders the "DIGITALLY SIGNED" block.
 
-Admins can preview all four templates with sample data at
+Admins can preview all templates with sample data at
 **Admin Dashboard → View Document Formats** (`/admin/document-formats`).
+
+### AI features
+
+The AI features route through `AiService` (`lib/services/ai_service.dart`), which invokes the
+Supabase Edge Function at `supabase/functions/ai/`. Every AI call returns `null` on failure so
+callers degrade gracefully.
+
+| Service | Task | What it does |
+| ------- | ---- | ------------ |
+| `ai_id_verifier.dart` | `id-verifier` | Advisory ID/selfie pre-check at registration. Never auto-approves; produces `IdVerificationSuggestion` for manual review. |
+| `ai_document_processor.dart` | `document-processor` | Validates/normalizes document request data on the citizen request screen ("AI check details"). |
+| `ai_receipt_parser.dart` | `receipt-parser` | Parses GCash receipt screenshots (reference number, amount, date, confidence). |
+| `ai_incident_classifier.dart` | `incident-classifier` | Suggests `report_type` + `priority` for citizen incident reports. |
+
+All AI features are **advisory only** — final decisions always rest with human reviewers.
+
+### Automation pipeline
+
+Pure-Dart rules in `lib/automation/` (no Supabase dependency, fully unit-testable):
+
+| File | Role |
+| ---- | ---- |
+| `pipeline_rules.dart` | State-machine transitions, legacy status mapping, overdue invoice check, receipt pre-check |
+| `fee_assessor.dart` | Fee assessment — determines `paymentRequired` and validates amount |
+| `document_data_validator.dart` | Per-document-type required-field validation (9 types) |
+| `release_payload.dart` | Builds verification identity (document ID, token, QR URL, content hash) |
+| `automation_constants.dart` | Shared constants (invoice due window, display labels) |
+
+`DocumentAutomationService` orchestrates: `afterSubmission` (auto-draft + route), `afterPaymentReceipt`
+(canonicalize status + notify), `afterPaymentConfirmed/Rejected` (notify), `afterCaptainApproved`
+(generate final PDF + release).
+
+### Offline cache
+
+- `document_cache_service.dart` — caches a citizen's own document requests as JSON in SharedPreferences
+- `incident_report_cache_service.dart` — caches a citizen's own incident reports
+
+Both are write-through (saved after online fetch) and fallback (loaded when network fails).
+
+### Connectivity
+
+`connectivity_provider.dart` tracks network state via `connectivity_plus`. The `connectivity_banner.dart`
+widget renders a floating "You're offline" pill above the navigator on every route.
+
+### Internationalization (i18n)
+
+`lib/l10n/` provides three locales: English (default), Filipino, Cebuano. `LocaleProvider`
+persists the choice in SharedPreferences and drives `MaterialApp.locale`. Language switching
+is available on both citizen and admin profile screens.
+
+### Profile management
+
+Both citizens and admins have profile screens (`/citizen/profile`, `/admin/profile`) with
+view/edit modes, profile photo upload, password change, and language switching.
+
+### Guarantor system
+
+Indigent registrants without a valid government ID can be backed by an approved guarantor.
+`guarantor_service.dart` manages the lifecycle: find approved guarantors, create/fetch/review
+guarantor records in the `kyc_guarantors` table. Admins review pending guarantor applications
+via the manage-users screen.
 
 ---
 
@@ -414,6 +484,7 @@ and services — not a copy of any single legacy script.
 | `users_profile`        | Accounts, `password_hash`, approval workflow, role, KYC metadata (method/result/indigent/review audit)             |
 | `document_requests`    | Requests, payment tracking, release + verification metadata    |
 | `barangay_config`      | Barangay identity + GCash payment details + sample Barangay ID (front/back, single-row config)  |
+| `kyc_guarantors`       | Guarantor registrations linking indigent citizens to approved guarantors                     |
 | `document_fees`        | Per-`document_type` pricing                                    |
 | `barangay_id_details`  | Type-specific fields for Barangay ID                           |
 | `indigency_details`    | Type-specific fields for Certificate of Indigency              |
@@ -426,7 +497,7 @@ and services — not a copy of any single legacy script.
 `payments`, `document_versions`, `document_verifications`, `document_print_copies`
 (per-print copy tokens/serials; policy stays on the parent `document_verifications` row),
 `incident_reports`, `incident_updates`, `incident_attachments`,
-`identity_access_logs`, `audit_logs`.
+`identity_access_logs`, `audit_logs`, `kyc_guarantors`.
 
 ### Enums
 
@@ -683,6 +754,11 @@ Alongside the new pipeline, older methods remain: `verifyPayment()`, `rejectPaym
 counts only `pending_payment` / `pending_review` / `approved` / `rejected`). Confirm which
 call sites are live before relying on them.
 
+> **Fixed (2026-10-13):** `verifyPayment()` and `encodeCashPayment()` previously set
+> `request_status` to `'pending_review'` instead of `for_approval` after payment confirmation,
+> causing paid documents to loop between the secretary review queue and the payment queue
+> instead of advancing to captain approval. Both now correctly transition to `for_approval`.
+
 ### 6. `password_hash` is not returned by `DocumentRequest.toJson()`
 
 The model reads ~30 fields in `fromJson()` but `toJson()` writes only up to `reviewed_by`,
@@ -724,7 +800,7 @@ Build output lands in `build/`.
 
 | File                          | Role                                                    |
 | ----------------------------- | ------------------------------------------------------- |
-| `lib/main.dart`               | Supabase init via `SupabaseConfig`, 6 providers, theme, routes |
+| `lib/main.dart`               | Supabase init via `SupabaseConfig`, 8 providers, theme, routes |
 | `lib/config/routes.dart`      | All route constants + builders                           |
 | `lib/config/supabase_config.dart` | `.env` loader, called from `main.dart` (§8.3)          |
 | `lib/config/theme.dart`       | Material 3 theme                                         |
@@ -734,24 +810,44 @@ Build output lands in `build/`.
 ### Models (`lib/models/`)
 
 `user_profile`, `document_request`, `notification`, `barangay_config`, `document_fee`,
-`payment_record`, `document_verification`, `document_print_copy`, `incident_report`
+`payment_record`, `document_verification`, `document_print_copy`, `incident_report`,
+`guarantor`
 
 ### Providers (`lib/providers/`)
 
-`auth_provider` (190), `user_provider` (183), `document_provider` (593),
-`notification_provider` (71), `barangay_provider` (109), `incident_report_provider` (78)
+`auth_provider` (283), `user_provider` (189), `document_provider` (716),
+`notification_provider` (71), `barangay_provider` (109), `incident_report_provider` (106),
+`connectivity_provider` (54), `locale_provider` (46)
 
 ### Services (`lib/services/`)
 
-`auth_service` (252), `user_service` (372), `document_service` (583),
+`auth_service` (327), `user_service` (521), `document_service` (727),
 `notification_service` (144), `barangay_service` (100), `storage_service` (78),
-`pdf_service` (1,245), `document_automation_service` (591), `payment_service` (68),
-`incident_report_service` (84), `verification_service` (193), `audit_service` (25)
+`pdf_service` (2,369), `document_automation_service` (671), `payment_service` (68),
+`incident_report_service` (84), `verification_service` (193), `audit_service` (25),
+`ai_service` (61), `ai_id_verifier` (250), `ai_document_processor` (71),
+`ai_receipt_parser` (77), `ai_incident_classifier` (63),
+`document_cache_service` (69), `incident_report_cache_service` (67),
+`guarantor_service` (125)
 
 ### Utilities (`lib/utils/`)
 
 `role_access` (**read this first**), `password_hash`, `session_manager`, `validators`,
-`helpers`, `constants`, `password_helper` *(dead)*, `generate_admin_hash`
+`helpers`, `constants`, `image_compressor`, `password_helper` *(dead)*, `generate_admin_hash`
+
+### Automation (`lib/automation/`)
+
+`pipeline_rules` (state machine, transitions, pre-checks), `fee_assessor` (fee logic),
+`document_data_validator` (per-type validation), `release_payload` (verification identity),
+`automation_constants` (shared constants)
+
+### Widgets (`lib/widgets/`)
+
+`connectivity_banner` — floating offline indicator
+
+### Internationalization (`lib/l10n/`)
+
+English (default), Filipino, Cebuano — ARB files + generated localizations
 
 ### Routes
 
@@ -765,6 +861,7 @@ Build output lands in `build/`.
 | `/citizen/my-requests`          | Request history              |
 | `/citizen/my-reports`           | Incident report history      |
 | `/citizen/submit-report`        | File incident report         |
+| `/citizen/profile`              | Citizen profile management   |
 | `/citizen/notifications`        | Notifications                |
 | `/admin/dashboard`              | Admin dashboard              |
 | `/admin/pending-users`          | Manage users                 |
@@ -773,6 +870,7 @@ Build output lands in `build/`.
 | `/admin/pending-payments`       | Treasurer queue              |
 | `/admin/captain-approval`       | Captain/kagawad queue        |
 | `/admin/all-requests`           | All requests                 |
+| `/admin/profile`                | Admin profile management     |
 | `/admin/incident-reports`       | Incident triage              |
 | `/admin/settings`               | Barangay + GCash config      |
 | `/admin/document-fees`          | Fee management               |
@@ -788,6 +886,7 @@ consolidated into this document. Listed newest-first by their own stated dates.
 
 | Date        | Milestone                                                                 |
 | ----------- | ------------------------------------------------------------------------- |
+| 2026-10    | AI features (ID verifier, document processor, receipt parser, incident classifier), automation pipeline, offline cache, i18n, guarantor system, profile screens |
 | Dec 2025    | Phase 1 foundation: schema, models, services, theme, routing               |
 |             | Multi-step (4-page) registration with photo + valid-ID upload             |
 |             | Custom auth replaced Supabase Auth: SHA-256 hashing + local sessions      |
@@ -817,5 +916,5 @@ README there explaining their unreliability.
 
 ---
 
-*Consolidated and verified 2026-09-26. When you change the code, update this file in the
-same commit.*
+*Consolidated 2026-09-26, comprehensively updated 2026-10-13. When you change the code,
+update this file in the same commit.*

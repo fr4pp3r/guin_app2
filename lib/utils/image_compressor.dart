@@ -17,6 +17,7 @@ class ImageCompressor {
   /// Hard cap on the encoded PNG. A <=800px ID photo lands far below this;
   /// anything bigger is treated as unusable rather than sent.
   static const int maxPngBytes = 700000;
+  static const int maxPngBytesReceipt = 2000000;
 
   /// Compresses [file] to a PNG whose longest side is <=[maxDimension] and
   /// returns it base64-encoded, or null when that is not possible.
@@ -32,6 +33,23 @@ class ImageCompressor {
     }
   }
 
+  /// Compresses receipt screenshot to a larger PNG (2MB max, 1600px max).
+  static Future<String?> toBase64PngForReceipt(
+    File file, {
+    int maxDimension = 1600,
+  }) async {
+    try {
+      final bytes = await file.readAsBytes();
+      return await encodeBytesToBase64Png(
+        bytes,
+        maxDimension: maxDimension,
+        maxPngBytesCap: maxPngBytesReceipt,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
   /// Shared encode helper: [toBase64Png] (files picked by the user) and the
   /// captured ID/selfie uploads in `AiIdVerifier` both funnel through here.
   ///
@@ -42,6 +60,7 @@ class ImageCompressor {
   static Future<String?> encodeBytesToBase64Png(
     Uint8List bytes, {
     int maxDimension = 800,
+    int maxPngBytesCap = maxPngBytes,
   }) async {
     if (bytes.isEmpty) return null;
     try {
@@ -65,7 +84,7 @@ class ImageCompressor {
       codec.dispose();
       if (byteData == null) return null;
       final png = byteData.buffer.asUint8List();
-      if (png.lengthInBytes > maxPngBytes) return null;
+      if (png.lengthInBytes > maxPngBytesCap) return null;
       return base64Encode(png);
     } catch (e) {
       return null;

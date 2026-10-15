@@ -38,6 +38,7 @@ class DocumentRequest {
   final String? documentId;
   final String? verificationToken;
   final String? qrUrl;
+  final String? eReceiptUrl;
   final String? documentHash;
   final String? paymentMethod;
   final String? paymentReferenceNumber;
@@ -68,6 +69,11 @@ class DocumentRequest {
   final String? approverId;
   final String? approverRole;
   final DateTime? captainApprovedAt;
+  // Payment parse metadata
+  final DateTime? paymentParsedAt;
+  final double? paymentParsedConfidence;
+  final String? paymentParseError;
+  final Map<String, dynamic>? receiptParse;
   // Optional join fields
   final String? userName;
   final String? userFullName;
@@ -92,6 +98,7 @@ class DocumentRequest {
     this.documentId,
     this.verificationToken,
     this.qrUrl,
+    this.eReceiptUrl,
     this.documentHash,
     this.paymentMethod,
     this.paymentReferenceNumber,
@@ -120,6 +127,10 @@ class DocumentRequest {
     this.approverId,
     this.approverRole,
     this.captainApprovedAt,
+    this.paymentParsedAt,
+    this.paymentParsedConfidence,
+    this.paymentParseError,
+    this.receiptParse,
     this.userName,
     this.userFullName,
   });
@@ -147,6 +158,7 @@ class DocumentRequest {
       documentId: json['document_id'] as String?,
       verificationToken: json['verification_token'] as String?,
       qrUrl: json['qr_url'] as String?,
+      eReceiptUrl: json['e_receipt_url'] as String?,
       documentHash: json['document_hash'] as String?,
       paymentMethod: json['payment_method'] as String?,
       paymentReferenceNumber: json['payment_reference_number'] as String?,
@@ -221,6 +233,7 @@ class DocumentRequest {
       'document_id': documentId,
       'verification_token': verificationToken,
       'qr_url': qrUrl,
+      'e_receipt_url': eReceiptUrl,
       'document_hash': documentHash,
       'payment_method': paymentMethod,
       'payment_reference_number': paymentReferenceNumber,
@@ -261,6 +274,7 @@ class DocumentRequest {
     String? documentId,
     String? verificationToken,
     String? qrUrl,
+    String? eReceiptUrl,
     String? documentHash,
     String? paymentMethod,
     String? paymentReferenceNumber,
@@ -302,6 +316,7 @@ class DocumentRequest {
       documentId: documentId ?? this.documentId,
       verificationToken: verificationToken ?? this.verificationToken,
       qrUrl: qrUrl ?? this.qrUrl,
+      eReceiptUrl: eReceiptUrl ?? this.eReceiptUrl,
       documentHash: documentHash ?? this.documentHash,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       paymentReferenceNumber:
@@ -320,6 +335,10 @@ class DocumentRequest {
       maxUses: maxUses ?? this.maxUses,
       useCount: useCount ?? this.useCount,
       usedAt: usedAt ?? this.usedAt,
+      paymentParsedAt: paymentParsedAt ?? this.paymentParsedAt,
+      paymentParsedConfidence: paymentParsedConfidence ?? this.paymentParsedConfidence,
+      paymentParseError: paymentParseError ?? this.paymentParseError,
+      receiptParse: receiptParse ?? this.receiptParse,
       userName: userName ?? this.userName,
       userFullName: userFullName ?? this.userFullName,
     );

@@ -51,7 +51,7 @@ class DocumentService {
           'request_status': DocStatus.draftGenerated,
           'draft_url': draftUrl,
           'reviewed_at': DateTime.now().toIso8601String(),
-          if (secretaryId != null) 'reviewed_by_secretary': secretaryId,
+          'reviewed_by_secretary': secretaryId,
         })
         .eq('id', requestId)
         .select()
@@ -108,7 +108,7 @@ class DocumentService {
         .update({
           'request_status': nextStatus,
           'secretary_verified_at': now.toIso8601String(),
-          if (secretaryId != null) 'reviewed_by_secretary': secretaryId,
+          'reviewed_by_secretary': secretaryId,
           if (paymentRequired) ...{
             'invoice_created_at': now.toIso8601String(),
             'invoice_due_date': now
@@ -240,18 +240,78 @@ class DocumentService {
   Future<DocumentRequest> submitPaymentReceipt({
     required String requestId,
     required String receiptUrl,
+    String paymentMethod = 'gcash',
+    String? referenceNumber,
   }) async {
     try {
+      final update = {
+        'payment_receipt_url': receiptUrl,
+        'payment_method': paymentMethod,
+      };
+      if (referenceNumber != null && referenceNumber.trim().isNotEmpty) {
+        update['payment_reference_number'] = referenceNumber.trim();
+      }
       final response = await _supabase
           .from('document_requests')
-          .update({
-            'payment_receipt_url': receiptUrl,
-            'payment_method': 'gcash',
-          })
+          .update(update)
           .eq('id', requestId)
           .select()
           .single();
 
+      return DocumentRequest.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<DocumentRequest> updatePaymentParsedFields({
+    required String requestId,
+    String? referenceNumber,
+    double? amount,
+    String? date,
+    double? confidence,
+    String? parseError,
+  }) async {
+    try {
+      final Map<String, dynamic> update = {
+        'payment_parsed_at': DateTime.now().toIso8601String(),
+      };
+      if (confidence != null) update['payment_parsed_confidence'] = confidence;
+      if (parseError != null && parseError.isNotEmpty) {
+        update['payment_parse_error'] = parseError;
+      } else {
+        update['payment_parse_error'] = null;
+      }
+      // Never overwrite existing human-entered ref
+      final check = await _supabase
+          .from('document_requests')
+          .select('payment_reference_number')
+          .eq('id', requestId)
+          .maybeSingle();
+      if (check != null) {
+        final existing = check['payment_reference_number'];
+        if (existing == null || (existing as String).trim().isEmpty) {
+          if (referenceNumber != null && referenceNumber.trim().isNotEmpty) {
+            update['payment_reference_number'] = referenceNumber.trim();
+          }
+        }
+      } else if (referenceNumber != null && referenceNumber.trim().isNotEmpty) {
+        update['payment_reference_number'] = referenceNumber.trim();
+      }
+      // store receipt_parse as JSON if available
+      final Map<String, dynamic> receiptParse = {};
+      if (referenceNumber != null) receiptParse['referenceNumber'] = referenceNumber;
+      if (amount != null) receiptParse['amount'] = amount;
+      if (date != null) receiptParse['paidAt'] = date;
+      if (confidence != null) receiptParse['confidence'] = confidence;
+      receiptParse['parsedAt'] = DateTime.now().toIso8601String();
+      update['receipt_parse'] = receiptParse;
+      final response = await _supabase
+          .from('document_requests')
+          .update(update)
+          .eq('id', requestId)
+          .select()
+          .single();
       return DocumentRequest.fromJson(response);
     } catch (e) {
       rethrow;
@@ -287,7 +347,7 @@ class DocumentService {
             'payment_status': 'verified',
             'payment_verified_at': DateTime.now().toIso8601String(),
             'payment_verified_by': adminId,
-            'request_status': 'pending_review',
+            'request_status': DocStatus.forApproval,
           })
           .eq('id', requestId)
           .select()
@@ -579,6 +639,40 @@ class DocumentService {
     }
   }
 
+  Future<String> uploadERecceipt(
+    String requestId,
+    File receiptFile,
+  ) async {
+    try {
+      final fileExt = receiptFile.path.split('.').last;
+      final fileName =
+          '$requestId/e-receipt_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+
+      await _supabase.storage.from('documents').upload(fileName, receiptFile);
+      return _supabase.storage.from('documents').getPublicUrl(fileName);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<DocumentRequest> updateERecceiptUrl({
+    required String requestId,
+    required String eReceiptUrl,
+  }) async {
+    try {
+      final response = await _supabase
+          .from('document_requests')
+          .update({'e_receipt_url': eReceiptUrl})
+          .eq('id', requestId)
+          .select()
+          .single();
+
+      return DocumentRequest.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<Map<String, int>> getStatistics() async {
     try {
       final pendingPayment = await _supabase
@@ -631,7 +725,7 @@ class DocumentService {
           'payment_reference_number': referenceNumber,
           'payment_verified_at': DateTime.now().toIso8601String(),
           'payment_verified_by': treasurerId,
-          'request_status': 'pending_review',
+          'request_status': DocStatus.forApproval,
         })
         .eq('id', requestId)
         .select()

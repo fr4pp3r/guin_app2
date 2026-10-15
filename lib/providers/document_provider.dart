@@ -5,6 +5,7 @@ import 'package:guin_app/models/document_request.dart';
 import 'package:guin_app/services/document_automation_service.dart';
 import 'package:guin_app/services/document_cache_service.dart';
 import 'package:guin_app/services/document_service.dart';
+import 'package:guin_app/services/ai_receipt_parser.dart';
 import 'package:guin_app/utils/role_access.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:guin_app/config/supabase_config.dart';
@@ -181,6 +182,8 @@ class DocumentProvider with ChangeNotifier {
     required String requestId,
     required File receiptImage,
     required String userId,
+    String? paymentMethod,
+    String? referenceNumber,
   }) async {
     _isLoading = true;
     _error = null;
@@ -208,6 +211,8 @@ class DocumentProvider with ChangeNotifier {
           await _documentService.submitPaymentReceipt(
             requestId: requestId,
             receiptUrl: receiptUrl,
+            paymentMethod: paymentMethod ?? 'gcash',
+            referenceNumber: referenceNumber,
           );
         }
       } catch (e) {
@@ -216,6 +221,8 @@ class DocumentProvider with ChangeNotifier {
           await _documentService.submitPaymentReceipt(
             requestId: requestId,
             receiptUrl: receiptUrl,
+            paymentMethod: paymentMethod ?? 'gcash',
+            referenceNumber: referenceNumber,
           );
         } catch (e2) {
           debugPrint('submitPaymentReceipt fallback failed: $e2');

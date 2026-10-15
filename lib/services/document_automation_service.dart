@@ -178,6 +178,14 @@ class DocumentAutomationService {
       type: feeRequired ? 'payment_verified' : 'request_approved',
     );
 
+    // Generate initial e-receipt (fire-and-forget, never blocks)
+    try {
+      await _generateAndUploadERecceipt(
+        request: request,
+        paymentReceiptUrl: null,
+      );
+    } catch (_) {}
+
     return AutomationOutcome(
       processed: true,
       finalStatus: nextStatus,
@@ -221,6 +229,14 @@ class DocumentAutomationService {
           'Your payment receipt for ${AutomationConstants.labelFor(request.documentType)} is awaiting treasurer verification.',
       type: 'system',
     );
+
+    // Update e-receipt with payment info (fire-and-forget, never blocks)
+    try {
+      await _generateAndUploadERecceipt(
+        request: request,
+        paymentReceiptUrl: receiptUrl,
+      );
+    } catch (_) {}
 
     return AutomationOutcome(
       processed: true,
@@ -328,6 +344,20 @@ class DocumentAutomationService {
         type: 'request_released',
       );
 
+      // Generate final e-receipt with release info (fire-and-forget, never blocks)
+      try {
+        await _generateAndUploadERecceipt(
+          request: request,
+          paymentReceiptUrl: request.paymentReceiptUrl,
+          documentId: payload.documentId,
+          qrUrl: payload.qrUrl,
+          verificationToken: payload.verificationToken,
+          expiresAtLabel: payload.expiresAt != null
+              ? DateFormat('MMM dd, yyyy').format(payload.expiresAt!)
+              : null,
+        );
+      } catch (_) {}
+
       return AutomationOutcome(
         processed: true,
         finalStatus: DocStatus.released,
@@ -409,6 +439,48 @@ class DocumentAutomationService {
         request.id,
         pdfFile,
       );
+    } finally {
+      try {
+        await pdfFile.delete();
+      } catch (_) {}
+    }
+  }
+
+  /// Generate and upload an e-receipt PDF for a request.
+  /// Returns the public URL or null if generation fails.
+  Future<String?> _generateAndUploadERecceipt({
+    required DocumentRequest request,
+    String? paymentReceiptUrl,
+    String? documentId,
+    String? qrUrl,
+    String? verificationToken,
+    String? expiresAtLabel,
+  }) async {
+    final config = await _barangayService.getBarangayConfig();
+    if (config == null) return null;
+    final citizen = await _userService.getUserProfile(request.userId);
+    if (citizen == null) return null;
+
+    final pdfFile = await PdfService.generateERecceipt(
+      request: request,
+      config: config,
+      userFullName: citizen.fullName,
+      userAddress: citizen.address,
+      paymentReceiptUrl: paymentReceiptUrl,
+      documentId: documentId,
+      qrUrl: qrUrl,
+      verificationToken: verificationToken,
+      expiresAtLabel: expiresAtLabel,
+    );
+    try {
+      final url = await _documentService.uploadERecceipt(request.id, pdfFile);
+      await _documentService.updateERecceiptUrl(
+        requestId: request.id,
+        eReceiptUrl: url,
+      );
+      return url;
+    } catch (_) {
+      return null;
     } finally {
       try {
         await pdfFile.delete();

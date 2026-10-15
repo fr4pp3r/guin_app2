@@ -1214,6 +1214,235 @@ class PdfService {
     return _savePdf(pdf, 'certification_${request.id}.pdf');
   }
 
+  /// Generate Electronic Receipt PDF for any document request.
+  static Future<File> generateERecceipt({
+    required DocumentRequest request,
+    required BarangayConfig config,
+    required String userFullName,
+    required String userAddress,
+    String? paymentReceiptUrl,
+    String? documentId,
+    String? qrUrl,
+    String? verificationToken,
+    String? expiresAtLabel,
+  }) async {
+    final pdf = pw.Document(theme: await _loadUnicodeTheme());
+    final data = request.documentData;
+    final amount = data['amount']?.toString() ?? '0.00';
+    final paymentMethod = data['payment_method']?.toString() ??
+        request.paymentMethod ??
+        'N/A';
+    final referenceNumber = data['reference_number']?.toString() ??
+        request.paymentReferenceNumber ??
+        'N/A';
+    final paymentStatus = request.paymentStatus;
+    final requestedAt = request.requestedAt;
+    final reviewedAt = request.reviewedAt;
+    final paidAt = request.paymentVerifiedAt;
+    final approvedAt = request.approvedAt;
+    final releasedAt = request.releasedAt;
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.legal,
+        margin: const pw.EdgeInsets.all(40),
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Header
+              _buildHeader(config),
+              pw.SizedBox(height: 30),
+
+              // Title
+              pw.Center(
+                child: pw.Column(
+                  children: [
+                    pw.Text(
+                      'ELECTRONIC RECEIPT',
+                      style: pw.TextStyle(
+                        fontSize: 24,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.blue900,
+                      ),
+                    ),
+                    pw.SizedBox(height: 5),
+                    pw.Container(
+                      width: 300,
+                      height: 3,
+                      decoration: const pw.BoxDecoration(
+                        gradient: pw.LinearGradient(
+                          colors: [PdfColors.blue900, PdfColors.blue600],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 20),
+
+              // Receipt Number
+              pw.Center(
+                child: pw.Text(
+                  'Receipt No.: ${documentId ?? request.id}',
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.grey700,
+                  ),
+                ),
+              ),
+              pw.SizedBox(height: 30),
+
+              // Document Request Details Section
+              _buildSectionTitle('DOCUMENT REQUEST DETAILS'),
+              pw.SizedBox(height: 10),
+              _buildInfoRow('Document Type:', _formatDocumentType(request.documentType)),
+              _buildInfoRow('Purpose:', request.purpose),
+              _buildInfoRow('Request ID:', request.id),
+              if (documentId != null && documentId.isNotEmpty)
+                _buildInfoRow('Document ID:', documentId),
+              pw.SizedBox(height: 20),
+
+              // Citizen Information Section
+              _buildSectionTitle('CITIZEN INFORMATION'),
+              pw.SizedBox(height: 10),
+              _buildInfoRow('Full Name:', userFullName),
+              _buildInfoRow('Address:', '$userAddress, ${config.barangayName}'),
+              pw.SizedBox(height: 20),
+
+              // Payment Information Section
+              _buildSectionTitle('PAYMENT INFORMATION'),
+              pw.SizedBox(height: 10),
+              _buildInfoRow('Amount:', 'PHP ${_formatAmount(amount)}'),
+              _buildInfoRow('Status:', _formatPaymentStatus(paymentStatus)),
+              _buildInfoRow('Method:', paymentMethod),
+              _buildInfoRow('Reference Number:', referenceNumber),
+              if (paymentReceiptUrl != null && paymentReceiptUrl.isNotEmpty)
+                _buildInfoRow('Receipt URL:', paymentReceiptUrl),
+              pw.SizedBox(height: 20),
+
+              // Timeline Section
+              _buildSectionTitle('TIMELINE'),
+              pw.SizedBox(height: 10),
+              _buildInfoRow('Requested At:', _formatDate(requestedAt)),
+              if (reviewedAt != null)
+                _buildInfoRow('Reviewed At:', _formatDate(reviewedAt)),
+              if (paidAt != null)
+                _buildInfoRow('Paid At:', _formatDate(paidAt)),
+              if (approvedAt != null)
+                _buildInfoRow('Approved At:', _formatDate(approvedAt)),
+              if (releasedAt != null)
+                _buildInfoRow('Released At:', _formatDate(releasedAt)),
+              pw.SizedBox(height: 20),
+
+              // Barangay Official Info
+              _buildSectionTitle('BARANGAY OFFICIAL'),
+              pw.SizedBox(height: 10),
+              _buildInfoRow('Barangay Captain:', config.barangayCaptain ?? 'N/A'),
+              pw.SizedBox(height: 30),
+
+              // QR Code
+              if (qrUrl != null && qrUrl.isNotEmpty) ...[
+                pw.Center(
+                  child: pw.Column(
+                    children: [
+                      pw.Text(
+                        'Verification QR Code',
+                        style: pw.TextStyle(
+                          fontSize: 11,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.grey700,
+                        ),
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Container(
+                        width: 100,
+                        height: 100,
+                        child: pw.BarcodeWidget(
+                          barcode: pw.Barcode.qrCode(),
+                          data: qrUrl,
+                          drawText: false,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: 20),
+              ],
+
+              // Footer
+              _buildFooter(
+                config,
+                documentId ?? request.id,
+                qrUrl: qrUrl ?? request.qrUrl,
+                expiresAtLabel: expiresAtLabel,
+                copyNotice: verificationToken != null
+                    ? 'Verification Token: ${verificationToken.length > 12 ? verificationToken.substring(0, 12).toUpperCase() : verificationToken.toUpperCase()}'
+                    : null,
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    return _savePdf(pdf, 'e_receipt_${request.id}.pdf');
+  }
+
+  /// Helper to build section titles
+  static pw.Widget _buildSectionTitle(String title) {
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+      decoration: pw.BoxDecoration(
+        color: PdfColors.blue900,
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+      ),
+      child: pw.Text(
+        title,
+        style: pw.TextStyle(
+          fontSize: 12,
+          fontWeight: pw.FontWeight.bold,
+          color: PdfColors.white,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  /// Format document type for display
+  static String _formatDocumentType(String type) {
+    return type
+        .split('_')
+        .map((word) => word[0].toUpperCase() + word.substring(1).toLowerCase())
+        .join(' ');
+  }
+
+  /// Format payment status for display
+  static String _formatPaymentStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'Pending Verification';
+      case 'verified':
+      case 'confirmed':
+        return 'Verified';
+      case 'rejected':
+        return 'Rejected';
+      case 'partial':
+        return 'Partial Payment';
+      default:
+        return status[0].toUpperCase() + status.substring(1).toLowerCase();
+    }
+  }
+
+  /// Format amount with commas
+  static String _formatAmount(String amount) {
+    final parsed = num.tryParse(amount.replaceAll(',', ''));
+    if (parsed == null) return amount;
+    return NumberFormat('#,##0.00').format(parsed);
+  }
+
   /// Generate Certificate of Good Moral Character PDF.
   static Future<File> generateGoodMoral({
     required DocumentRequest request,

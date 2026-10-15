@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:guin_app/models/document_request.dart';
 import 'package:guin_app/screens/splash_screen.dart';
 import 'package:guin_app/screens/auth/login_screen.dart';
 import 'package:guin_app/screens/auth/register_screen.dart';
@@ -8,6 +9,7 @@ import 'package:guin_app/screens/citizen/request_document_screen.dart';
 import 'package:guin_app/screens/citizen/my_requests_screen.dart';
 import 'package:guin_app/screens/citizen/my_reports_screen.dart';
 import 'package:guin_app/screens/citizen/notifications_screen.dart';
+import 'package:guin_app/screens/citizen/e_receipt_viewer_screen.dart';
 import 'package:guin_app/screens/admin/dashboard_screen.dart' as admin;
 import 'package:guin_app/screens/admin/manage_users_screen.dart';
 import 'package:guin_app/screens/admin/pending_requests_screen.dart';
@@ -40,6 +42,7 @@ class AppRoutes {
   static const String notifications = '/citizen/notifications';
   static const String submitReport = '/citizen/submit-report';
   static const String profile = '/citizen/profile';
+  static const String eReceipt = '/citizen/e-receipt';
   static const String incidentReports = '/admin/incident-reports';
   static const String verifyDocument = '/verify';
 
@@ -121,6 +124,11 @@ class AppRoutes {
       case profile:
         return MaterialPageRoute(
           builder: (context) => const ProfileScreen(),
+        );
+      case eReceipt:
+        final args = settings.arguments as DocumentRequest?;
+        return MaterialPageRoute(
+          builder: (context) => EReceiptViewerScreen(request: args!),
         );
       case incidentReports:
         return MaterialPageRoute(

@@ -8,6 +8,8 @@ import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/screens/citizen/document_viewer_screen.dart';
 import 'package:guin_app/screens/citizen/upload_payment_screen.dart';
+import 'package:guin_app/screens/citizen/e_receipt_viewer_screen.dart';
+import 'package:guin_app/config/routes.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 // ignore_for_file: unused_import
@@ -523,6 +525,29 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                   ),
                 ],
 
+                // View e-receipt (available for all statuses when e-receipt exists)
+                if (request.eReceiptUrl != null) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _openERecceiptViewer(request),
+                      icon: const Icon(Icons.receipt_long, size: 18),
+                      label: Text(
+                        'View E-Receipt',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: BorderSide(color: AppColors.primary),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+
                 // Payment needed
                 if (request.requestStatus == 'pending_payment' &&
                     request.paymentReceiptUrl == null) ...[
@@ -670,6 +695,14 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => DocumentViewerScreen(request: request)),
+    );
+  }
+
+  void _openERecceiptViewer(DocumentRequest request) {
+    Navigator.pushNamed(
+      context,
+      AppRoutes.eReceipt,
+      arguments: request,
     );
   }
 
