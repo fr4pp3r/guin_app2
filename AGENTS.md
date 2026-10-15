@@ -9,8 +9,8 @@ Flutter CLI.
 ```bash
 flutter pub get        # after any pubspec change
 flutter analyze        # lint (flutter_lints) — the pre-commit gate
-flutter test           # unit tests (test/automation/)
-flutter test test/automation/fee_assessor_test.dart   # run one test file
+flutter test           # 62 offline tests (test/automation, providers, services, utils, widgets)
+flutter test test/automation/kyc_models_test.dart   # run one test file
 flutter run -d chrome  # web; `flutter run` for an attached device
 ```
 
@@ -47,14 +47,14 @@ with the same graceful-degradation rule.
 
 - `DOCUMENTATION.md` — architecture, roles, workflow statuses, setup, security posture,
   and §13 Known Gaps. README points here.
-- Trust executable sources over prose: README/DOCUMENTATION still claim "no tests" and
-  "`.env` tracked in git" — both stale (tests exist in `test/automation/`; `.env` is
-  gitignored).
+- Trust executable sources over prose: README/DOCUMENTATION previously claimed "no tests" and
+  "`.env` tracked in git" — both were stale and are now corrected (tests exist across `test/`;
+  `.env` is gitignored).
 
 ## Architecture facts easy to get wrong
 
 - Entry: `lib/main.dart` → `SupabaseConfig.initialize()` (loads `.env`, throws if either
-  key missing) → 6 providers → routes in `lib/config/routes.dart`.
+  key missing) → 9 providers → routes in `lib/config/routes.dart`.
 - **Supabase Auth is not used.** Login queries `users_profile` in Dart and compares a
   salted SHA-256 hash (`lib/utils/password_hash.dart`); sessions live in
   `shared_preferences`. RLS is enabled but every policy is `USING (true)` because
@@ -84,6 +84,26 @@ with the same graceful-degradation rule.
   — none exists in-app.
 - Realtime self-updates require tables in the `supabase_realtime` publication
   (`setup.sql` handles it); a missing table fails silently (dashboards just stop updating).
+  Live tables are `document_requests`, `users_profile`, `notifications`, `announcements`.
+- Notifications (`lib/services/notification_service.dart`): `createNotification` targets one
+  user, `notifyRoles` fans out to every APPROVED official holding one of the roles, and
+  `notifyAllApproved` fans out to all approved users (announcements). `notifications.type` is
+  a Postgres ENUM — only `registration_approved|registration_rejected|request_approved|
+  request_rejected|request_released|payment_verified|payment_rejected|incident_submitted|
+  incident_updated|system` exist; new codes need a migration. All fan-outs are best-effort
+  (errors swallowed) and never block the action that triggered them.
+- Approver review is **page-based**, not list-card based: `user_registration_detail_screen.dart`
+  opens for pending registration reviews (captain/admin only; `canManageUsers`) and
+  `document_request_detail_screen.dart` opens for secretary/captain/kagawad queues with a
+  per-queue `actions` descriptor. Both show the requestor's full profile, run existing
+  handlers unchanged (captain page still signs+releases PDFs), and return to the queue only
+  when the status actually changed. No permission model changes.
+- Announcements: global bulletin board (`announcements` table) — every signed-in user reads
+  the same rows, no audience or read state. `AnnouncementProvider`/`AnnouncementService`,
+  feed screens under `lib/screens/announcements/`, entry points on both dashboards. Posting
+  and deleting are gated by `AppRoles.canPostAnnouncements` (captain / secretary / admin);
+  posting also fans out a bell notification to all approved users. Live DBs need
+  `supabase/migrations/20261020_announcements.sql` applied or the feed stays empty.
 - Document security: policy (`expires_at`, `single_use`, `max_uses`, `use_count`) lives on
   the released row in `document_verifications` (parent). Each printable copy is a row in
   `document_print_copies` with its OWN random token + serial (cap 5, `PrintCopyRules`), but
@@ -92,7 +112,7 @@ with the same graceful-degradation rule.
   path is the viewer's "Request printable copy" → `VerificationService.issuePrintCopy` →
   `DocumentAutomationService.generatePrintableCopyPdf` (`printing` package, native-only —
   PDF gen uses `dart:io`, so web/desktop degrade gracefully). Live-DB migration:
-  `supabase/migrations/20261007_document_print_copies.sql` (additive); `setup.sql` is 18 tables now.
+  `supabase/migrations/20261007_document_print_copies.sql` (additive); `setup.sql` is 20 tables now.
   Live DBs from before the security work also need
   `supabase/migrations/20261007_document_policy_columns.sql` (additive;
   `expires_at`/`single_use`/`max_uses`/`use_count`/`used_at` on both
@@ -104,9 +124,9 @@ with the same graceful-degradation rule.
 
 ## Testing
 
-- Tests cover the pure-Dart automation layer (`lib/automation/` ↔ `test/automation/`,
-  ~100 tests incl. document-access rules, print-copy rules, verification-QR parsing, and
-  AiService.unwrapResponse). Screens, providers,
-  and Supabase-bound services are untested: verify manually against the workflows in
-  `DOCUMENTATION.md` §5.
-- Tests are offline and dependency-free: no fixtures, services, or snapshots.
+- Tests are offline and dependency-free (62 total, no fixtures/services/snapshots). They cover
+  the KYC / ID-verifier models (`test/automation/`), the offline document and incident caches,
+  session-snapshot persistence, `Helpers.parseSupabaseError`, `ConnectivityProvider.isOfflineFrom`,
+  and the connectivity banner widget. Screens and Supabase-bound services are untested, and the
+  document workflow rules in `lib/automation/` have **no** tests: verify manually against the
+  workflows in `DOCUMENTATION.md` §5.

@@ -5,7 +5,10 @@ import 'package:provider/provider.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/document_provider.dart';
 import 'package:guin_app/providers/barangay_provider.dart';
+import 'package:guin_app/config/routes.dart';
 import 'package:guin_app/models/document_request.dart';
+import 'package:guin_app/providers/notification_provider.dart';
+import 'package:guin_app/screens/admin/document_request_detail_screen.dart';
 import 'package:guin_app/services/pdf_service.dart';
 import 'package:guin_app/services/user_service.dart';
 import 'package:guin_app/utils/constants.dart';
@@ -388,6 +391,61 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
     }
   }
 
+  // ── Review page ─────────────────────────────────────────────────────
+
+  /// The decision buttons live only on the review page — this builds the
+  /// same status-dependent set the cards used to show inline and hands the
+  /// handlers over unchanged as action descriptors.
+  List<RequestAction> _actionsFor(DocumentRequest r) {
+    final status = r.requestStatus;
+    if (status == DocStatus.submitted || status == DocStatus.pendingReview) {
+      return [
+        RequestAction(
+          label: 'Reject',
+          icon: Icons.cancel_outlined,
+          color: AppColors.error,
+          onPressed: () => _handleReject(r),
+        ),
+        RequestAction(
+          label: 'Generate Draft',
+          icon: Icons.description_outlined,
+          color: AppColors.primary,
+          filled: true,
+          onPressed: () => _handleGenerateDraft(r),
+        ),
+      ];
+    }
+    if (status == DocStatus.draftGenerated) {
+      return [
+        RequestAction(
+          label: 'Needs Revision',
+          icon: Icons.edit_note,
+          color: Colors.orange,
+          onPressed: () => _handleRequestRevision(r),
+        ),
+        RequestAction(
+          label: r.paymentRequired ? 'Send Invoice' : 'Forward to Captain',
+          icon: Icons.verified_outlined,
+          color: Colors.teal,
+          filled: true,
+          onPressed: () => _handleVerifyForPayment(r),
+        ),
+      ];
+    }
+    // e.g. needs_revision — the card showed a waiting banner, no actions.
+    return const [];
+  }
+
+  void _openRequestReview(DocumentRequest r) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            DocumentRequestDetailScreen(request: r, actions: _actionsFor(r)),
+      ),
+    );
+  }
+
   // ── Build ────────────────────────────────────────────────────────────
 
   @override
@@ -450,6 +508,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                         ],
                       ),
                     ),
+                    const _NotificationsBell(),
                   ],
                 ),
               ),
@@ -529,287 +588,188 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
+      child: Material(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.05),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    _getDocumentIcon(r.documentType),
-                    color: statusColor,
-                    size: 20,
+        elevation: 2,
+        shadowColor: Colors.black.withValues(alpha: 0.06),
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: InkWell(
+          onTap: () => _openRequestReview(r),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.05),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        r.documentTypeDisplay,
-                        style: const TextStyle(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        _getDocumentIcon(r.documentType),
+                        color: statusColor,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            r.documentTypeDisplay,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Requested ${Helpers.formatDate(r.requestedAt)}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        r.statusDisplay,
+                        style: TextStyle(
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          fontSize: 15,
+                          color: statusColor,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Requested ${Helpers.formatDate(r.requestedAt)}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (r.userFullName != null || r.userName != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.person_outline,
+                              size: 14,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              r.userFullName ?? r.userName ?? '',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const Text(
+                      'Purpose',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F7FA),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        r.purpose,
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ),
+                    if (r.secretaryNotes != null &&
+                        r.secretaryNotes!.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.orange.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Revision Notes',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.orange,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              r.secretaryNotes!,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    r.statusDisplay,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: statusColor,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (r.userFullName != null || r.userName != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.person_outline,
-                          size: 14,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          r.userFullName ?? r.userName ?? '',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                const Text(
-                  'Purpose',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F7FA),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(r.purpose, style: const TextStyle(fontSize: 13)),
-                ),
-                if (r.secretaryNotes != null &&
-                    r.secretaryNotes!.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade50,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.orange.shade200),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         const Text(
-                          'Revision Notes',
+                          'Review request',
                           style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.orange,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          r.secretaryNotes!,
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 14),
-                // ── Actions based on status ──
-                if (isSubmitted)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _handleReject(r),
-                          icon: const Icon(Icons.cancel_outlined, size: 16),
-                          label: const Text(
-                            'Reject',
-                            style: TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.error,
-                            side: BorderSide(
-                              color: AppColors.error.withValues(alpha: 0.5),
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => _handleGenerateDraft(r),
-                          icon: const Icon(
-                            Icons.description_outlined,
-                            size: 16,
-                          ),
-                          label: const Text(
-                            'Generate Draft',
-                            style: TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                else if (isDraft)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _handleRequestRevision(r),
-                          icon: const Icon(Icons.edit_note, size: 16),
-                          label: const Text(
-                            'Needs Revision',
-                            style: TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.orange,
-                            side: const BorderSide(color: Colors.orange),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => _handleVerifyForPayment(r),
-                          icon: const Icon(Icons.verified_outlined, size: 16),
-                          label: Text(
-                            r.paymentRequired
-                                ? 'Send Invoice'
-                                : 'Forward to Captain',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.teal,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                else if (isRevision)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade50,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.hourglass_top,
-                          size: 16,
-                          color: Colors.orange,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Waiting for citizen to resubmit',
-                          style: TextStyle(
-                            color: Colors.orange,
+                            fontSize: 12.5,
                             fontWeight: FontWeight.w600,
-                            fontSize: 13,
+                            color: Color(0xFF1976D2),
                           ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 11,
+                          color: Color(0xFF1976D2),
                         ),
                       ],
                     ),
-                  ),
-              ],
-            ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -837,5 +797,50 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       default:
         return Icons.description_outlined;
     }
+  }
+}
+
+/// Bell with unread badge for the gradient header. The officials' dashboard
+/// owns the load/subscribe lifecycle for NotificationProvider — this only
+/// reads `unreadCount` for display.
+class _NotificationsBell extends StatelessWidget {
+  const _NotificationsBell();
+
+  @override
+  Widget build(BuildContext context) {
+    final unread = context.watch<NotificationProvider>().unreadCount;
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+          tooltip: 'Notifications',
+          onPressed: () =>
+              Navigator.pushNamed(context, AppRoutes.notifications),
+        ),
+        if (unread > 0)
+          Positioned(
+            right: 8,
+            top: 8,
+            child: Container(
+              padding: const EdgeInsets.all(3),
+              decoration: const BoxDecoration(
+                color: AppColors.error,
+                shape: BoxShape.circle,
+              ),
+              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+              child: Text(
+                '$unread',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }

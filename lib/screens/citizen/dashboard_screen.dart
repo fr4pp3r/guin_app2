@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:guin_app/models/announcement.dart';
+import 'package:guin_app/providers/announcement_provider.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/document_provider.dart';
 import 'package:guin_app/providers/notification_provider.dart';
 import 'package:guin_app/config/routes.dart';
+import 'package:guin_app/screens/announcements/announcement_detail_screen.dart';
+import 'package:guin_app/screens/announcements/announcements_screen.dart';
 import 'package:guin_app/screens/citizen/document_viewer_screen.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
@@ -19,6 +23,7 @@ class CitizenDashboardScreen extends StatefulWidget {
 class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
   DocumentProvider? _documentProvider;
   NotificationProvider? _notificationProvider;
+  AnnouncementProvider? _announcementProvider;
 
   @override
   void initState() {
@@ -27,6 +32,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
       if (!mounted) return;
       _documentProvider = context.read<DocumentProvider>();
       _notificationProvider = context.read<NotificationProvider>();
+      _announcementProvider = context.read<AnnouncementProvider>();
       _loadData();
     });
   }
@@ -36,12 +42,17 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
     // Unsubscribe when leaving the screen
     _documentProvider?.unsubscribeFromDocuments();
     _notificationProvider?.unsubscribe();
+    _announcementProvider?.unsubscribe();
     super.dispose();
   }
 
   Future<void> _loadData() async {
-    if (!mounted || _documentProvider == null || _notificationProvider == null)
+    if (!mounted ||
+        _documentProvider == null ||
+        _notificationProvider == null ||
+        _announcementProvider == null) {
       return;
+    }
     final authProvider = context.read<AuthProvider>();
 
     if (authProvider.userProfile != null) {
@@ -49,12 +60,14 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
       await _notificationProvider!.loadNotifications(
         authProvider.userProfile!.id,
       );
+      await _announcementProvider!.loadAnnouncements();
 
       // Subscribe to real-time updates using stored providers
       _documentProvider!.subscribeToUserDocuments(authProvider.userProfile!.id);
       _notificationProvider!.subscribeToNotifications(
         authProvider.userProfile!.id,
       );
+      _announcementProvider!.subscribeToAnnouncements();
     }
   }
 
@@ -64,6 +77,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
     final authProvider = context.watch<AuthProvider>();
     final documentProvider = context.watch<DocumentProvider>();
     final notificationProvider = context.watch<NotificationProvider>();
+    final announcementProvider = context.watch<AnnouncementProvider>();
     final userProfile = authProvider.userProfile;
 
     return Scaffold(
@@ -277,7 +291,10 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                           child: _buildActionCard(
                             context,
                             icon: Icons.file_copy,
-                            title: l10n.citizenRequestDocument.replaceAll(' ', '\n'),
+                            title: l10n.citizenRequestDocument.replaceAll(
+                              ' ',
+                              '\n',
+                            ),
                             color: AppColors.primary,
                             onTap: () {
                               Navigator.pushNamed(
@@ -311,7 +328,10 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                           child: _buildActionCard(
                             context,
                             icon: Icons.report_problem,
-                            title: l10n.citizenReportIncident.replaceAll(' ', '\n'),
+                            title: l10n.citizenReportIncident.replaceAll(
+                              ' ',
+                              '\n',
+                            ),
                             color: AppColors.warning,
                             onTap: () {
                               Navigator.pushNamed(
@@ -326,7 +346,10 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                           child: _buildActionCard(
                             context,
                             icon: Icons.qr_code_scanner,
-                            title: l10n.citizenVerifyDocument.replaceAll(' ', '\n'),
+                            title: l10n.citizenVerifyDocument.replaceAll(
+                              ' ',
+                              '\n',
+                            ),
                             color: Colors.teal,
                             onTap: () {
                               Navigator.pushNamed(
@@ -357,6 +380,15 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                       ],
                     ),
                     const SizedBox(height: 32),
+
+                    // Announcements Section — hidden entirely when nothing
+                    // has been posted (no empty card).
+                    if (announcementProvider.announcements.isNotEmpty) ...[
+                      _buildAnnouncementsSection(
+                        announcementProvider.announcements,
+                      ),
+                      const SizedBox(height: 32),
+                    ],
 
                     // Request Statistics Section
                     Padding(
@@ -691,6 +723,152 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Section header plus the latest two announcements. Only rendered when the
+  /// provider list is non-empty, so the section never shows an empty card.
+  Widget _buildAnnouncementsSection(List<Announcement> announcements) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: AppColors.accent,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Announcements',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AnnouncementsScreen(),
+                    ),
+                  );
+                },
+                child: const Text(
+                  'See all ›',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...announcements.take(2).map(_buildAnnouncementPreviewCard),
+      ],
+    );
+  }
+
+  /// Preview card for one announcement (title + body preview) on the feed.
+  Widget _buildAnnouncementPreviewCard(Announcement announcement) {
+    final pinned = announcement.isPinned;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) =>
+                  AnnouncementDetailScreen(announcement: announcement),
+            ),
+          );
+        },
+        child: Container(
+          margin: const EdgeInsets.only(bottom: AppSizes.paddingM),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: pinned
+                  ? AppColors.primary.withValues(alpha: 0.35)
+                  : Colors.grey.withValues(alpha: 0.08),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    pinned ? Icons.push_pin : Icons.campaign_outlined,
+                    size: 16,
+                    color: pinned ? AppColors.primary : AppColors.accent,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      announcement.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 12,
+                    color: Colors.grey.shade400,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                announcement.body,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.4,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${announcement.createdByName}  ·  '
+                '${Helpers.formatDate(announcement.createdAt)}',
+                style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -7,6 +7,7 @@ import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/utils/role_access.dart';
 import 'package:guin_app/screens/admin/create_user_screen.dart';
+import 'package:guin_app/screens/admin/user_registration_detail_screen.dart';
 
 class ManageUsersScreen extends StatefulWidget {
   const ManageUsersScreen({super.key});
@@ -41,86 +42,18 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
 
   // ── Pending users actions ────────────────────────────────────────────────
 
-  Future<void> _handleApprove(UserProfile user) async {
-    final confirm = await Helpers.showConfirmDialog(
+  /// Open the full registration review. Approve/Reject live only on that
+  /// page; on success it pops with the message we surface here as a snackbar
+  /// (a snackbar shown on the detail page would die with its route).
+  Future<void> _openRegistrationDetail(UserProfile user) async {
+    final message = await Navigator.push<String>(
       context,
-      title: 'Approve User',
-      message: 'Approve ${user.fullName}?',
-    );
-    if (!confirm) return;
-
-    final userProvider = context.read<UserProvider>();
-    Helpers.showLoadingDialog(context, 'Approving...');
-    final ok = await userProvider.approveUser(user.id);
-    if (!mounted) return;
-    Helpers.dismissDialog(context);
-    if (ok) {
-      Helpers.showSuccessSnackBar(context, 'User approved');
-    } else {
-      Helpers.showErrorSnackBar(
-        context,
-        Helpers.parseSupabaseError(userProvider.errorMessage),
-      );
-    }
-  }
-
-  Future<void> _handleReject(UserProfile user) async {
-    final reasonController = TextEditingController();
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Reject User'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Rejecting: ${user.fullName}'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: reasonController,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Rejection Reason',
-                hintText: 'Provide a reason...',
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (reasonController.text.trim().isEmpty) {
-                Helpers.showErrorSnackBar(ctx, 'Please provide a reason');
-                return;
-              }
-              Navigator.pop(ctx, true);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Reject'),
-          ),
-        ],
+      MaterialPageRoute(
+        builder: (_) => UserRegistrationDetailScreen(user: user),
       ),
     );
-    if (confirm != true || !mounted) return;
-
-    final userProvider = context.read<UserProvider>();
-    Helpers.showLoadingDialog(context, 'Rejecting...');
-    final ok = await userProvider.rejectUser(
-      user.id,
-      reasonController.text.trim(),
-    );
-    if (!mounted) return;
-    Helpers.dismissDialog(context);
-    if (ok) {
-      Helpers.showSuccessSnackBar(context, 'Registration rejected');
-    } else {
-      Helpers.showErrorSnackBar(
-        context,
-        Helpers.parseSupabaseError(userProvider.errorMessage),
-      );
+    if (message != null && mounted) {
+      Helpers.showSuccessSnackBar(context, message);
     }
   }
 
@@ -325,149 +258,140 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
       shadowColor: Colors.black.withValues(alpha: 0.07),
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundImage: user.profilePhotoUrl != null
-                      ? NetworkImage(user.profilePhotoUrl!)
-                      : null,
-                  child: user.profilePhotoUrl == null
-                      ? const Icon(Icons.person, size: 26)
-                      : null,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        user.fullName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        '@${user.username}',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13,
-                        ),
-                      ),
-                      Text(
-                        user.email,
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
+      child: InkWell(
+        onTap: () => _openRegistrationDetail(user),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundImage: user.profilePhotoUrl != null
+                        ? NetworkImage(user.profilePhotoUrl!)
+                        : null,
+                    child: user.profilePhotoUrl == null
+                        ? const Icon(Icons.person, size: 26)
+                        : null,
                   ),
-                ),
-              ],
-            ),
-            if (_kycBadgeData(user) != null) ...[
-              const SizedBox(height: 10),
-              _kycBadge(_kycBadgeData(user)!),
-            ],
-            const Divider(height: 20),
-            _infoRow(Icons.location_on, user.address),
-            const SizedBox(height: 4),
-            _infoRow(Icons.cake, '${user.age} years old · ${user.gender}'),
-            const SizedBox(height: 4),
-            _infoRow(Icons.phone, user.phoneNumber),
-            const SizedBox(height: 4),
-            _infoRow(
-              Icons.access_time,
-              'Registered: ${Helpers.formatDate(user.createdAt)}',
-            ),
-            // ID info
-            if (user.kycIdType != null) ...[
-              const SizedBox(height: 4),
-              _infoRow(
-                Icons.badge_outlined,
-                '${KycIdTypes.label(user.kycIdType)}: ${user.kycIdNumber ?? "N/A"}',
-              ),
-            ],
-            if (user.idIssuedAt != null) ...[
-              const SizedBox(height: 4),
-              _infoRow(
-                Icons.event_available,
-                'ID issued: ${Helpers.formatDate(user.idIssuedAt!)}',
-              ),
-            ],
-            if (user.idExpiryAt != null) ...[
-              const SizedBox(height: 4),
-              _infoRow(
-                Icons.event_busy,
-                'ID expires: ${Helpers.formatDate(user.idExpiryAt!)}',
-              ),
-            ],
-            // Liveness info
-            if (user.livenessVerified) ...[
-              const SizedBox(height: 4),
-              _infoRow(
-                Icons.face_retouching_natural,
-                'Liveness verified${user.livenessVerifiedAt != null ? " on ${Helpers.formatDate(user.livenessVerifiedAt!)}" : ""}',
-              ),
-            ],
-            // Indigent info
-            if (user.isIndigent &&
-                (user.indigencyReason?.isNotEmpty ?? false)) ...[
-              const SizedBox(height: 4),
-              _infoRow(
-                Icons.speaker_notes_outlined,
-                'Indigency reason: ${user.indigencyReason}',
-              ),
-            ],
-            const SizedBox(height: 12),
-            _kycPhotoRow(user),
-            if (user.kycAiResult != null) ...[
-              const SizedBox(height: 4),
-              _kycAiSummary(user.kycAiResult!),
-            ],
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _handleReject(user),
-                    icon: const Icon(Icons.close),
-                    label: const Text('Reject'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: const BorderSide(color: AppColors.error),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user.fullName,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '@${user.username}',
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                          ),
+                        ),
+                        Text(
+                          user.email,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _handleApprove(user),
-                    icon: const Icon(Icons.check),
-                    label: const Text('Approve'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
+                ],
+              ),
+              if (_kycBadgeData(user) != null) ...[
+                const SizedBox(height: 10),
+                _kycBadge(_kycBadgeData(user)!),
+              ],
+              const Divider(height: 20),
+              _infoRow(Icons.location_on, user.address),
+              const SizedBox(height: 4),
+              _infoRow(Icons.cake, '${user.age} years old · ${user.gender}'),
+              const SizedBox(height: 4),
+              _infoRow(Icons.phone, user.phoneNumber),
+              const SizedBox(height: 4),
+              _infoRow(
+                Icons.access_time,
+                'Registered: ${Helpers.formatDate(user.createdAt)}',
+              ),
+              // ID info
+              if (user.kycIdType != null) ...[
+                const SizedBox(height: 4),
+                _infoRow(
+                  Icons.badge_outlined,
+                  '${KycIdTypes.label(user.kycIdType)}: ${user.kycIdNumber ?? "N/A"}',
                 ),
               ],
-            ),
-          ],
+              if (user.idIssuedAt != null) ...[
+                const SizedBox(height: 4),
+                _infoRow(
+                  Icons.event_available,
+                  'ID issued: ${Helpers.formatDate(user.idIssuedAt!)}',
+                ),
+              ],
+              if (user.idExpiryAt != null) ...[
+                const SizedBox(height: 4),
+                _infoRow(
+                  Icons.event_busy,
+                  'ID expires: ${Helpers.formatDate(user.idExpiryAt!)}',
+                ),
+              ],
+              // Liveness info
+              if (user.livenessVerified) ...[
+                const SizedBox(height: 4),
+                _infoRow(
+                  Icons.face_retouching_natural,
+                  'Liveness verified${user.livenessVerifiedAt != null ? " on ${Helpers.formatDate(user.livenessVerifiedAt!)}" : ""}',
+                ),
+              ],
+              // Indigent info
+              if (user.isIndigent &&
+                  (user.indigencyReason?.isNotEmpty ?? false)) ...[
+                const SizedBox(height: 4),
+                _infoRow(
+                  Icons.speaker_notes_outlined,
+                  'Indigency reason: ${user.indigencyReason}',
+                ),
+              ],
+              const SizedBox(height: 12),
+              _kycPhotoRow(user),
+              if (user.kycAiResult != null) ...[
+                const SizedBox(height: 4),
+                _kycAiSummary(user.kycAiResult!),
+              ],
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  const Text(
+                    'Review registration',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1976D2),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(
+                    Icons.arrow_forward_ios,
+                    size: 11,
+                    color: Color(0xFF1976D2),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -539,9 +463,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
       children: [
         Row(
           children: [
-            Expanded(
-              child: _kycThumb(user.profilePhotoUrl, 'Profile photo'),
-            ),
+            Expanded(child: _kycThumb(user.profilePhotoUrl, 'Profile photo')),
             const SizedBox(width: 12),
             Expanded(child: _kycThumb(user.validIdUrl, '$idLabel — front')),
           ],
@@ -575,15 +497,20 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                 : Image.network(
                     url,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) =>
-                        Icon(Icons.broken_image_outlined, color: Colors.grey.shade400),
+                    errorBuilder: (_, _, _) => Icon(
+                      Icons.broken_image_outlined,
+                      color: Colors.grey.shade400,
+                    ),
                   ),
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(fontSize: 10.5, color: AppColors.textSecondary),
+          style: const TextStyle(
+            fontSize: 10.5,
+            color: AppColors.textSecondary,
+          ),
         ),
       ],
     );
@@ -597,34 +524,34 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
       child: Material(
         color: Colors.transparent,
         child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 8),
-        childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-        dense: true,
-        iconColor: AppColors.textSecondary,
-        collapsedIconColor: AppColors.textSecondary,
-        leading: const Icon(
-          Icons.auto_awesome,
-          size: 16,
-          color: Color(0xFF1976D2),
-        ),
-        title: const Text(
-          'AI advisory summary',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-        ),
-        children: [
-          ..._kycSummaryRows(kyc),
-          const SizedBox(height: 4),
-          const Text(
-            'AI-assisted advisory — final review by the barangay.',
-            style: TextStyle(
-              fontSize: 10.5,
-              fontStyle: FontStyle.italic,
-              color: AppColors.textSecondary,
-            ),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 8),
+          childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+          dense: true,
+          iconColor: AppColors.textSecondary,
+          collapsedIconColor: AppColors.textSecondary,
+          leading: const Icon(
+            Icons.auto_awesome,
+            size: 16,
+            color: Color(0xFF1976D2),
           ),
-        ],
+          title: const Text(
+            'AI advisory summary',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+          children: [
+            ..._kycSummaryRows(kyc),
+            const SizedBox(height: 4),
+            const Text(
+              'AI-assisted advisory — final review by the barangay.',
+              style: TextStyle(
+                fontSize: 10.5,
+                fontStyle: FontStyle.italic,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 
@@ -657,35 +584,31 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
     }
 
     // ID authenticity
-    final idAuthenticity = _kycString(
-      kyc,
-      ['id_authenticity', 'idAuthenticity'],
-    );
+    final idAuthenticity = _kycString(kyc, [
+      'id_authenticity',
+      'idAuthenticity',
+    ]);
     if (idAuthenticity != null) {
       addRow('ID authenticity', _idAuthenticityLabel(idAuthenticity));
     }
 
     // ID type guess/match
-    final idTypeGuess = _kycString(
-      kyc,
-      ['id_type_guess', 'idTypeGuess'],
-    );
-    final idTypeMatch = _kycString(
-      kyc,
-      ['id_type_match', 'idTypeMatch'],
-    );
+    final idTypeGuess = _kycString(kyc, ['id_type_guess', 'idTypeGuess']);
+    final idTypeMatch = _kycString(kyc, ['id_type_match', 'idTypeMatch']);
     if (idTypeGuess != null) {
       addRow('ID type detected', _idTypeGuessLabel(idTypeGuess));
     }
     if (idTypeMatch != null) {
-      addRow('Type match', idTypeMatch == 'true' ? 'Matches declared type' : 'Does not match declared type');
+      addRow(
+        'Type match',
+        idTypeMatch == 'true'
+            ? 'Matches declared type'
+            : 'Does not match declared type',
+      );
     }
 
     // Selfie quality
-    final selfieQuality = _kycString(
-      kyc,
-      ['selfie_quality', 'selfieQuality'],
-    );
+    final selfieQuality = _kycString(kyc, ['selfie_quality', 'selfieQuality']);
     if (selfieQuality != null) {
       addRow('Selfie quality', _selfieQualityLabel(selfieQuality));
     }
@@ -999,130 +922,133 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
         elevation: 2,
         shadowColor: Colors.black.withValues(alpha: 0.06),
         child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Stack(
-          children: [
-            CircleAvatar(
-              radius: 26,
-              backgroundImage: user.profilePhotoUrl != null
-                  ? NetworkImage(user.profilePhotoUrl!)
-                  : null,
-              backgroundColor: roleColor.withValues(alpha: 0.15),
-              child: user.profilePhotoUrl == null
-                  ? Icon(Icons.person, color: roleColor, size: 24)
-                  : null,
-            ),
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: user.registrationStatus == 'approved'
-                      ? Colors.green
-                      : Colors.orange,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 1.5),
-                ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
+          leading: Stack(
+            children: [
+              CircleAvatar(
+                radius: 26,
+                backgroundImage: user.profilePhotoUrl != null
+                    ? NetworkImage(user.profilePhotoUrl!)
+                    : null,
+                backgroundColor: roleColor.withValues(alpha: 0.15),
+                child: user.profilePhotoUrl == null
+                    ? Icon(Icons.person, color: roleColor, size: 24)
+                    : null,
               ),
-            ),
-          ],
-        ),
-        title: Text(
-          user.fullName,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              user.email,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: roleColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    AppRoles.displayName(user.role),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: roleColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  width: 12,
+                  height: 12,
                   decoration: BoxDecoration(
                     color: user.registrationStatus == 'approved'
-                        ? Colors.green.withValues(alpha: 0.1)
-                        : Colors.orange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    user.registrationStatus,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: user.registrationStatus == 'approved'
-                          ? Colors.green
-                          : Colors.orange,
-                    ),
+                        ? Colors.green
+                        : Colors.orange,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
                   ),
                 ),
-              ],
-            ),
-          ],
-        ),
-        trailing: PopupMenuButton<String>(
-          onSelected: (action) {
-            if (action == 'role') _handleChangeRole(user);
-            if (action == 'delete') _handleDeleteUser(user);
-          },
-          itemBuilder: (_) => [
-            const PopupMenuItem(
-              value: 'role',
-              child: Row(
+              ),
+            ],
+          ),
+          title: Text(
+            user.fullName,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                user.email,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
                 children: [
-                  Icon(Icons.swap_horiz, size: 18),
-                  SizedBox(width: 8),
-                  Text('Change Role'),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: roleColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      AppRoles.displayName(user.role),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: roleColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: user.registrationStatus == 'approved'
+                          ? Colors.green.withValues(alpha: 0.1)
+                          : Colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      user.registrationStatus,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: user.registrationStatus == 'approved'
+                            ? Colors.green
+                            : Colors.orange,
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            ),
-            const PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                  SizedBox(width: 8),
-                  Text('Delete', style: TextStyle(color: Colors.red)),
-                ],
+            ],
+          ),
+          trailing: PopupMenuButton<String>(
+            onSelected: (action) {
+              if (action == 'role') _handleChangeRole(user);
+              if (action == 'delete') _handleDeleteUser(user);
+            },
+            itemBuilder: (_) => [
+              const PopupMenuItem(
+                value: 'role',
+                child: Row(
+                  children: [
+                    Icon(Icons.swap_horiz, size: 18),
+                    SizedBox(width: 8),
+                    Text('Change Role'),
+                  ],
+                ),
               ),
-            ),
-          ],
-          child: const Icon(Icons.more_vert, color: Colors.grey),
+              const PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Delete', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
+            child: const Icon(Icons.more_vert, color: Colors.grey),
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _emptyState(String message, IconData icon, Color color) {
     return Center(

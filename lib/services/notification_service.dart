@@ -158,4 +158,77 @@ class NotificationService {
       rethrow;
     }
   }
+
+  /// Fan a notification out to every APPROVED user holding one of [roles].
+  ///
+  /// Best-effort by design: never throws, and one failed insert does not stop
+  /// the remaining recipients. Queue/alert notices for officials rely on this
+  /// so a notifications hiccup can never block the action that triggered it.
+  Future<void> notifyRoles({
+    required List<String> roles,
+    required String title,
+    required String message,
+    required String type,
+  }) async {
+    if (roles.isEmpty) return;
+    try {
+      final officials = await _supabase
+          .from('users_profile')
+          .select('id')
+          .inFilter('role', roles)
+          .eq('is_approved', true);
+
+      for (final row in officials as List) {
+        final id = row['id']?.toString();
+        if (id == null) continue;
+        try {
+          await createNotification(
+            userId: id,
+            title: title,
+            message: message,
+            type: type,
+          );
+        } catch (_) {
+          // One recipient failing must not stop the rest.
+        }
+      }
+    } catch (_) {
+      // Fan-out is best-effort; callers never see a throw.
+    }
+  }
+
+  /// Fan a notification out to every APPROVED user, regardless of role.
+  ///
+  /// Used for barangay-wide notices (announcements). Best-effort in exactly the
+  /// same way as [notifyRoles]: never throws, one failed insert never stops the
+  /// remaining recipients.
+  Future<void> notifyAllApproved({
+    required String title,
+    required String message,
+    required String type,
+  }) async {
+    try {
+      final users = await _supabase
+          .from('users_profile')
+          .select('id')
+          .eq('is_approved', true);
+
+      for (final row in users as List) {
+        final id = row['id']?.toString();
+        if (id == null) continue;
+        try {
+          await createNotification(
+            userId: id,
+            title: title,
+            message: message,
+            type: type,
+          );
+        } catch (_) {
+          // One recipient failing must not stop the rest.
+        }
+      }
+    } catch (_) {
+      // Fan-out is best-effort; callers never see a throw.
+    }
+  }
 }

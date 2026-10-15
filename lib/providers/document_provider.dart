@@ -6,6 +6,7 @@ import 'package:guin_app/services/document_automation_service.dart';
 import 'package:guin_app/services/document_cache_service.dart';
 import 'package:guin_app/services/document_service.dart';
 import 'package:guin_app/services/ai_receipt_parser.dart';
+import 'package:guin_app/services/notification_service.dart';
 import 'package:guin_app/utils/role_access.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:guin_app/config/supabase_config.dart';
@@ -13,6 +14,7 @@ import 'package:guin_app/config/supabase_config.dart';
 class DocumentProvider with ChangeNotifier {
   final DocumentService _documentService = DocumentService();
   final DocumentCacheService _cache = DocumentCacheService();
+  final NotificationService _notificationService = NotificationService();
   late final DocumentAutomationService _automation =
       DocumentAutomationService(documentService: _documentService);
   RealtimeChannel? _documentsChannel;
@@ -42,6 +44,58 @@ class DocumentProvider with ChangeNotifier {
 
   /// When the cached data currently being shown was saved (null when live).
   DateTime? get cacheTimestamp => _cacheTimestamp;
+
+  // ── Notification fan-out (best-effort; never blocks the caller) ─────────
+
+  /// One-off notification to a single user (usually the citizen owner of a
+  /// request). Swallows all errors: a failed notification must never fail
+  /// the workflow action that triggered it.
+  Future<void> _safeNotifyUser(
+    String userId,
+    String title,
+    String message,
+    String type,
+  ) async {
+    try {
+      await _notificationService.createNotification(
+        userId: userId,
+        title: title,
+        message: message,
+        type: type,
+      );
+    } catch (e) {
+      debugPrint('Notification to $userId failed: $e');
+    }
+  }
+
+  /// Fan-out to every approved official in [roles]. Same swallow discipline.
+  Future<void> _safeNotifyRoles(
+    List<String> roles,
+    String title,
+    String message,
+    String type,
+  ) async {
+    try {
+      await _notificationService.notifyRoles(
+        roles: roles,
+        title: title,
+        message: message,
+        type: type,
+      );
+    } catch (e) {
+      debugPrint('Role notification fan-out failed: $e');
+    }
+  }
+
+  /// Best-effort fetch of a request for notification context (citizen id,
+  /// document label). Returns null rather than throwing so callers can skip.
+  Future<DocumentRequest?> _requestForNotify(String requestId) async {
+    try {
+      return await _documentService.getRequestById(requestId);
+    } catch (_) {
+      return null;
+    }
+  }
 
   // Citizen: Load their own requests (network-first, offline cache fallback)
   Future<void> loadMyRequests(String userId) async {
@@ -164,6 +218,19 @@ class DocumentProvider with ChangeNotifier {
         debugPrint('afterSubmission failed: $e');
       }
 
+      // Official-side fan-out: a new request is waiting for review.
+      await _safeNotifyRoles(
+        [
+          AppRoles.secretary,
+          AppRoles.captain,
+          AppRoles.legacyAdmin,
+        ],
+        'New document request',
+        'A new ${created.documentTypeDisplay} request is waiting for review '
+            '(purpose: ${created.purpose}).',
+        'system',
+      );
+
       // Reload user's requests
       await loadMyRequests(userId);
 
@@ -228,6 +295,17 @@ class DocumentProvider with ChangeNotifier {
           debugPrint('submitPaymentReceipt fallback failed: $e2');
         }
       }
+
+      // Official-side fan-out: a receipt is waiting for verification.
+      await _safeNotifyRoles(
+        [
+          AppRoles.treasurer,
+          AppRoles.legacyAdmin,
+        ],
+        'Payment receipt submitted',
+        'A citizen submitted a payment receipt that needs verification.',
+        'system',
+      );
 
       // Reload user's requests
       await loadMyRequests(userId);
@@ -407,6 +485,18 @@ class DocumentProvider with ChangeNotifier {
         reason: reason,
       );
 
+      // Citizen-side notify: the request was refused outright.
+      final rejected = await _requestForNotify(requestId);
+      if (rejected != null) {
+        await _safeNotifyUser(
+          rejected.userId,
+          'Request rejected',
+          'Your ${rejected.documentTypeDisplay} request was rejected. '
+              'Reason: $reason',
+          'request_rejected',
+        );
+      }
+
       // Reload pending reviews list
       await loadPendingReviews();
 
@@ -513,6 +603,19 @@ class DocumentProvider with ChangeNotifier {
         secretaryId: secretaryId,
         notes: notes,
       );
+
+      // Citizen-side notify: changes were requested before approval.
+      final revision = await _requestForNotify(requestId);
+      if (revision != null) {
+        await _safeNotifyUser(
+          revision.userId,
+          'Document needs revision',
+          'Your ${revision.documentTypeDisplay} request needs changes '
+              'before it can proceed. Notes: $notes',
+          'system',
+        );
+      }
+
       await loadPendingReviews();
       _isLoading = false;
       notifyListeners();
@@ -538,6 +641,34 @@ class DocumentProvider with ChangeNotifier {
         secretaryId: secretaryId,
         paymentRequired: paymentRequired,
       );
+
+      // Official-side fan-out: route the request to the next queue.
+      final verified = await _requestForNotify(requestId);
+      final label = verified?.documentTypeDisplay ?? 'Document request';
+      if (paymentRequired) {
+        await _safeNotifyRoles(
+          [
+            AppRoles.treasurer,
+            AppRoles.legacyAdmin,
+          ],
+          'Payment to verify',
+          'A $label is verified and awaiting payment verification.',
+          'payment_verified',
+        );
+      } else {
+        await _safeNotifyRoles(
+          [
+            AppRoles.captain,
+            AppRoles.kagawadRepresentative,
+            AppRoles.legacyAdmin,
+          ],
+          'Request awaiting approval',
+          'A $label passed review and awaits final approval (no payment '
+              'required).',
+          'system',
+        );
+      }
+
       await loadPendingReviews();
       _isLoading = false;
       notifyListeners();
@@ -579,6 +710,23 @@ class DocumentProvider with ChangeNotifier {
           referenceNumber: referenceNumber,
         );
       }
+
+      // Official-side fan-out: payment settled, final approval is next.
+      // (The citizen's own payment-confirmed notice comes from automation.)
+      final confirmed = await _requestForNotify(requestId);
+      await _safeNotifyRoles(
+        [
+          AppRoles.captain,
+          AppRoles.kagawadRepresentative,
+          AppRoles.legacyAdmin,
+        ],
+        'Request ready for approval',
+        'Payment confirmed for a '
+            '${confirmed?.documentTypeDisplay ?? 'document request'} — '
+            'it is now in the approval queue.',
+        'system',
+      );
+
       await loadPendingPayments();
       _isLoading = false;
       notifyListeners();
@@ -651,6 +799,20 @@ class DocumentProvider with ChangeNotifier {
         citizenName: citizenName,
         payload: payload,
       );
+
+      // Citizen-side notify: the captain flow bypasses automation, so the
+      // released document must be announced here.
+      final released = await _requestForNotify(requestId);
+      if (released != null) {
+        await _safeNotifyUser(
+          released.userId,
+          'Document released',
+          'Your ${released.documentTypeDisplay} has been approved, signed, '
+              'and released. You can now claim your copy.',
+          'request_released',
+        );
+      }
+
       await loadForApproval();
       _isLoading = false;
       notifyListeners();
@@ -678,6 +840,19 @@ class DocumentProvider with ChangeNotifier {
         approverRole: approverRole,
         reason: reason,
       );
+
+      // Citizen-side notify: captain refusal (also bypasses automation).
+      final refused = await _requestForNotify(requestId);
+      if (refused != null) {
+        await _safeNotifyUser(
+          refused.userId,
+          'Request rejected',
+          'Your ${refused.documentTypeDisplay} request was rejected by the '
+              'Barangay Captain. Reason: $reason',
+          'request_rejected',
+        );
+      }
+
       await loadForApproval();
       _isLoading = false;
       notifyListeners();

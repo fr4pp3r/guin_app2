@@ -3,8 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/user_provider.dart';
 import 'package:guin_app/providers/document_provider.dart';
+import 'package:guin_app/providers/incident_report_provider.dart';
+import 'package:guin_app/providers/notification_provider.dart';
+import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/role_access.dart';
 import 'package:guin_app/config/routes.dart';
+import 'package:guin_app/screens/announcements/announcements_screen.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -19,6 +23,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Map<String, int>? _userStats;
   UserProvider? _userProvider;
   DocumentProvider? _documentProvider;
+  NotificationProvider? _notificationProvider;
+  IncidentReportProvider? _reportProvider;
 
   @override
   void initState() {
@@ -27,6 +33,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       if (!mounted) return;
       _userProvider = context.read<UserProvider>();
       _documentProvider = context.read<DocumentProvider>();
+      _notificationProvider = context.read<NotificationProvider>();
+      _reportProvider = context.read<IncidentReportProvider>();
 
       _loadData();
       // Subscribe to real-time updates with callback to reload stats
@@ -36,7 +44,46 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       // Listen to provider changes to reload statistics
       _userProvider!.addListener(_onDataChanged);
       _documentProvider!.addListener(_onDataChanged);
+
+      // Notification bell: same load + subscribe lifecycle as the citizen
+      // dashboard (unsubscribed in dispose).
+      _initNotifications();
+
+      // Queue counts behind the role-gated badges below.
+      _loadQueueCounts(context.read<AuthProvider>().userProfile?.role ?? '');
     });
+  }
+
+  Future<void> _initNotifications() async {
+    final userId = context.read<AuthProvider>().userProfile?.id;
+    if (userId == null || _notificationProvider == null) return;
+    await _notificationProvider!.loadNotifications(userId);
+    _notificationProvider!.subscribeToNotifications(userId);
+  }
+
+  /// Refresh the role-appropriate work queues so the dashboard badges show
+  /// live counts. Runs once per dashboard open — no new realtime
+  /// subscriptions are created here, only provider state is reused.
+  void _loadQueueCounts(String role) {
+    final docs = _documentProvider;
+    final users = _userProvider;
+    if (docs != null) {
+      if (AppRoles.canReviewDocuments(role)) {
+        docs.loadPendingReviews();
+      }
+      if (AppRoles.canApproveDocuments(role)) {
+        docs.loadForApproval();
+      }
+      if (AppRoles.canVerifyPayments(role)) {
+        docs.loadPendingPayments();
+      }
+    }
+    if (users != null && AppRoles.canManageUsers(role)) {
+      users.loadPendingUsers();
+    }
+    if (AppRoles.canManageReports(role)) {
+      _reportProvider?.loadAllReports();
+    }
   }
 
   void _onDataChanged() {
@@ -53,6 +100,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     // Unsubscribe from real-time updates
     _userProvider?.unsubscribeFromUsers();
     _documentProvider?.unsubscribeFromDocuments();
+    _notificationProvider?.unsubscribe();
 
     super.dispose();
   }
@@ -93,6 +141,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final canManageSettings =
         role == AppRoles.captain || role == AppRoles.legacyAdmin;
 
+    // Watched so the badge counts rebuild as soon as a provider reloads.
+    final userProvider = context.watch<UserProvider>();
+    final documentProvider = context.watch<DocumentProvider>();
+    final notificationProvider = context.watch<NotificationProvider>();
+    final reportProvider = context.watch<IncidentReportProvider>();
+
+    // Reports still needing action: everything not resolved/closed/dismissed
+    // (the terminal statuses offered in IncidentReportsScreen).
+    final openIncidents = reportProvider.reports
+        .where(
+          (r) =>
+              r.status != 'resolved' &&
+              r.status != 'closed' &&
+              r.status != 'dismissed',
+        )
+        .length;
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -112,6 +177,42 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
         automaticallyImplyLeading: false,
         actions: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined),
+                tooltip: 'Notifications',
+                onPressed: () =>
+                    Navigator.of(context).pushNamed(AppRoutes.notifications),
+              ),
+              if (notificationProvider.unreadCount > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: const BoxDecoration(
+                      color: AppColors.error,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
+                    child: Text(
+                      '${notificationProvider.unreadCount}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.person_outline_rounded),
             tooltip: 'My Profile',
@@ -333,6 +434,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         () => Navigator.of(
                           context,
                         ).pushNamed('/admin/pending-payments'),
+                        badgeCount: documentProvider.pendingPayments.length,
                       ),
                     ),
                   if (canVerifyPayments &&
@@ -348,6 +450,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         () => Navigator.of(
                           context,
                         ).pushNamed('/admin/pending-reviews'),
+                        badgeCount: documentProvider.pendingReviews.length,
                       ),
                     ),
                 ],
@@ -421,6 +524,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 'Manage Users',
                 Icons.people,
                 () => Navigator.of(context).pushNamed('/admin/pending-users'),
+                badgeCount: userProvider.pendingUsers.length,
               ),
               const SizedBox(height: 8),
             ],
@@ -451,6 +555,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 Icons.approval_outlined,
                 () =>
                     Navigator.of(context).pushNamed(AppRoutes.captainApproval),
+                badgeCount: documentProvider.forApproval.length,
               ),
               const SizedBox(height: 8),
             ],
@@ -460,9 +565,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 Icons.report,
                 () =>
                     Navigator.of(context).pushNamed(AppRoutes.incidentReports),
+                badgeCount: openIncidents,
               ),
               const SizedBox(height: 8),
             ],
+            // Announcements — every official can read; the create FAB inside
+            // the feed handles posting rights, so no role gate here.
+            _buildActionButton(
+              'Announcements',
+              Icons.campaign_outlined,
+              () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AnnouncementsScreen()),
+              ),
+            ),
+            const SizedBox(height: 8),
             _buildActionButton(
               'Verify Document',
               Icons.qr_code_scanner,
@@ -479,8 +595,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     String value,
     IconData icon,
     Color color,
-    VoidCallback? onTap,
-  ) {
+    VoidCallback? onTap, {
+    int badgeCount = 0,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -508,13 +625,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(icon, size: 28, color: color),
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(icon, size: 28, color: color),
+                          ),
+                          if (badgeCount > 0)
+                            Positioned(
+                              top: -6,
+                              right: -8,
+                              child: _countPill(badgeCount),
+                            ),
+                        ],
                       ),
                       if (onTap != null)
                         Icon(
@@ -551,7 +679,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildActionButton(String title, IconData icon, VoidCallback onTap) {
+  Widget _buildActionButton(
+    String title,
+    IconData icon,
+    VoidCallback onTap, {
+    int badgeCount = 0,
+  }) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
@@ -593,10 +726,35 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                   ),
                 ),
+                if (badgeCount > 0) ...[
+                  const SizedBox(width: 8),
+                  _countPill(badgeCount),
+                ],
                 Icon(Icons.chevron_right, color: Colors.grey[400]),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  /// Small red pill showing how many items are waiting in a queue.
+  /// Hidden by every caller when the count is zero.
+  Widget _countPill(int count) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.error,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        count > 99 ? '99+' : '$count',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          height: 1.3,
         ),
       ),
     );

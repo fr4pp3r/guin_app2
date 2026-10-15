@@ -5,7 +5,8 @@
 > notice explaining why they should not be trusted. Every claim below was verified against
 > the actual source code, SQL scripts, and configuration in this repo (verified 2026-09-26).
 > If code and docs disagree, the code wins — and this document should be corrected.
-> Last updated: 2026-10-13 (comprehensive feature audit).
+> Last updated: 2026-10-15 (approval review pages, notifications for every role, and the
+> announcement board).
 
 ---
 
@@ -27,6 +28,7 @@
 14. [Command Reference](#14-command-reference)
 15. [File Map](#15-file-map)
 16. [Project History](#16-project-history)
+17. [Announcements and Notifications](#17-announcements-and-notifications)
 
 ---
 
@@ -36,12 +38,17 @@ A **Flutter** application for a Philippine barangay (local government unit) that
 residents request and obtain official documents online, and lets barangay officials
 process those requests through a role-gated approval pipeline.
 
-The app supports two independent business domains:
+The app supports three independent business domains:
 
 - **Document requests** — Barangay Clearance, Certificate of Indigency, Barangay ID,
   and Community Tax Certificate (Cedula), with fee assessment, GCash payment, PDF
   generation, and public verification.
 - **Incident reports** — residents file incident reports; officials triage and resolve them.
+- **Announcements** — barangay-wide notices posted by officials; every signed-in user
+  reads the same board. See [§17](#17-announcements-and-notifications).
+
+Every workflow transition also emits **in-app notifications** to the people who must act
+next and to the citizen whose request moved ([§17](#17-announcements-and-notifications)).
 
 Supported document types (from `lib/models/document_request.dart` and the PDF service):
 
@@ -65,7 +72,7 @@ Supported document types (from `lib/models/document_request.dart` and the PDF se
 | ----------- | ------------------------------------------------------------- |
 | Framework   | Flutter / Dart — `sdk: ^3.10.1` in `pubspec.yaml`              |
 | Backend     | Supabase (PostgreSQL, Storage)                                 |
-| State mgmt  | `provider` (`ChangeNotifier`) — 8 providers registered in `main.dart` |
+| State mgmt  | `provider` (`ChangeNotifier`) — 9 providers registered in `main.dart` |
 | PDF         | `pdf: ^3.11.1`                                                  |
 | Files       | `file_picker`, `open_filex`, `path_provider`, `image_picker`, `image_cropper` |
 | Crypto      | `crypto` (SHA-256 password hashing, document verification hashes) |
@@ -79,17 +86,17 @@ Supported document types (from `lib/models/document_request.dart` and the PDF se
 
 ## 3. Architecture
 
-Standard Flutter layered structure. **94 Dart files** under `lib/`.
+Standard Flutter layered structure. **103 Dart files** under `lib/`.
 
 ```
 lib/
-├── main.dart                     # Entry point: Supabase init + 8 providers
+├── main.dart                     # Entry point: Supabase init + 9 providers
 ├── config/
 │   ├── routes.dart               # AppRoutes: all named routes (175 lines)
 │   ├── supabase_config.dart      # .env loader (see Known Gaps #1)
 │   └── theme.dart                # Material 3 theme
 ├── models/                       # 11 data models
-├── providers/                    # 8 ChangeNotifier state containers
+├── providers/                    # 9 ChangeNotifier state containers
 ├── screens/
 │   ├── splash_screen.dart
 │   ├── verify_document_screen.dart
@@ -97,9 +104,11 @@ lib/
 │   ├── citizen/                  # dashboard, request_document, my_requests, profile,
 │   │                             # notifications, submit_report, my_reports
 │   │                             # (+ upload_payment_screen — dead, see §13.3)
+│   ├── announcements/            # feed, detail, create (read: everyone; post: officials)
 │   └── admin/                    # dashboard, manage_users, create_user, pending_requests,
 │                                 # pending_payments, captain_approval, all_requests, profile,
-│                                 # settings, document_fees, document_formats, incident_reports
+│                                 # settings, document_fees, document_formats, incident_reports,
+│                                 # user_registration_detail, document_request_detail
 ├── services/                     # Backend/data access (Supabase queries, AI, cache)
 ├── automation/                   # Pure-Dart pipeline rules, validators, PDF payloads
 ├── widgets/                      # Shared widgets (connectivity_banner)
@@ -143,13 +152,19 @@ old files.
 | `canReleaseDocuments`               | secretary, admin                                            |
 | `canVerifyPayments`                 | treasurer, admin                                            |
 | `canApproveDocuments`               | captain, kagawad_representative, admin                      |
+| `canDeleteDocuments`                | captain, admin                                              |
 | `canManageReports`                  | captain, barangay_tanod, kagawad_representative, admin      |
 | `canRevealSensitiveReporter`        | captain, admin                                              |
+| `canPostAnnouncements`              | captain, secretary, admin                                    |
 | `isOfficial` (any official role)    | all above except citizen                                    |
 
 `isCaptain()` and `isKagawad()` helpers distinguish the two final approvers.
 The `admin` role is deliberately kept as a legacy alias so existing accounts keep working —
 prefer assigning real roles (`captain`, `secretary`, …) for new accounts.
+
+`canPostAnnouncements` gates **posting and deleting** on the announcement board. Reading
+announcements needs no capability at all — every signed-in user sees the same board
+(see [§17](#17-announcements-and-notifications)).
 
 ---
 
@@ -273,6 +288,30 @@ Pure-Dart rules in `lib/automation/` (no Supabase dependency, fully unit-testabl
 `DocumentAutomationService` orchestrates: `afterSubmission` (auto-draft + route), `afterPaymentReceipt`
 (canonicalize status + notify), `afterPaymentConfirmed/Rejected` (notify), `afterCaptainApproved`
 (generate final PDF + release).
+
+### Approval review pages
+
+Approvers do not decide from list cards any more. Both queues are tap-to-review:
+
+| Tap                        | Opens                              | Actions exposed                                   |
+| -------------------------- | ---------------------------------- | ------------------------------------------------- |
+| Pending registration card  | `user_registration_detail_screen`  | Approve / reject — captain + admin only (`canManageUsers` unchanged) |
+| Request card (secretary queue, captain/kagawad queue) | `document_request_detail_screen` | Only the actions that queue already allowed, driven by a per-queue action descriptor |
+
+The request page also renders the **requestor's full profile** (fetched via
+`UserService.getUserProfile`) next to the request details, with a fallback row when the
+profile cannot be loaded. Both pages run the *existing* handlers unchanged — the captain
+page still triggers the sign-and-release PDF flow — and pop back to the queue **only when
+the status actually changed**, so a cancelled or failed attempt leaves the approver on the
+page. No permission model changed: the pages are reachable only from entry points that
+already required the capability.
+
+### Notifications
+
+Every transition notifies the roles that must act next, plus the citizen whose request
+moved. Fan-outs are best-effort — a failed insert never blocks the action that triggered
+it. The full matrix, the fan-out helpers and the in-app badge rules are in
+[§17](#17-announcements-and-notifications).
 
 ### Offline cache
 
@@ -417,14 +456,41 @@ first admin.
 
 > ⚠️ `setup.sql` is **destructive** — it issues `DROP TABLE ... CASCADE` before
 > rebuilding. Use it on a fresh or disposable project. For a database that already
-> holds data, run only the commented-out **Incremental repair** block at the
-> bottom of `setup.sql`, on its own.
+> holds data, follow
+> [Upgrading a database that already holds data](#upgrading-a-database-that-already-holds-data)
+> below instead.
 
 The eight earlier scripts still exist under [`sql-legacy/`](sql-legacy/) but are
 archived and must not be run — see that folder's README for what each one got wrong.
 
 After running, the verification queries at the end of `setup.sql` should report
-**18 tables** (`document_print_copies` is the per-print copy table) and **4 buckets**.
+**20 tables** (`document_print_copies` is the per-print copy table,
+`announcements` is the barangay bulletin board) and **4 buckets**.
+
+#### Upgrading a database that already holds data
+
+Do **not** re-run `setup.sql`. Apply the additive files in
+[`supabase/migrations/`](supabase/migrations/) instead, in filename order, via the SQL
+Editor. The ones that matter to current features:
+
+| Migration                                    | Adds                                                        |
+| -------------------------------------------- | ----------------------------------------------------------- |
+| `20261007_document_policy_columns.sql`       | `expires_at` / `single_use` / `max_uses` / `use_count` / `used_at` on `document_requests` + `document_verifications` |
+| `20261007_document_print_copies.sql`         | `document_print_copies` (per-print copy tokens/serials)      |
+| `20261011_document_types_*.sql`              | Expanded `document_type` values + fees                       |
+| `20261016_kyc_general_ids_guarantor.sql`     | General government IDs + `kyc_guarantors`                    |
+| `20261017_name_fields.sql`, `20261018_id_back_url.sql` | Split name fields, ID-back image                    |
+| `20261019_gcash_receipt_parse.sql`           | Receipt-parse columns                                        |
+| `20261020_announcements.sql`                 | `announcements` board + realtime publication                 |
+
+Each file is idempotent and non-destructive. Skipping `20261020_announcements.sql` leaves
+the announcement feed empty and its realtime channel silent — with no error shown in the
+app.
+
+The **only** case that still needs the commented-out **Incremental repair** block at the
+bottom of `setup.sql` is a database created by the pre-`setup.sql` legacy scripts, where
+`document_requests.request_status` is a Postgres enum rather than `TEXT`. That block widens
+the column in place and must be run on its own, never together with Sections 0–9.
 
 ### Step 5 — Verify storage buckets
 
@@ -459,10 +525,10 @@ saved session and routes by role and approval status.
 
 ### Step 8 — Realtime (handled by `setup.sql`)
 
-`UserProvider`, `DocumentProvider` and `NotificationProvider` subscribe to Postgres
-changes so dashboards self-update. `setup.sql` §8 adds `users_profile`,
-`document_requests` and `notifications` to the `supabase_realtime` publication, so
-there is nothing to do by hand.
+`UserProvider`, `DocumentProvider`, `NotificationProvider` and `AnnouncementProvider`
+subscribe to Postgres changes so dashboards and the announcement feed self-update.
+`setup.sql` §8 adds `users_profile`, `document_requests`, `notifications` and
+`announcements` to the `supabase_realtime` publication, so there is nothing to do by hand.
 
 Verify under **Supabase Dashboard → Database → Replication** if dashboards ever stop
 live-updating. A table missing from the publication still opens its channel but
@@ -490,6 +556,7 @@ and services — not a copy of any single legacy script.
 | `indigency_details`    | Type-specific fields for Certificate of Indigency              |
 | `cedula_details`       | Type-specific fields for Cedula                                |
 | `notifications`        | In-app notifications                                           |
+| `announcements`        | Barangay-wide bulletin board posted by officials ([§17](#17-announcements-and-notifications)) |
 | `role_permissions`     | Seeded role → permission keys                                  |
 
 ### Workflow and operations tables
@@ -497,7 +564,7 @@ and services — not a copy of any single legacy script.
 `payments`, `document_versions`, `document_verifications`, `document_print_copies`
 (per-print copy tokens/serials; policy stays on the parent `document_verifications` row),
 `incident_reports`, `incident_updates`, `incident_attachments`,
-`identity_access_logs`, `audit_logs`, `kyc_guarantors`.
+`identity_access_logs`, `audit_logs`.
 
 ### Enums
 
@@ -505,7 +572,7 @@ and services — not a copy of any single legacy script.
 | --------------------- | ----------------------------------------------------------------------------------------------- |
 | `user_role`           | `admin`, `citizen`, `captain`, `secretary`, `treasurer`, `kagawad_representative`, `barangay_tanod` |
 | `registration_status` | `pending`, `approved`, `rejected`                                                                 |
-| `document_type`       | `barangay_clearance`, `indigency`, `barangay_id`, `cedula`                                       |
+| `document_type`       | `barangay_clearance`, `indigency`, `barangay_id`, `cedula`, `business_clearance`, `certification`, `oath_undertaking`, `good_moral`, `residency` |
 | `notification_type`   | `registration_approved`, `registration_rejected`, `request_approved`, `request_rejected`, `request_released`, `payment_verified`, `payment_rejected`, `incident_submitted`, `incident_updated`, `system` |
 
 ### Workflow columns are `TEXT`, not enums
@@ -767,10 +834,32 @@ silently dropping the newer payment, approval, and release fields. Round-trippin
 
 ### 7. ~~No tests~~ — **RESOLVED**
 
-`test/automation/` now holds ~100 offline, dependency-free unit tests for the pure-Dart layer
-(`lib/automation/` ↔ `test/automation/`), including the document-access and print-copy rules.
-Screens, providers, and Supabase-bound services are still untested — verify those manually
-against §5's workflows.
+`test/` now holds **62** offline, dependency-free tests. In practice they cover the
+KYC / ID-verifier models (`test/automation/`), the offline document and incident caches
+(`test/services/`), session-snapshot persistence, `Helpers.parseSupabaseError`
+(`test/utils/`), `ConnectivityProvider.isOfflineFrom` (`test/providers/`), and the
+connectivity banner widget (`test/widgets/`).
+
+Screens, Supabase-bound services, and the document workflow rules in `lib/automation/` are
+still **untested** — verify those manually against §5's workflows.
+
+### 8. Notification fan-out is client-side and one-insert-per-recipient — **open**
+
+Notifications are written by whichever client performs the action
+(`NotificationService.notifyRoles` / `notifyAllApproved`), not by database triggers. Two
+consequences:
+
+- A transition performed outside the app (SQL console, another client) emits **no**
+  notification, and a client that dies mid-action can emit none at all. Every call is
+  fire-and-forget by design: a notification failure never blocks the workflow.
+- Posting an announcement inserts one row per approved user. That is fine at barangay
+  scale, but a larger user base would want a trigger or a scheduled sender instead.
+
+Related: `notifications.type` is a **closed Postgres enum** (`notification_type`, ten
+values — see [§9](#9-database-schema)). Queue notices aimed at officials therefore reuse
+`system` rather than inventing new codes; a genuinely new notice kind needs
+`ALTER TYPE ... ADD VALUE` in a migration, or the insert fails silently inside the
+best-effort wrapper.
 
 ---
 
@@ -782,7 +871,7 @@ flutter pub upgrade        # upgrade dependencies
 flutter run                # run on attached device
 flutter run -d chrome      # run on web
 flutter analyze            # static analysis (flutter_lints)
-flutter test               # run unit tests (test/automation)
+flutter test               # 62 offline unit tests (no network, no fixtures)
 flutter clean             # clear build artifacts
 flutter doctor             # verify toolchain
 flutter build apk          # Android release
@@ -800,7 +889,7 @@ Build output lands in `build/`.
 
 | File                          | Role                                                    |
 | ----------------------------- | ------------------------------------------------------- |
-| `lib/main.dart`               | Supabase init via `SupabaseConfig`, 8 providers, theme, routes |
+| `lib/main.dart`               | Supabase init via `SupabaseConfig`, 9 providers, theme, routes |
 | `lib/config/routes.dart`      | All route constants + builders                           |
 | `lib/config/supabase_config.dart` | `.env` loader, called from `main.dart` (§8.3)          |
 | `lib/config/theme.dart`       | Material 3 theme                                         |
@@ -809,23 +898,23 @@ Build output lands in `build/`.
 
 ### Models (`lib/models/`)
 
-`user_profile`, `document_request`, `notification`, `barangay_config`, `document_fee`,
-`payment_record`, `document_verification`, `document_print_copy`, `incident_report`,
-`guarantor`
+`user_profile`, `document_request`, `notification`, `announcement`, `barangay_config`,
+`document_fee`, `payment_record`, `document_verification`, `document_print_copy`,
+`incident_report`, `guarantor`
 
 ### Providers (`lib/providers/`)
 
-`auth_provider` (283), `user_provider` (189), `document_provider` (716),
-`notification_provider` (71), `barangay_provider` (109), `incident_report_provider` (106),
-`connectivity_provider` (54), `locale_provider` (46)
+`auth_provider` (299), `user_provider` (189), `document_provider` (874),
+`notification_provider` (71), `announcement_provider` (144), `barangay_provider` (109),
+`incident_report_provider` (125), `connectivity_provider` (54), `locale_provider` (46)
 
 ### Services (`lib/services/`)
 
-`auth_service` (327), `user_service` (521), `document_service` (727),
-`notification_service` (144), `barangay_service` (100), `storage_service` (78),
-`pdf_service` (2,369), `document_automation_service` (671), `payment_service` (68),
-`incident_report_service` (84), `verification_service` (193), `audit_service` (25),
-`ai_service` (61), `ai_id_verifier` (250), `ai_document_processor` (71),
+`auth_service` (327), `user_service` (562), `document_service` (757),
+`notification_service` (213), `announcement_service` (61), `barangay_service` (100),
+`storage_service` (78), `pdf_service` (2,582), `document_automation_service` (738),
+`payment_service` (68), `incident_report_service` (84), `verification_service` (193),
+`audit_service` (25), `ai_service` (61), `ai_id_verifier` (250), `ai_document_processor` (71),
 `ai_receipt_parser` (77), `ai_incident_classifier` (63),
 `document_cache_service` (69), `incident_report_cache_service` (67),
 `guarantor_service` (125)
@@ -877,6 +966,20 @@ English (default), Filipino, Cebuano — ARB files + generated localizations
 | `/admin/document-formats`       | PDF template preview         |
 | `/verify`                       | Public document verification |
 
+`/citizen/notifications` is shared by every role: it renders the signed-in user's own
+notifications, so the officials' dashboard bell pushes the same route.
+
+These screens are reached with `Navigator.push(MaterialPageRoute(...))` and deliberately have
+**no** named route:
+
+| Screen                              | Reached from                                        |
+| ----------------------------------- | --------------------------------------------------- |
+| `announcements/announcements_screen`| Citizen dashboard section, officials' dashboard button |
+| `announcements/announcement_detail_screen` | Announcement cards                            |
+| `announcements/create_announcement_screen` | Feed FAB (posting roles only)                 |
+| `admin/user_registration_detail_screen` | Pending registration cards (manage users)       |
+| `admin/document_request_detail_screen` | Secretary review queue + captain/kagawad queue cards |
+
 ---
 
 ## 16. Project History
@@ -886,6 +989,7 @@ consolidated into this document. Listed newest-first by their own stated dates.
 
 | Date        | Milestone                                                                 |
 | ----------- | ------------------------------------------------------------------------- |
+| 2026-10-15  | Approval review pages (full registration / request + requestor detail before approve/refuse), notifications for every role with in-app queue badges, and the announcement board |
 | 2026-10    | AI features (ID verifier, document processor, receipt parser, incident classifier), automation pipeline, offline cache, i18n, guarantor system, profile screens |
 | Dec 2025    | Phase 1 foundation: schema, models, services, theme, routing               |
 |             | Multi-step (4-page) registration with photo + valid-ID upload             |
@@ -904,7 +1008,7 @@ consolidated into this document. Listed newest-first by their own stated dates.
 
 For anyone who reads them before this file: they were written as point-in-time completion
 reports and were never reconciled with each other. Concretely, they claimed Provider was
-"to be added" (it exists, 6 providers), that PDF generation was "pending" (1,189-line
+"to be added" (it exists, 9 providers), that PDF generation was "pending" (1,189-line
 service exists), that RLS was "enabled with role-based policies" (it was disabled, and is
 now enabled with *permissive* policies — still not role-based), that the workflow was
 4 statuses (it is 16), that `.env` drove Supabase config (it was bypassed; it now does
@@ -916,5 +1020,117 @@ README there explaining their unreliability.
 
 ---
 
-*Consolidated 2026-09-26, comprehensively updated 2026-10-13. When you change the code,
-update this file in the same commit.*
+## 17. Announcements and Notifications
+
+### 17.1 Announcement board
+
+**Verified source:** `lib/models/announcement.dart`, `lib/services/announcement_service.dart`,
+`lib/providers/announcement_provider.dart`, `lib/screens/announcements/`, table `announcements`.
+
+Officials post barangay-wide notices; **every signed-in user reads the same board**.
+
+| Aspect            | Behaviour                                                                 |
+| ----------------- | ------------------------------------------------------------------------- |
+| Scope             | Global. No audience/targeting column, no per-user read state, no "unread announcements" count |
+| Columns           | `title`, `body`, `created_by` (nullable FK, `ON DELETE SET NULL`), `created_by_name`, `is_pinned`, `created_at`, `updated_at` |
+| Ordering          | Pinned first, then newest first                                            |
+| `created_by_name` | Denormalized so the feed renders without joining `users_profile`, and so the name survives the poster's deletion |
+| Who can post      | `AppRoles.canPostAnnouncements` → captain, secretary, admin                |
+| Who can read      | Everyone, including citizens. Reading needs no capability                   |
+| Realtime          | Table is in the `supabase_realtime` publication; the provider reloads on any change |
+
+**Screens and entry points**
+
+- `announcements_screen.dart` — the feed (pinned-first cards, pull-to-refresh, loading /
+  empty / error states, live reload). The "New announcement" FAB appears only for posting
+  roles.
+- `announcement_detail_screen.dart` — full read view; the delete action appears only for
+  posting roles and confirms before deleting.
+- `create_announcement_screen.dart` — title + body (both required) and a "Pin to top" switch.
+- **Citizen dashboard** — an Announcements section with the latest 1–2 notices and a
+  "See all ›" link, hidden entirely while the board is empty.
+- **Officials' dashboard** — an "Announcements" action button, ungated (reading is for
+  everyone).
+
+Posting also fans a bell notification out to every approved user via
+`NotificationService.notifyAllApproved` — best-effort, like all fan-outs.
+
+> ⚠️ Live databases need `supabase/migrations/20261020_announcements.sql` applied
+> (see [§8 Step 4](#step-4--create-the-database-schema)). Without it the feed stays empty and
+> its realtime channel stays silent, with no error surfaced in the app.
+
+**Implementation note — reference-counted subscription.** The feed screen is pushed *on top
+of* dashboards that already hold this subscription. If the screen tore the channel down on
+dispose, the dashboard behind it would silently stop updating (exactly the failure mode
+`setup.sql` §8 warns about). `AnnouncementProvider` therefore counts subscribers and closes
+the channel only when the last one releases it.
+
+### 17.2 Notifications
+
+**Verified source:** `lib/services/notification_service.dart`,
+`lib/providers/notification_provider.dart`, `lib/models/notification.dart`,
+`lib/screens/citizen/notifications_screen.dart`, table `notifications`.
+
+`notifications(id, user_id, title, message, type, is_read, created_at)`. `NotificationProvider`
+loads the list and unread count, subscribes to inserts addressed to the signed-in user, and
+exposes `markAsRead` / `markAllAsRead`. The screen itself is role-agnostic — it renders
+whichever user is signed in.
+
+**Fan-out helpers** (`NotificationService`)
+
+| Helper              | Recipients                                                     |
+| ------------------- | -------------------------------------------------------------- |
+| `createNotification`| One user (the citizen owner of a request, usually)             |
+| `notifyRoles`       | Every **approved** profile whose `role` is in the given list    |
+| `notifyAllApproved` | Every approved user (used by announcements)                     |
+
+Every fan-out is fire-and-forget and swallows errors: a notification problem must never block
+the action that triggered it. `notifications.type` is a **closed enum** — the fan-outs reuse
+existing values (`system` for queue alerts) rather than inventing codes, so **no migration is
+needed** for the current behaviour. See [Known Gaps #8](#13-known-gaps-and-discrepancies).
+
+**Who gets notified of what**
+
+| Event                                             | Notified (type)                                                        |
+| ------------------------------------------------- | ---------------------------------------------------------------------- |
+| Citizen submits a document request                | secretary, captain, admin (`system`)                                    |
+| Citizen uploads a payment receipt                 | treasurer, admin (`system`)                                             |
+| Secretary verifies for payment — fee required     | treasurer, admin (`payment_verified`)                                   |
+| Secretary verifies for payment — no fee           | captain, kagawad, admin (`system`)                                      |
+| Secretary requests a revision                     | the citizen (`system`)                                                  |
+| Secretary / admin rejects a request               | the citizen (`request_rejected`)                                        |
+| Treasurer confirms payment                        | captain, kagawad, admin (`system`) — the citizen's own notice comes from the automation pipeline |
+| Captain / kagawad releases the document           | the citizen (`request_released`)                                        |
+| Captain / kagawad rejects                         | the citizen (`request_rejected`)                                        |
+| Registration approved / rejected                  | the citizen (`registration_approved` / `registration_rejected`)          |
+| New registration submitted                        | captain, admin (`system`)                                               |
+| New incident report                               | tanod, captain, admin (`incident_submitted`)                            |
+| Announcement posted                               | every approved user (`system`)                                          |
+
+The automation pipeline (`DocumentAutomationService`) separately notifies the citizen on
+submission acknowledgement, draft ready, invoice issued, and payment confirmed/rejected —
+those predate this work and are not duplicated by the client-side fan-outs above.
+
+**Where users see them**
+
+- **Bell + unread badge** on the citizen dashboard and the officials' dashboard AppBar, plus
+  the captain-approval and secretary-review headers; taps open `/citizen/notifications`. Only
+  the dashboards own the load/subscribe lifecycle — the pushed screens reuse that channel.
+- **Queue badges** on the officials' dashboard action buttons, shown only when the count is
+  above zero: pending reviews (secretary/admin), captain-approval queue (captain/kagawad/admin),
+  pending payments (treasurer/admin), pending users (captain/admin), open incident reports
+  (captain/kagawad/tanod/admin). Counts come from provider state loaded on dashboard init — no extra
+  queries and no new realtime channels; they refresh when the queue reloads, while the bell
+  count updates live.
+- These are **in-app badges only**. There is no push notification (FCM/APNs) and no OS
+  launcher badge — the app also runs on web, where launcher badges do not exist.
+
+> Caveat: notification and announcement *content* is written in English by the fan-outs and
+> by the announcement screens; only the surrounding UI goes through `l10n`. Localizing the
+> generated copy would be a follow-up.
+
+---
+
+*Consolidated 2026-09-26, comprehensively updated 2026-10-13 and 2026-10-15 (approval review
+pages, notifications for every role, announcement board). When you change the code, update
+this file in the same commit.*

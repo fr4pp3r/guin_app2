@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:guin_app/services/auth_service.dart';
 import 'package:guin_app/services/user_service.dart';
+import 'package:guin_app/services/notification_service.dart';
 import 'package:guin_app/models/user_profile.dart';
 import 'package:guin_app/utils/role_access.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final UserService _userService = UserService();
+  final NotificationService _notificationService = NotificationService();
 
   UserProfile? _userProfile;
   bool _isLoading = false;
@@ -187,6 +189,21 @@ class AuthProvider extends ChangeNotifier {
         isIndigent: isIndigent,
         indigencyReason: indigencyReason,
       );
+
+      // Official-side fan-out: a new registration is waiting for review.
+      // Best-effort — a notification failure must never fail registration.
+      try {
+        await _notificationService.notifyRoles(
+          roles: [AppRoles.captain, AppRoles.legacyAdmin],
+          title: 'New registration to review',
+          message:
+              '${_userProfile?.fullName ?? 'A new citizen'} just registered '
+              'and is awaiting approval.',
+          type: 'system',
+        );
+      } catch (e) {
+        debugPrint('Registration fan-out notification failed: $e');
+      }
 
       _isLoading = false;
       notifyListeners();

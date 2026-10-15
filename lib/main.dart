@@ -8,6 +8,7 @@ import 'package:guin_app/providers/user_provider.dart';
 import 'package:guin_app/providers/document_provider.dart';
 import 'package:guin_app/providers/notification_provider.dart';
 import 'package:guin_app/providers/barangay_provider.dart';
+import 'package:guin_app/providers/announcement_provider.dart';
 import 'package:guin_app/providers/incident_report_provider.dart';
 import 'package:guin_app/providers/connectivity_provider.dart';
 import 'package:guin_app/providers/locale_provider.dart';
@@ -67,6 +68,7 @@ class MainApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => DocumentProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProvider(create: (_) => BarangayProvider()),
+        ChangeNotifierProvider(create: (_) => AnnouncementProvider()),
         ChangeNotifierProvider(create: (_) => IncidentReportProvider()),
         ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),

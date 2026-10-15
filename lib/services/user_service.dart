@@ -3,11 +3,33 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:guin_app/config/supabase_config.dart';
 import 'package:guin_app/models/user_profile.dart';
+import 'package:guin_app/services/notification_service.dart';
 import 'package:guin_app/utils/password_hash.dart';
 import 'package:guin_app/utils/session_manager.dart';
 
 class UserService {
   final SupabaseClient _supabase = SupabaseConfig.client;
+  final NotificationService _notificationService = NotificationService();
+
+  /// Best-effort citizen notice for registration decisions. Swallows errors —
+  /// a notification failure must never fail the approve/reject itself.
+  Future<void> _safeNotify(
+    String userId,
+    String title,
+    String message,
+    String type,
+  ) async {
+    try {
+      await _notificationService.createNotification(
+        userId: userId,
+        title: title,
+        message: message,
+        type: type,
+      );
+    } catch (e) {
+      debugPrint('Registration notification to $userId failed: $e');
+    }
+  }
 
   // Get user profile by ID
   Future<UserProfile?> getUserProfile(String userId) async {
@@ -229,7 +251,16 @@ class UserService {
           .select()
           .single();
 
-      return UserProfile.fromJson(response);
+      final approved = UserProfile.fromJson(response);
+      await _safeNotify(
+        userId,
+        'Registration approved',
+        'Your barangay registration has been approved. You can now sign in '
+            'and use the app.',
+        'registration_approved',
+      );
+
+      return approved;
     } catch (e) {
       rethrow;
     }
@@ -286,7 +317,20 @@ class UserService {
           .select()
           .single();
 
-      return UserProfile.fromJson(response);
+      final rejected = UserProfile.fromJson(response);
+      final trimmedReason = (reason ?? '').trim();
+      await _safeNotify(
+        userId,
+        'Registration rejected',
+        trimmedReason.isEmpty
+            ? 'Your barangay registration was not approved. Please visit the '
+                  'barangay hall for details.'
+            : 'Your barangay registration was not approved. '
+                  'Reason: $trimmedReason',
+        'registration_rejected',
+      );
+
+      return rejected;
     } catch (e) {
       rethrow;
     }

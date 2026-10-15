@@ -2,10 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:guin_app/models/incident_report.dart';
 import 'package:guin_app/services/incident_report_cache_service.dart';
 import 'package:guin_app/services/incident_report_service.dart';
+import 'package:guin_app/services/notification_service.dart';
+import 'package:guin_app/utils/role_access.dart';
 
 class IncidentReportProvider with ChangeNotifier {
   final IncidentReportService _service = IncidentReportService();
   final IncidentReportCacheService _cache = IncidentReportCacheService();
+  final NotificationService _notificationService = NotificationService();
 
   List<IncidentReport> _reports = [];
   bool _isLoading = false;
@@ -96,6 +99,24 @@ class IncidentReportProvider with ChangeNotifier {
       isAnonymous: isAnonymous,
       priority: priority,
     );
+
+    // Official-side fan-out: tanod/captain/admin get a new-report notice.
+    // Best-effort — never fails the citizen's submission.
+    try {
+      await _notificationService.notifyRoles(
+        roles: [
+          AppRoles.barangayTanod,
+          AppRoles.captain,
+          AppRoles.legacyAdmin,
+        ],
+        title: 'New incident report',
+        message: '$title ($reportType) was reported at $location.',
+        type: 'incident_submitted',
+      );
+    } catch (e) {
+      debugPrint('Incident fan-out notification failed: $e');
+    }
+
     await loadMyReports(submittedBy);
   }
 

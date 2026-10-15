@@ -7,7 +7,10 @@ import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/document_provider.dart';
 import 'package:guin_app/providers/barangay_provider.dart';
 import 'package:guin_app/automation/release_payload.dart';
+import 'package:guin_app/config/routes.dart';
 import 'package:guin_app/models/document_request.dart';
+import 'package:guin_app/providers/notification_provider.dart';
+import 'package:guin_app/screens/admin/document_request_detail_screen.dart';
 import 'package:guin_app/services/pdf_service.dart';
 import 'package:guin_app/services/user_service.dart';
 import 'package:guin_app/utils/constants.dart';
@@ -369,6 +372,36 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
     }
   }
 
+  // ── Review page ─────────────────────────────────────────────────────
+
+  /// The decision buttons live only on the review page — the card just
+  /// hands over its handlers, unchanged, as action descriptors.
+  void _openRequestReview(DocumentRequest r) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DocumentRequestDetailScreen(
+          request: r,
+          actions: [
+            RequestAction(
+              label: 'Reject',
+              icon: Icons.cancel_outlined,
+              color: AppColors.error,
+              onPressed: () => _handleReject(r),
+            ),
+            RequestAction(
+              label: 'Sign & Release',
+              icon: Icons.draw_outlined,
+              color: const Color(0xFF0D47A1),
+              filled: true,
+              onPressed: () => _handleApprove(r),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ── Build ───────────────────────────────────────────────────────────
 
   @override
@@ -434,6 +467,7 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
                         ],
                       ),
                     ),
+                    const _NotificationsBell(),
                   ],
                 ),
               ),
@@ -493,200 +527,178 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
   Widget _buildApprovalCard(DocumentRequest r) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
+      child: Material(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-            decoration: BoxDecoration(
-              color: Colors.indigo.withValues(alpha: 0.05),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.indigo.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    _docIcon(r.documentType),
-                    color: Colors.indigo,
-                    size: 20,
+        elevation: 2,
+        shadowColor: Colors.black.withValues(alpha: 0.06),
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: InkWell(
+          onTap: () => _openRequestReview(r),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+                decoration: BoxDecoration(
+                  color: Colors.indigo.withValues(alpha: 0.05),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        r.documentTypeDisplay,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Requested ${Helpers.formatDate(r.requestedAt)}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.indigo.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text(
-                    'For Approval',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.indigo,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (r.userFullName != null || r.userName != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.person_outline,
-                          size: 14,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          r.userFullName ?? r.userName ?? '',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                const Text(
-                  'Purpose',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F7FA),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(r.purpose, style: const TextStyle(fontSize: 13)),
-                ),
-                if (r.paymentRequired) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.payments_outlined,
-                        size: 14,
-                        color: Colors.green,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Payment: ₱${r.paymentAmount.toStringAsFixed(2)} — ${r.paymentStatus}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.green,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-                const SizedBox(height: 14),
-                Row(
+                child: Row(
                   children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _handleReject(r),
-                        icon: const Icon(Icons.cancel_outlined, size: 16),
-                        label: const Text(
-                          'Reject',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.error,
-                          side: BorderSide(
-                            color: AppColors.error.withValues(alpha: 0.5),
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.indigo.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        _docIcon(r.documentType),
+                        color: Colors.indigo,
+                        size: 20,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => _handleApprove(r),
-                        icon: const Icon(Icons.draw_outlined, size: 16),
-                        label: const Text(
-                          'Sign & Release',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0D47A1),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            r.documentTypeDisplay,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Requested ${Helpers.formatDate(r.requestedAt)}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.indigo.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'For Approval',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.indigo,
                         ),
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (r.userFullName != null || r.userName != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.person_outline,
+                              size: 14,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              r.userFullName ?? r.userName ?? '',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const Text(
+                      'Purpose',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F7FA),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        r.purpose,
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ),
+                    if (r.paymentRequired) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.payments_outlined,
+                            size: 14,
+                            color: Colors.green,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Payment: ₱${r.paymentAmount.toStringAsFixed(2)} — ${r.paymentStatus}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.green,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        const Text(
+                          'Review request',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1976D2),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 11,
+                          color: Color(0xFF1976D2),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -810,7 +822,7 @@ class _ReleasePolicySheetState extends State<_ReleasePolicySheet> {
   _ReleasePolicy _previewPolicy() {
     final rawMax = _maxUsesCtrl.text.trim();
     final rawCustom = _customDaysCtrl.text.trim();
-    
+
     int activeDays = _days;
     if (rawCustom.isNotEmpty) {
       final customParsed = int.tryParse(rawCustom);
@@ -883,7 +895,6 @@ class _ReleasePolicySheetState extends State<_ReleasePolicySheet> {
       ),
     );
   }
-
 
   Widget _sectionLabel(String text) => Text(text, style: _labelStyle);
 
@@ -1187,6 +1198,51 @@ class _ReleasePolicySheetState extends State<_ReleasePolicySheet> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Bell with unread badge for the gradient header. The officials' dashboard
+/// owns the load/subscribe lifecycle for NotificationProvider — this only
+/// reads `unreadCount` for display.
+class _NotificationsBell extends StatelessWidget {
+  const _NotificationsBell();
+
+  @override
+  Widget build(BuildContext context) {
+    final unread = context.watch<NotificationProvider>().unreadCount;
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+          tooltip: 'Notifications',
+          onPressed: () =>
+              Navigator.pushNamed(context, AppRoutes.notifications),
+        ),
+        if (unread > 0)
+          Positioned(
+            right: 8,
+            top: 8,
+            child: Container(
+              padding: const EdgeInsets.all(3),
+              decoration: const BoxDecoration(
+                color: AppColors.error,
+                shape: BoxShape.circle,
+              ),
+              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+              child: Text(
+                '$unread',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

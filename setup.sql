@@ -593,6 +593,23 @@ CREATE TABLE public.kyc_guarantors (
   updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- 3n. Announcements ------------------------------------------------------
+-- Barangay-wide notices posted by officials (captain / secretary / admin).
+-- Every signed-in user can read them; there is no per-user targeting or read
+-- state. `created_by_name` is denormalized so the feed renders without a join.
+-- See supabase/migrations/20261020_announcements.sql for the additive version
+-- of this table for existing databases.
+CREATE TABLE public.announcements (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title           TEXT NOT NULL,
+  body            TEXT NOT NULL,
+  created_by      UUID REFERENCES public.users_profile(id) ON DELETE SET NULL,
+  created_by_name TEXT NOT NULL,
+  is_pinned       BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 
 -- ============================================================================
 --  SECTION 4 — INDEXES
@@ -620,6 +637,8 @@ CREATE INDEX idx_audit_logs_entity            ON public.audit_logs(entity_type, 
 CREATE INDEX idx_audit_logs_request           ON public.audit_logs(request_id);
 CREATE INDEX idx_kyc_guarantors_indigent      ON public.kyc_guarantors(indigent_user_id);
 CREATE INDEX idx_kyc_guarantors_status        ON public.kyc_guarantors(status);
+CREATE INDEX idx_announcements_created        ON public.announcements(created_at DESC);
+CREATE INDEX idx_announcements_pinned         ON public.announcements(is_pinned);
 
 
 -- ============================================================================
@@ -666,6 +685,10 @@ CREATE TRIGGER trg_kyc_guarantors_updated_at
   BEFORE UPDATE ON public.kyc_guarantors
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
+CREATE TRIGGER trg_announcements_updated_at
+  BEFORE UPDATE ON public.announcements
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
 
 -- ============================================================================
 --  SECTION 6 — ROW LEVEL SECURITY
@@ -694,6 +717,7 @@ ALTER TABLE public.identity_access_logs   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.role_permissions       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.kyc_guarantors         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.announcements          ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "app_access_users_profile"          ON public.users_profile          FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "app_access_barangay_config"        ON public.barangay_config        FOR ALL USING (true) WITH CHECK (true);
@@ -714,6 +738,7 @@ CREATE POLICY "app_access_identity_access_logs"   ON public.identity_access_logs
 CREATE POLICY "app_access_role_permissions"       ON public.role_permissions       FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "app_access_audit_logs"             ON public.audit_logs             FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "app_access_kyc_guarantors"         ON public.kyc_guarantors         FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "app_access_announcements"          ON public.announcements          FOR ALL USING (true) WITH CHECK (true);
 
 
 -- ============================================================================
@@ -767,10 +792,11 @@ END $$;
 
 -- ============================================================================
 --  SECTION 8 — REALTIME
---  The app holds live subscriptions on exactly three tables — document_requests,
---  users_profile and notifications (document/user/notification providers). If a
---  table is absent from the publication the channel still connects but delivers
---  nothing, so dashboards go stale with no visible error.
+--  The app holds live subscriptions on exactly four tables — document_requests,
+--  users_profile, notifications and announcements (document/user/notification/
+--  announcement providers). If a table is absent from the publication the
+--  channel still connects but delivers nothing, so dashboards go stale with no
+--  visible error.
 --  ALTER PUBLICATION has no IF NOT EXISTS form, hence the membership check.
 -- ============================================================================
 
@@ -778,7 +804,7 @@ DO $$
 DECLARE
   t TEXT;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['document_requests','users_profile','notifications'] LOOP
+  FOREACH t IN ARRAY ARRAY['document_requests','users_profile','notifications','announcements'] LOOP
     IF NOT EXISTS (
       SELECT 1 FROM pg_publication_tables
       WHERE pubname = 'supabase_realtime'
@@ -879,7 +905,7 @@ SELECT username, role, registration_status, is_approved
 FROM public.users_profile
 ORDER BY created_at;
 
--- Expected: 19 tables
+-- Expected: 20 tables
 SELECT COUNT(*) AS table_count
 FROM information_schema.tables
 WHERE table_schema = 'public'
