@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/models/user_profile.dart';
 import 'package:guin_app/providers/user_provider.dart';
 import 'package:guin_app/services/user_service.dart';
@@ -67,20 +68,21 @@ class _UserRegistrationDetailScreenState
   // ── Decisions ────────────────────────────────────────────────────────────
 
   Future<void> _handleApprove() async {
+    final l10n = AppLocalizations.of(context);
     final confirm = await Helpers.showConfirmDialog(
       context,
-      title: 'Approve User',
-      message: 'Approve ${_user.fullName}?',
+      title: l10n.auserApproveUserTitle,
+      message: l10n.auserApproveConfirm(_user.fullName),
     );
     if (!confirm || !mounted) return;
 
     final userProvider = context.read<UserProvider>();
-    Helpers.showLoadingDialog(context, 'Approving...');
+    Helpers.showLoadingDialog(context, l10n.auserApproving);
     final ok = await userProvider.approveUser(_user.id);
     if (!mounted) return;
     Helpers.dismissDialog(context);
     if (ok) {
-      Navigator.pop(context, 'User approved');
+      Navigator.pop(context, l10n.auserApprovedSnackbar);
     } else {
       Helpers.showErrorSnackBar(
         context,
@@ -90,22 +92,23 @@ class _UserRegistrationDetailScreenState
   }
 
   Future<void> _handleReject() async {
+    final l10n = AppLocalizations.of(context);
     final reasonController = TextEditingController();
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Reject User'),
+        title: Text(l10n.auserRejectUserTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Rejecting: ${_user.fullName}'),
+            Text(l10n.auserRejectingName(_user.fullName)),
             const SizedBox(height: 12),
             TextField(
               controller: reasonController,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Rejection Reason',
-                hintText: 'Provide a reason...',
+              decoration: InputDecoration(
+                labelText: l10n.commonRejectionReason,
+                hintText: l10n.auserRejectReasonHint,
               ),
             ),
           ],
@@ -113,18 +116,18 @@ class _UserRegistrationDetailScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.commonCancel),
           ),
           ElevatedButton(
             onPressed: () {
               if (reasonController.text.trim().isEmpty) {
-                Helpers.showErrorSnackBar(ctx, 'Please provide a reason');
+                Helpers.showErrorSnackBar(ctx, l10n.commonPleaseProvideReason);
                 return;
               }
               Navigator.pop(ctx, true);
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Reject'),
+            child: Text(l10n.commonReject),
           ),
         ],
       ),
@@ -132,7 +135,7 @@ class _UserRegistrationDetailScreenState
     if (confirm != true || !mounted) return;
 
     final userProvider = context.read<UserProvider>();
-    Helpers.showLoadingDialog(context, 'Rejecting...');
+    Helpers.showLoadingDialog(context, l10n.auserRejecting);
     final ok = await userProvider.rejectUser(
       _user.id,
       reasonController.text.trim(),
@@ -140,7 +143,7 @@ class _UserRegistrationDetailScreenState
     if (!mounted) return;
     Helpers.dismissDialog(context);
     if (ok) {
-      Navigator.pop(context, 'Registration rejected');
+      Navigator.pop(context, l10n.auserRegistrationRejected);
     } else {
       Helpers.showErrorSnackBar(
         context,
@@ -162,6 +165,7 @@ class _UserRegistrationDetailScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     // If a realtime refresh drops this registration from the pending list
     // while we're looking at it, re-read it — the officer must not be able to
     // approve something that was already decided elsewhere.
@@ -177,9 +181,9 @@ class _UserRegistrationDetailScreenState
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
-        title: const Text(
-          'Registration Detail',
-          style: TextStyle(fontWeight: FontWeight.w600),
+        title: Text(
+          l10n.auregTitle,
+          style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -288,6 +292,7 @@ class _UserRegistrationDetailScreenState
   }
 
   Widget _headerAvatar() {
+    final l10n = AppLocalizations.of(context);
     final photo = _user.profilePhotoUrl;
     const fallback = Color(0xFF1976D2);
     final Widget inner;
@@ -307,7 +312,7 @@ class _UserRegistrationDetailScreenState
       );
     }
     return InkWell(
-      onTap: photo == null ? null : () => _openViewer('Profile photo', photo),
+      onTap: photo == null ? null : () => _openViewer(l10n.commonProfilePhoto, photo),
       customBorder: const CircleBorder(),
       child: Container(
         padding: const EdgeInsets.all(3),
@@ -330,20 +335,21 @@ class _UserRegistrationDetailScreenState
   // ── Read-only decision banner ──────────────────────────────────────────
 
   Widget _buildDecisionBanner() {
+    final l10n = AppLocalizations.of(context);
     final status = _user.registrationStatus;
     final ({String label, Color color, IconData icon}) data = switch (status) {
       'approved' => (
-        label: 'Registration approved',
+        label: l10n.auregRegistrationApproved,
         color: Colors.green[700]!,
         icon: Icons.verified,
       ),
       'rejected' => (
-        label: 'Registration rejected',
+        label: l10n.auserRegistrationRejected,
         color: AppColors.error,
         icon: Icons.cancel_outlined,
       ),
       _ => (
-        label: 'Awaiting review',
+        label: l10n.auregAwaitingReview,
         color: Colors.orange[800]!,
         icon: Icons.hourglass_top,
       ),
@@ -378,8 +384,12 @@ class _UserRegistrationDetailScreenState
                 if (status == 'approved' && _user.kycVerifiedAt != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    'Approved ${Helpers.formatDate(_user.kycVerifiedAt!)}'
-                    '${_user.kycReviewedBy != null ? ' · reviewed by ${_user.kycReviewedBy}' : ''}',
+                    l10n.auregApprovedOn(
+                      Helpers.formatDate(_user.kycVerifiedAt!),
+                    ) +
+                        (_user.kycReviewedBy != null
+                            ? l10n.auregReviewedBy(_user.kycReviewedBy!)
+                            : ''),
                     style: const TextStyle(
                       fontSize: 12.5,
                       color: AppColors.textSecondary,
@@ -390,7 +400,9 @@ class _UserRegistrationDetailScreenState
                     (reason?.isNotEmpty ?? false)) ...[
                   const SizedBox(height: 10),
                   Text(
-                    status == 'rejected' ? 'Rejection reason' : 'Review notes',
+                    status == 'rejected'
+                        ? l10n.auregRejectionReason
+                        : l10n.auregReviewNotes,
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -419,75 +431,112 @@ class _UserRegistrationDetailScreenState
   // ── Sections ───────────────────────────────────────────────────────────
 
   Widget _buildPersonalSection() {
+    final l10n = AppLocalizations.of(context);
     return _sectionCard(
       icon: Icons.person_outline,
-      title: 'Personal details',
+      title: l10n.auregPersonalDetails,
       children: [
-        _detailRow('Address', _user.address),
-        _detailRow('Age', '${_user.age} years old'),
-        _detailRow('Date of birth', Helpers.formatDate(_user.dateOfBirth)),
-        _detailRow('Place of birth', _user.placeOfBirth),
-        _detailRow('Civil status', _user.civilStatus),
-        _detailRow('Gender', _user.gender),
-        _detailRow('Phone number', _user.phoneNumber),
-        _detailRow('Registered', Helpers.formatDate(_user.createdAt)),
-        _detailRow('Role', AppRoles.displayName(_user.role)),
+        _detailRow(l10n.commonAddress, _user.address),
+        _detailRow(l10n.commonAge, l10n.apendYearsOld(_user.age)),
+        _detailRow(l10n.commonDateOfBirth, Helpers.formatDate(_user.dateOfBirth)),
+        _detailRow(l10n.commonPlaceOfBirth, _user.placeOfBirth),
+        _detailRow(l10n.commonCivilStatus, _user.civilStatus),
+        _detailRow(l10n.commonGender, _user.gender),
+        _detailRow(l10n.commonPhoneNumber, _user.phoneNumber),
+        _detailRow(l10n.auregRegisteredLabel, Helpers.formatDate(_user.createdAt)),
+        _detailRow(l10n.commonRole, AppRoles.displayName(_user.role)),
       ],
     );
   }
 
   Widget _buildIdentitySection() {
+    final l10n = AppLocalizations.of(context);
     return _sectionCard(
       icon: Icons.fact_check_outlined,
-      title: 'Identity verification',
+      title: l10n.auregIdentityVerification,
       children: [
         if (_user.kycIdType != null) ...[
-          _detailRow('ID type', KycIdTypes.label(_user.kycIdType)),
-          _detailRow('ID number', _user.kycIdNumber ?? 'Not provided'),
+          _detailRow(l10n.auregIdTypeLabel, KycIdTypes.label(_user.kycIdType)),
+          _detailRow(
+            l10n.auregIdNumberLabel,
+            _user.kycIdNumber ?? l10n.auregNotProvided,
+          ),
           if (_user.idIssuedAt != null)
-            _detailRow('ID issued', Helpers.formatDate(_user.idIssuedAt!)),
+            _detailRow(
+              l10n.auregIdIssuedLabel,
+              Helpers.formatDate(_user.idIssuedAt!),
+            ),
           if (_user.idExpiryAt != null)
-            _detailRow('ID expires', Helpers.formatDate(_user.idExpiryAt!)),
+            _detailRow(
+              l10n.auregIdExpiresLabel,
+              Helpers.formatDate(_user.idExpiryAt!),
+            ),
         ] else
-          _detailRow('Government ID', 'Not provided'),
+          _detailRow(l10n.auregGovernmentId, l10n.auregNotProvided),
         _detailRow(
-          'Liveness check',
+          l10n.auregLivenessCheck,
           _user.livenessVerified
-              ? 'Verified${_user.livenessVerifiedAt != null ? ' on ${Helpers.formatDate(_user.livenessVerifiedAt!)}' : ''}'
-              : 'Not completed',
+              ? (_user.livenessVerifiedAt != null
+                    ? l10n.auregVerifiedOn(
+                        Helpers.formatDate(_user.livenessVerifiedAt!),
+                      )
+                    : l10n.auregVerified)
+              : l10n.auregNotCompleted,
         ),
-        _detailRow('Indigent registration', _user.isIndigent ? 'Yes' : 'No'),
+        _detailRow(
+          l10n.auregIndigentRegistration,
+          _user.isIndigent ? l10n.commonYes : l10n.commonNo,
+        ),
         if (_user.isIndigent && (_user.indigencyReason?.isNotEmpty ?? false))
-          _detailRow('Indigency reason', _user.indigencyReason!),
+          _detailRow(l10n.auregIndigencyReasonLabel, _user.indigencyReason!),
         if (_user.kycVerifiedAt != null)
-          _detailRow('KYC verified', Helpers.formatDate(_user.kycVerifiedAt!)),
+          _detailRow(
+            l10n.auregKycVerifiedLabel,
+            Helpers.formatDate(_user.kycVerifiedAt!),
+          ),
         if ((_user.kycReviewedBy ?? '').isNotEmpty)
-          _detailRow('KYC reviewed by', _user.kycReviewedBy!),
+          _detailRow(l10n.auregKycReviewedByLabel, _user.kycReviewedBy!),
         if ((_user.kycRejectionReason ?? '').isNotEmpty)
-          _detailRow('KYC rejection reason', _user.kycRejectionReason!),
+          _detailRow(
+            l10n.auregKycRejectionReasonLabel,
+            _user.kycRejectionReason!,
+          ),
         if ((_user.rejectionReason ?? '').isNotEmpty)
-          _detailRow('Rejection reason', _user.rejectionReason!),
+          _detailRow(l10n.auregRejectionReason, _user.rejectionReason!),
       ],
     );
   }
 
   Widget _buildDocumentsSection() {
-    final idLabel = _user.isIndigent ? 'Certificate of Indigency' : 'Valid ID';
+    final l10n = AppLocalizations.of(context);
+    final idLabel = _user.isIndigent ? 'Certificate of Indigency' : l10n.commonValidId;
     return _sectionCard(
       icon: Icons.photo_library_outlined,
-      title: 'Documents & photos',
+      title: l10n.auregDocumentsPhotos,
       children: [
         Row(
           children: [
-            Expanded(child: _docTile(_user.profilePhotoUrl, 'Profile photo')),
+            Expanded(
+              child: _docTile(_user.profilePhotoUrl, l10n.commonProfilePhoto),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: _docTile(_user.validIdUrl, '$idLabel — front')),
+            Expanded(
+              child: _docTile(
+                _user.validIdUrl,
+                l10n.auserKycPhotoFront(idLabel),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _docTile(_user.validIdBackUrl, '$idLabel — back')),
+            Expanded(
+              child: _docTile(
+                _user.validIdBackUrl,
+                l10n.auserKycPhotoBack(idLabel),
+              ),
+            ),
             const SizedBox(width: 12),
             Expanded(child: _zoomHintTile()),
           ],
@@ -545,6 +594,7 @@ class _UserRegistrationDetailScreenState
   }
 
   Widget _missingImage(String label) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -555,7 +605,7 @@ class _UserRegistrationDetailScreenState
         ),
         const SizedBox(height: 6),
         Text(
-          'Not provided',
+          l10n.auregNotProvided,
           style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
         ),
         const SizedBox(height: 2),
@@ -571,6 +621,7 @@ class _UserRegistrationDetailScreenState
   }
 
   Widget _zoomHintTile() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       height: 140,
       width: double.infinity,
@@ -588,7 +639,7 @@ class _UserRegistrationDetailScreenState
           const Icon(Icons.zoom_in_map, size: 26, color: Color(0xFF1976D2)),
           const SizedBox(height: 8),
           Text(
-            'Tap any photo to open it full-screen and zoom in on the details.',
+            l10n.auregTapPhotoHint,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 11, color: Colors.grey[700]),
           ),
@@ -598,6 +649,7 @@ class _UserRegistrationDetailScreenState
   }
 
   Widget _buildAiSection() {
+    final l10n = AppLocalizations.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
       elevation: 2,
@@ -622,16 +674,16 @@ class _UserRegistrationDetailScreenState
               color: Color(0xFF1976D2),
             ),
           ),
-          title: const Text(
-            'AI advisory summary',
-            style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+          title: Text(
+            l10n.auserAiAdvisorySummary,
+            style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
           ),
           children: [
             ..._kycSummaryRows(_user.kycAiResult!),
             const SizedBox(height: 4),
-            const Text(
-              'AI-assisted advisory — final review by the barangay.',
-              style: TextStyle(
+            Text(
+              l10n.auserAiAdvisoryNote,
+              style: const TextStyle(
                 fontSize: 10.5,
                 fontStyle: FontStyle.italic,
                 color: AppColors.textSecondary,
@@ -726,22 +778,23 @@ class _UserRegistrationDetailScreenState
   ({String label, Color color, IconData icon})? _kycBadgeData(
     UserProfile user,
   ) {
+    final l10n = AppLocalizations.of(context);
     switch (user.kycMethod) {
       case 'ai_verified':
         return (
-          label: 'AI pre-checked',
+          label: l10n.auserKycAiPrechecked,
           color: const Color(0xFF1976D2),
           icon: Icons.auto_awesome,
         );
       case 'indigent_bypass':
         return (
-          label: 'Indigent — guarantor verification required',
+          label: l10n.auserKycIndigentBypass,
           color: Colors.orange[800]!,
           icon: Icons.priority_high,
         );
       case 'guarantor_verified':
         return (
-          label: 'Guarantor-backed',
+          label: l10n.auserKycGuarantorBacked,
           color: Colors.teal[700]!,
           icon: Icons.verified_user,
         );
@@ -760,18 +813,23 @@ class _UserRegistrationDetailScreenState
   }
 
   ({String label, Color color, IconData icon}) _statusChipData(String status) {
+    final l10n = AppLocalizations.of(context);
     switch (status) {
       case 'approved':
         return (
-          label: 'Approved',
+          label: l10n.auregStatusApproved,
           color: Colors.green[700]!,
           icon: Icons.check_circle,
         );
       case 'rejected':
-        return (label: 'Rejected', color: AppColors.error, icon: Icons.cancel);
+        return (
+          label: l10n.auregStatusRejected,
+          color: AppColors.error,
+          icon: Icons.cancel,
+        );
       case 'pending':
         return (
-          label: 'Pending review',
+          label: l10n.auregStatusPendingReview,
           color: Colors.orange[800]!,
           icon: Icons.hourglass_top,
         );
@@ -835,6 +893,7 @@ class _UserRegistrationDetailScreenState
   // ── Bottom action bar ──────────────────────────────────────────────────
 
   Widget _buildActionBar() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -856,7 +915,7 @@ class _UserRegistrationDetailScreenState
                 child: OutlinedButton.icon(
                   onPressed: _handleReject,
                   icon: const Icon(Icons.close),
-                  label: const Text('Reject'),
+                  label: Text(l10n.commonReject),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.error,
                     side: const BorderSide(color: AppColors.error),
@@ -872,7 +931,7 @@ class _UserRegistrationDetailScreenState
                 child: ElevatedButton.icon(
                   onPressed: _handleApprove,
                   icon: const Icon(Icons.check),
-                  label: const Text('Approve'),
+                  label: Text(l10n.commonApprove),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
@@ -893,6 +952,7 @@ class _UserRegistrationDetailScreenState
   // ── AI advisory rows (read-only copy of the pending-card renderer) ─────
 
   List<Widget> _kycSummaryRows(Map<String, dynamic> kyc) {
+    final l10n = AppLocalizations.of(context);
     final rows = <Widget>[];
     void addRow(String label, String value) {
       rows.add(
@@ -926,28 +986,28 @@ class _UserRegistrationDetailScreenState
       'idAuthenticity',
     ]);
     if (idAuthenticity != null) {
-      addRow('ID authenticity', _idAuthenticityLabel(idAuthenticity));
+      addRow(l10n.auserKycIdAuthenticity, _idAuthenticityLabel(idAuthenticity));
     }
 
     // ID type guess/match
     final idTypeGuess = _kycString(kyc, ['id_type_guess', 'idTypeGuess']);
     final idTypeMatch = _kycString(kyc, ['id_type_match', 'idTypeMatch']);
     if (idTypeGuess != null) {
-      addRow('ID type detected', _idTypeGuessLabel(idTypeGuess));
+      addRow(l10n.auserKycIdTypeDetected, _idTypeGuessLabel(idTypeGuess));
     }
     if (idTypeMatch != null) {
       addRow(
-        'Type match',
+        l10n.auserKycTypeMatch,
         idTypeMatch == 'true'
-            ? 'Matches declared type'
-            : 'Does not match declared type',
+            ? l10n.auserKycMatchesDeclared
+            : l10n.auserKycDoesNotMatchDeclared,
       );
     }
 
     // Selfie quality
     final selfieQuality = _kycString(kyc, ['selfie_quality', 'selfieQuality']);
     if (selfieQuality != null) {
-      addRow('Selfie quality', _selfieQualityLabel(selfieQuality));
+      addRow(l10n.auserKycSelfieQuality, _selfieQualityLabel(selfieQuality));
     }
 
     // Liveness spoof signal
@@ -956,7 +1016,7 @@ class _UserRegistrationDetailScreenState
         ? _kycString(liveness, ['spoof_signal', 'spoofSignal'])
         : _kycString(kyc, ['liveness_spoof_signal']);
     if (spoofSignal != null) {
-      addRow('Liveness signal', _spoofSignalLabel(spoofSignal));
+      addRow(l10n.auserKycLivenessSignal, _spoofSignalLabel(spoofSignal));
     }
 
     // Liveness notes
@@ -964,7 +1024,7 @@ class _UserRegistrationDetailScreenState
         ? _kycString(liveness, ['notes'])
         : _kycString(kyc, ['liveness_notes']);
     if (livenessNotes != null) {
-      addRow('Liveness notes', livenessNotes);
+      addRow(l10n.auserKycLivenessNotes, livenessNotes);
     }
 
     // Field checks
@@ -978,7 +1038,7 @@ class _UserRegistrationDetailScreenState
     // Recommendation
     final recommendation = _kycString(kyc, ['recommendation']);
     if (recommendation != null) {
-      addRow('Recommendation', _recommendationLabel(recommendation));
+      addRow(l10n.auserKycRecommendation, _recommendationLabel(recommendation));
     }
 
     // Reasons
@@ -1009,7 +1069,7 @@ class _UserRegistrationDetailScreenState
     // Prompt version
     final promptVersion = _kycString(kyc, ['prompt_version', 'promptVersion']);
     if (promptVersion != null) {
-      addRow('Check version', promptVersion);
+      addRow(l10n.auserKycCheckVersion, promptVersion);
     }
 
     return rows;
@@ -1040,21 +1100,23 @@ class _UserRegistrationDetailScreenState
   }
 
   String _idAuthenticityLabel(String value) {
+    final l10n = AppLocalizations.of(context);
     switch (value) {
       case 'authentic':
-        return 'Looks authentic';
+        return l10n.auserKycLooksAuthentic;
       case 'suspicious':
-        return 'Suspicious — needs closer look';
+        return l10n.auserKycSuspicious;
       case 'unreadable':
-        return 'Unreadable';
+        return l10n.auserKycUnreadable;
       case 'uncertain':
-        return 'Uncertain';
+        return l10n.auserKycUncertain;
       default:
         return value;
     }
   }
 
   String _idTypeGuessLabel(String value) {
+    final l10n = AppLocalizations.of(context);
     switch (value) {
       case 'barangay_id':
         return 'Barangay ID';
@@ -1077,71 +1139,76 @@ class _UserRegistrationDetailScreenState
       case 'voters_id':
         return "Voter's ID";
       case 'other':
-        return 'Other';
+        return l10n.commonOther;
       case 'unknown':
-        return 'Unknown';
+        return l10n.auserUnknown;
       default:
         return value;
     }
   }
 
   String _selfieQualityLabel(String value) {
+    final l10n = AppLocalizations.of(context);
     switch (value) {
       case 'good':
-        return 'Good quality';
+        return l10n.auserKycGoodQuality;
       case 'poor':
-        return 'Poor quality';
+        return l10n.auserKycPoorQuality;
       case 'no_face':
-        return 'No face detected';
+        return l10n.auserKycNoFaceDetected;
       case 'uncertain':
-        return 'Uncertain';
+        return l10n.auserKycUncertain;
       default:
         return value;
     }
   }
 
   String _spoofSignalLabel(String value) {
+    final l10n = AppLocalizations.of(context);
     switch (value) {
       case 'live_looking':
-        return 'Live-looking';
+        return l10n.auserKycLiveLooking;
       case 'spoof_suspected':
-        return 'Spoof suspected';
+        return l10n.auserKycSpoofSuspected;
       case 'uncertain':
-        return 'Uncertain';
+        return l10n.auserKycUncertain;
       default:
         return value;
     }
   }
 
   String _fieldCheckLabel(String key) {
+    final l10n = AppLocalizations.of(context);
     switch (key) {
       case 'full_name':
-        return 'Name check';
+        return l10n.auserKycNameCheck;
       case 'date_of_birth':
       case 'birth_date':
-        return 'Birth date check';
+        return l10n.auserKycBirthDateCheck;
       case 'address':
-        return 'Address check';
+        return l10n.auserKycAddressCheck;
       case 'gender':
-        return 'Gender check';
+        return l10n.auserKycGenderCheck;
       default:
         return key;
     }
   }
 
   String _fieldCheckValue(Object? value) {
-    if (value == 'match') return 'Matches';
-    if (value == 'mismatch') return 'Does not match';
-    if (value == 'unverifiable') return 'Unverifiable';
+    final l10n = AppLocalizations.of(context);
+    if (value == 'match') return l10n.auserKycMatches;
+    if (value == 'mismatch') return l10n.auserKycDoesNotMatch;
+    if (value == 'unverifiable') return l10n.auserKycUnverifiable;
     return value.toString();
   }
 
   String _recommendationLabel(String value) {
+    final l10n = AppLocalizations.of(context);
     switch (value) {
       case 'looks_ok':
-        return 'Looks OK — advisory only';
+        return l10n.auserKycLooksOk;
       case 'needs_review':
-        return 'Needs review — advisory only';
+        return l10n.auserKycNeedsReview;
       default:
         return value;
     }
@@ -1172,6 +1239,7 @@ class _FullScreenImageViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -1191,14 +1259,18 @@ class _FullScreenImageViewer extends StatelessWidget {
                 child: CircularProgressIndicator(color: Colors.white),
               );
             },
-            errorBuilder: (_, _, _) => const Column(
+            errorBuilder: (_, _, _) => Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.broken_image, color: Colors.white54, size: 64),
-                SizedBox(height: 16),
+                const Icon(
+                  Icons.broken_image,
+                  color: Colors.white54,
+                  size: 64,
+                ),
+                const SizedBox(height: 16),
                 Text(
-                  'Image failed to load',
-                  style: TextStyle(color: Colors.white54),
+                  l10n.auregImageFailed,
+                  style: const TextStyle(color: Colors.white54),
                 ),
               ],
             ),

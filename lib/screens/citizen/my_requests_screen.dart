@@ -584,7 +584,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          l10n.citizenPayAmountPrompt(request.paymentAmount),
+                          l10n.citizenPayAmountPrompt(request.paymentAmount.toStringAsFixed(2)),
                           style: const TextStyle(fontSize: 12),
                         ),
                         const SizedBox(height: 10),

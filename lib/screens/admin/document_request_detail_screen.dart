@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/models/document_request.dart';
 import 'package:guin_app/models/user_profile.dart';
 import 'package:guin_app/providers/document_provider.dart';
@@ -144,14 +145,15 @@ class _DocumentRequestDetailScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final r = widget.request;
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
-        title: const Text(
-          'Request Review',
-          style: TextStyle(fontWeight: FontWeight.w600),
+        title: Text(
+          l10n.adocdetTitle,
+          style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -181,6 +183,7 @@ class _DocumentRequestDetailScreenState
   // ── Header ──────────────────────────────────────────────────────────────
 
   Widget _buildHeaderCard(DocumentRequest r) {
+    final l10n = AppLocalizations.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
       elevation: 2,
@@ -233,7 +236,7 @@ class _DocumentRequestDetailScreenState
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'Requested ${Helpers.formatDate(r.requestedAt)}',
+                        l10n.acapRequestedAt(Helpers.formatDate(r.requestedAt)),
                         style: const TextStyle(
                           fontSize: 12.5,
                           color: AppColors.textSecondary,
@@ -255,7 +258,9 @@ class _DocumentRequestDetailScreenState
                   _pill(
                     color: _paymentColor(r.paymentStatus),
                     icon: Icons.payments_outlined,
-                    label: 'Payment ${_capitalize(r.paymentStatus)}',
+                    label: l10n.adocdetPaymentStatus(
+                      _capitalize(r.paymentStatus),
+                    ),
                   ),
               ],
             ),
@@ -314,6 +319,7 @@ class _DocumentRequestDetailScreenState
   // ── Requestor ───────────────────────────────────────────────────────────
 
   Widget _buildRequestorCard(DocumentRequest r) {
+    final l10n = AppLocalizations.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
       elevation: 2,
@@ -325,7 +331,7 @@ class _DocumentRequestDetailScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _sectionHeader(Icons.person_outline, 'Requestor'),
+            _sectionHeader(Icons.person_outline, l10n.adocdetRequestor),
             const SizedBox(height: 14),
             if (_loadingProfile)
               const Center(
@@ -345,6 +351,7 @@ class _DocumentRequestDetailScreenState
   }
 
   Widget _profileUnavailable(DocumentRequest r) {
+    final l10n = AppLocalizations.of(context);
     final fallback = r.userFullName ?? r.userName;
     return Container(
       width: double.infinity,
@@ -362,14 +369,14 @@ class _DocumentRequestDetailScreenState
             color: Colors.grey.shade400,
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Requestor profile unavailable',
-            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+          Text(
+            l10n.adocdetProfileUnavailable,
+            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
           ),
           if (fallback != null && fallback.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
-              'Requested by $fallback',
+              l10n.adocdetRequestedBy(fallback),
               style: const TextStyle(
                 fontSize: 12.5,
                 color: AppColors.textSecondary,
@@ -378,7 +385,7 @@ class _DocumentRequestDetailScreenState
           ],
           const SizedBox(height: 4),
           Text(
-            'The request details below are still complete.',
+            l10n.adocdetDetailsComplete,
             style: TextStyle(fontSize: 11.5, color: Colors.grey.shade500),
           ),
         ],
@@ -387,6 +394,7 @@ class _DocumentRequestDetailScreenState
   }
 
   Widget _profileContent(UserProfile p) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -430,18 +438,19 @@ class _DocumentRequestDetailScreenState
           ],
         ),
         const SizedBox(height: 14),
-        _detailRow('Phone number', p.phoneNumber),
-        _detailRow('Address', p.address),
-        _detailRow('Age', '${p.age} years old'),
-        _detailRow('Date of birth', Helpers.formatDate(p.dateOfBirth)),
-        _detailRow('Civil status', p.civilStatus),
-        _detailRow('Gender', p.gender),
-        _detailRow('Place of birth', p.placeOfBirth),
+        _detailRow(l10n.commonPhoneNumber, p.phoneNumber),
+        _detailRow(l10n.commonAddress, p.address),
+        _detailRow(l10n.commonAge, l10n.apendYearsOld(p.age)),
+        _detailRow(l10n.commonDateOfBirth, Helpers.formatDate(p.dateOfBirth)),
+        _detailRow(l10n.commonCivilStatus, p.civilStatus),
+        _detailRow(l10n.commonGender, p.gender),
+        _detailRow(l10n.commonPlaceOfBirth, p.placeOfBirth),
       ],
     );
   }
 
   Widget _requestorAvatar(UserProfile p) {
+    final l10n = AppLocalizations.of(context);
     final photo = p.profilePhotoUrl;
     const fallback = Color(0xFF1976D2);
     final Widget inner;
@@ -461,7 +470,9 @@ class _DocumentRequestDetailScreenState
       );
     }
     return InkWell(
-      onTap: photo == null ? null : () => _openViewer('Profile photo', photo),
+      onTap: photo == null
+          ? null
+          : () => _openViewer(l10n.commonProfilePhoto, photo),
       customBorder: const CircleBorder(),
       child: Container(
         padding: const EdgeInsets.all(3),
@@ -482,6 +493,7 @@ class _DocumentRequestDetailScreenState
   }
 
   Widget _registrationChip(String status) {
+    final l10n = AppLocalizations.of(context);
     final Color color;
     final IconData icon;
     final String label;
@@ -489,17 +501,17 @@ class _DocumentRequestDetailScreenState
       case 'approved':
         color = Colors.green[700]!;
         icon = Icons.check_circle;
-        label = 'Approved resident';
+        label = l10n.adocdetApprovedResident;
         break;
       case 'rejected':
         color = AppColors.error;
         icon = Icons.cancel;
-        label = 'Rejected resident';
+        label = l10n.adocdetRejectedResident;
         break;
       default:
         color = Colors.orange[800]!;
         icon = Icons.hourglass_top;
-        label = 'Registration pending';
+        label = l10n.adocdetRegistrationPending;
         break;
     }
     return _pill(color: color, icon: icon, label: label);
@@ -508,14 +520,15 @@ class _DocumentRequestDetailScreenState
   // ── Request details ─────────────────────────────────────────────────────
 
   Widget _buildRequestDetailsCard(DocumentRequest r) {
+    final l10n = AppLocalizations.of(context);
     final dataRows = _dataRows(r);
     return _sectionCard(
       icon: Icons.description_outlined,
-      title: 'Request details',
+      title: l10n.adocdetRequestDetails,
       children: [
-        const Text(
-          'Purpose',
-          style: TextStyle(
+        Text(
+          l10n.commonPurpose,
+          style: const TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
             color: AppColors.textSecondary,
@@ -534,9 +547,9 @@ class _DocumentRequestDetailScreenState
         ),
         if (dataRows.isNotEmpty) ...[
           const SizedBox(height: 14),
-          const Text(
-            'Submitted details',
-            style: TextStyle(
+          Text(
+            l10n.adocdetSubmittedDetails,
+            style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
@@ -547,7 +560,7 @@ class _DocumentRequestDetailScreenState
         ] else ...[
           const SizedBox(height: 12),
           Text(
-            'No additional details were provided with this request.',
+            l10n.adocdetNoAdditionalDetails,
             style: TextStyle(
               fontSize: 12,
               fontStyle: FontStyle.italic,
@@ -592,7 +605,10 @@ class _DocumentRequestDetailScreenState
 
   String _humanizeValue(String key, Object? value) {
     if (value == null) return '';
-    if (value is bool) return value ? 'Yes' : 'No';
+    if (value is bool) {
+      final l10n = AppLocalizations.of(context);
+      return value ? l10n.commonYes : l10n.commonNo;
+    }
     final text = value.toString().trim();
     if (text.isEmpty) return '';
     if (key == 'birth_date' || key == 'date_of_birth') {
@@ -605,27 +621,34 @@ class _DocumentRequestDetailScreenState
   // ── Payment ─────────────────────────────────────────────────────────────
 
   Widget _buildPaymentCard(DocumentRequest r) {
+    final l10n = AppLocalizations.of(context);
     final hasReceipt =
         r.paymentReceiptUrl != null && r.paymentReceiptUrl!.isNotEmpty;
     return _sectionCard(
       icon: Icons.payments_outlined,
-      title: 'Payment',
+      title: l10n.adocdetPayment,
       children: [
-        _detailRow('Amount', '₱${r.paymentAmount.toStringAsFixed(2)}'),
-        _detailRow('Payment status', _capitalize(r.paymentStatus)),
+        _detailRow(l10n.commonAmount, '₱${r.paymentAmount.toStringAsFixed(2)}'),
+        _detailRow(
+          l10n.adocdetPaymentStatusLabel,
+          _capitalize(r.paymentStatus),
+        ),
         if ((r.paymentMethod ?? '').isNotEmpty)
-          _detailRow('Method', r.paymentMethod!),
+          _detailRow(l10n.adocdetMethod, r.paymentMethod!),
         if ((r.paymentReferenceNumber ?? '').isNotEmpty)
-          _detailRow('Reference number', r.paymentReferenceNumber!),
+          _detailRow(l10n.adocdetReferenceNumber, r.paymentReferenceNumber!),
         if (r.paymentVerifiedAt != null)
-          _detailRow('Verified', Helpers.formatDate(r.paymentVerifiedAt!)),
+          _detailRow(
+            l10n.adocdetVerified,
+            Helpers.formatDate(r.paymentVerifiedAt!),
+          ),
         if ((r.paymentRejectionReason ?? '').isNotEmpty)
-          _detailRow('Rejection reason', r.paymentRejectionReason!),
+          _detailRow(l10n.commonRejectionReason, r.paymentRejectionReason!),
         if (hasReceipt) ...[
           const SizedBox(height: 6),
-          const Text(
-            'Payment receipt',
-            style: TextStyle(
+          Text(
+            l10n.adocdetPaymentReceipt,
+            style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
@@ -639,6 +662,7 @@ class _DocumentRequestDetailScreenState
   }
 
   Widget _receiptTile(String url) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -652,7 +676,7 @@ class _DocumentRequestDetailScreenState
             border: Border.all(color: Colors.grey.shade300),
           ),
           child: InkWell(
-            onTap: () => _openViewer('Payment receipt', url),
+            onTap: () => _openViewer(l10n.adocdetPaymentReceipt, url),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -669,7 +693,7 @@ class _DocumentRequestDetailScreenState
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Receipt image unavailable',
+                        l10n.adocdetReceiptUnavailable,
                         style: TextStyle(
                           fontSize: 11,
                           color: Colors.grey.shade500,
@@ -685,7 +709,7 @@ class _DocumentRequestDetailScreenState
         ),
         const SizedBox(height: 6),
         Text(
-          'Tap to open full-screen and zoom in.',
+          l10n.adocdetTapToZoom,
           style: const TextStyle(
             fontSize: 11.5,
             color: AppColors.textSecondary,
@@ -698,6 +722,7 @@ class _DocumentRequestDetailScreenState
   // ── Workflow trail ──────────────────────────────────────────────────────
 
   Widget _buildTrailCard(DocumentRequest r) {
+    final l10n = AppLocalizations.of(context);
     final rows = <Widget>[];
     void addText(String label, String? value) {
       if (value != null && value.trim().isNotEmpty) {
@@ -709,27 +734,27 @@ class _DocumentRequestDetailScreenState
       if (value != null) rows.add(_detailRow(label, Helpers.formatDate(value)));
     }
 
-    addText('Secretary notes', r.secretaryNotes);
-    addText('Invoice description', r.invoiceDescription);
-    addDate('Invoice due date', r.invoiceDueDate);
+    addText(l10n.adocdetSecretaryNotes, r.secretaryNotes);
+    addText(l10n.adocdetInvoiceDescription, r.invoiceDescription);
+    addDate(l10n.adocdetInvoiceDueDate, r.invoiceDueDate);
     if ((r.draftUrl ?? '').isNotEmpty) {
       rows.add(
-        _detailRow('Draft document', 'Generated — available for review'),
+        _detailRow(l10n.adocdetDraftDocument, l10n.adocdetDraftGenerated),
       );
     }
-    addText('Rejection reason', r.rejectionReason);
+    addText(l10n.commonRejectionReason, r.rejectionReason);
     addText(
-      'Approved by',
+      l10n.adocdetApprovedBy,
       r.approverRole == null ? null : AppRoles.displayName(r.approverRole!),
     );
-    addDate('Approved on', r.captainApprovedAt);
-    addText('Release method', r.releaseMethod);
-    addDate('Released on', r.releasedAt);
+    addDate(l10n.adocdetApprovedOn, r.captainApprovedAt);
+    addText(l10n.adocdetReleaseMethod, r.releaseMethod);
+    addDate(l10n.adocdetReleasedOn, r.releasedAt);
 
     if (rows.isEmpty) return const SizedBox.shrink();
     return _sectionCard(
       icon: Icons.timeline_outlined,
-      title: 'Workflow trail',
+      title: l10n.adocdetWorkflowTrail,
       children: rows,
     );
   }
@@ -983,6 +1008,7 @@ class _FullScreenImageViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -1002,14 +1028,14 @@ class _FullScreenImageViewer extends StatelessWidget {
                 child: CircularProgressIndicator(color: Colors.white),
               );
             },
-            errorBuilder: (_, _, _) => const Column(
+            errorBuilder: (_, _, _) => Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.broken_image, color: Colors.white54, size: 64),
-                SizedBox(height: 16),
+                const Icon(Icons.broken_image, color: Colors.white54, size: 64),
+                const SizedBox(height: 16),
                 Text(
-                  'Image failed to load',
-                  style: TextStyle(color: Colors.white54),
+                  l10n.adocdetImageFailed,
+                  style: const TextStyle(color: Colors.white54),
                 ),
               ],
             ),

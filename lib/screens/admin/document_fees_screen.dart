@@ -5,6 +5,7 @@ import 'package:guin_app/providers/barangay_provider.dart';
 import 'package:guin_app/models/document_fee.dart';
 import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/automation/automation_constants.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class DocumentFeesScreen extends StatefulWidget {
   const DocumentFeesScreen({super.key});
@@ -29,6 +30,7 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: Column(
@@ -63,21 +65,21 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
                       size: 22,
                     ),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Document Fees',
-                            style: TextStyle(
+                            l10n.afeeTitle,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                           Text(
-                            'Manage fees per document type',
-                            style: TextStyle(
+                            l10n.afeeSubtitle,
+                            style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 12,
                             ),
@@ -111,7 +113,7 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'No document fees found',
+                          l10n.afeeNoFees,
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 16,
@@ -141,6 +143,7 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
   }
 
   Widget _buildFeeCard(DocumentFee fee) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -210,7 +213,7 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Fee Amount',
+                      l10n.afeeAmount,
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                     const SizedBox(height: 4),
@@ -243,18 +246,22 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
                       onTap: () => _showEditDialog(fee),
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: 20,
                           vertical: 12,
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.edit, color: Colors.white, size: 18),
-                            SizedBox(width: 8),
+                            const Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
                             Text(
-                              'Edit',
-                              style: TextStyle(
+                              l10n.commonEdit,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -274,6 +281,7 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
   }
 
   void _showEditDialog(DocumentFee fee) {
+    final l10n = AppLocalizations.of(context);
     final amountController = TextEditingController(
       text: fee.feeAmount.toStringAsFixed(2),
     );
@@ -299,7 +307,7 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Edit ${_formatDocumentType(fee.documentType)}',
+                l10n.afeeEditDialogTitle(_formatDocumentType(fee.documentType)),
                 style: const TextStyle(fontSize: 18),
               ),
             ),
@@ -319,7 +327,7 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
                   FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                 ],
                 decoration: InputDecoration(
-                  labelText: 'Fee Amount',
+                  labelText: l10n.afeeAmount,
                   prefixText: '₱ ',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -327,11 +335,11 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter an amount';
+                    return l10n.afeeEnterAmount;
                   }
                   final amount = double.tryParse(value);
                   if (amount == null || amount <= 0) {
-                    return 'Please enter a valid amount';
+                    return l10n.afeeEnterValidAmount;
                   }
                   return null;
                 },
@@ -341,7 +349,7 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
                 controller: descriptionController,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  labelText: 'Description (Optional)',
+                  labelText: l10n.afeeDescriptionOptional,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -353,7 +361,7 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(l10n.commonCancel),
           ),
           Container(
             decoration: BoxDecoration(
@@ -376,7 +384,7 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text('Save'),
+              child: Text(l10n.commonSave),
             ),
           ),
         ],
@@ -390,13 +398,14 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
     String description,
     GlobalKey<FormState> formKey,
   ) async {
+    final l10n = AppLocalizations.of(context);
     if (!formKey.currentState!.validate()) return;
 
     final amount = double.parse(amountText);
     final barangayProvider = context.read<BarangayProvider>();
 
     Navigator.pop(context); // Close dialog
-    Helpers.showLoadingDialog(context, 'Updating fee...');
+    Helpers.showLoadingDialog(context, l10n.afeeUpdating);
 
     try {
       await barangayProvider.updateFee(
@@ -407,7 +416,7 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
 
       if (!mounted) return;
       Helpers.dismissDialog(context);
-      Helpers.showSuccessSnackBar(context, 'Fee updated successfully');
+      Helpers.showSuccessSnackBar(context, l10n.afeeUpdated);
     } catch (e) {
       if (!mounted) return;
       Helpers.dismissDialog(context);

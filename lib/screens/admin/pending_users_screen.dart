@@ -4,6 +4,7 @@ import 'package:guin_app/providers/user_provider.dart';
 import 'package:guin_app/models/user_profile.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class PendingUsersScreen extends StatefulWidget {
   const PendingUsersScreen({super.key});
@@ -27,16 +28,17 @@ class _PendingUsersScreenState extends State<PendingUsersScreen> {
   }
 
   Future<void> _handleApprove(UserProfile user) async {
+    final l10n = AppLocalizations.of(context);
     final confirm = await Helpers.showConfirmDialog(
       context,
-      title: 'Approve User',
-      message: 'Are you sure you want to approve ${user.fullName}?',
+      title: l10n.auserApproveUserTitle,
+      message: l10n.apendApproveConfirm(user.fullName),
     );
 
     if (!confirm) return;
 
     final userProvider = context.read<UserProvider>();
-    Helpers.showLoadingDialog(context, 'Approving user...');
+    Helpers.showLoadingDialog(context, l10n.apendApprovingUser);
 
     final success = await userProvider.approveUser(user.id);
 
@@ -44,7 +46,7 @@ class _PendingUsersScreenState extends State<PendingUsersScreen> {
     Helpers.dismissDialog(context);
 
     if (success) {
-      Helpers.showSuccessSnackBar(context, 'User approved successfully');
+      Helpers.showSuccessSnackBar(context, l10n.apendUserApproved);
     } else {
       Helpers.showErrorSnackBar(
         context,
@@ -54,24 +56,25 @@ class _PendingUsersScreenState extends State<PendingUsersScreen> {
   }
 
   Future<void> _handleReject(UserProfile user) async {
+    final l10n = AppLocalizations.of(context);
     final reasonController = TextEditingController();
 
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Reject User'),
+        title: Text(l10n.auserRejectUserTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Rejecting: ${user.fullName}'),
+            Text(l10n.auserRejectingName(user.fullName)),
             const SizedBox(height: AppSizes.paddingM),
             TextField(
               controller: reasonController,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Rejection Reason',
-                hintText: 'Please provide a reason for rejection...',
+              decoration: InputDecoration(
+                labelText: l10n.commonRejectionReason,
+                hintText: l10n.apendRejectReasonHint,
               ),
             ),
           ],
@@ -79,18 +82,21 @@ class _PendingUsersScreenState extends State<PendingUsersScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.commonCancel),
           ),
           ElevatedButton(
             onPressed: () {
               if (reasonController.text.trim().isEmpty) {
-                Helpers.showErrorSnackBar(context, 'Please provide a reason');
+                Helpers.showErrorSnackBar(
+                  context,
+                  l10n.commonPleaseProvideReason,
+                );
                 return;
               }
               Navigator.pop(context, true);
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Reject'),
+            child: Text(l10n.commonReject),
           ),
         ],
       ),
@@ -99,7 +105,7 @@ class _PendingUsersScreenState extends State<PendingUsersScreen> {
     if (confirm != true || !mounted) return;
 
     final userProvider = context.read<UserProvider>();
-    Helpers.showLoadingDialog(context, 'Rejecting user...');
+    Helpers.showLoadingDialog(context, l10n.apendRejectingUser);
 
     final success = await userProvider.rejectUser(
       user.id,
@@ -110,7 +116,7 @@ class _PendingUsersScreenState extends State<PendingUsersScreen> {
     Helpers.dismissDialog(context);
 
     if (success) {
-      Helpers.showSuccessSnackBar(context, 'User registration rejected');
+      Helpers.showSuccessSnackBar(context, l10n.apendUserRejected);
     } else {
       Helpers.showErrorSnackBar(
         context,
@@ -121,15 +127,16 @@ class _PendingUsersScreenState extends State<PendingUsersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final userProvider = context.watch<UserProvider>();
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
-        title: const Text(
-          'Pending Users',
-          style: TextStyle(fontWeight: FontWeight.w600),
+        title: Text(
+          l10n.apendTitle,
+          style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -157,7 +164,7 @@ class _PendingUsersScreenState extends State<PendingUsersScreen> {
                     ),
                     const SizedBox(height: AppSizes.paddingM),
                     Text(
-                      'No pending users',
+                      l10n.apendNoPending,
                       style: TextStyle(color: Colors.grey[600], fontSize: 16),
                     ),
                   ],
@@ -176,6 +183,7 @@ class _PendingUsersScreenState extends State<PendingUsersScreen> {
   }
 
   Widget _buildUserCard(UserProfile user) {
+    final l10n = AppLocalizations.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.paddingM),
       elevation: 2,
@@ -224,13 +232,13 @@ class _PendingUsersScreenState extends State<PendingUsersScreen> {
             // Details
             _buildInfoRow(Icons.location_on, user.address),
             const SizedBox(height: AppSizes.paddingS),
-            _buildInfoRow(Icons.calendar_today, '${user.age} years old'),
+            _buildInfoRow(Icons.calendar_today, l10n.apendYearsOld(user.age)),
             const SizedBox(height: AppSizes.paddingS),
             _buildInfoRow(Icons.phone, user.phoneNumber),
             const SizedBox(height: AppSizes.paddingS),
             _buildInfoRow(
               Icons.access_time,
-              'Registered: ${Helpers.formatDate(user.createdAt)}',
+              l10n.auserRegisteredAt(Helpers.formatDate(user.createdAt)),
             ),
 
             const SizedBox(height: AppSizes.paddingL),
@@ -242,7 +250,7 @@ class _PendingUsersScreenState extends State<PendingUsersScreen> {
                   child: OutlinedButton.icon(
                     onPressed: () => _handleReject(user),
                     icon: const Icon(Icons.close_rounded),
-                    label: const Text('Reject'),
+                    label: Text(l10n.commonReject),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.error,
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -272,7 +280,7 @@ class _PendingUsersScreenState extends State<PendingUsersScreen> {
                     child: ElevatedButton.icon(
                       onPressed: () => _handleApprove(user),
                       icon: const Icon(Icons.check_rounded),
-                      label: const Text('Approve'),
+                      label: Text(l10n.commonApprove),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,

@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:guin_app/providers/user_provider.dart';
 import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/utils/role_access.dart';
+import 'package:guin_app/l10n/app_l10n.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class CreateUserScreen extends StatefulWidget {
   const CreateUserScreen({super.key});
@@ -99,6 +101,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   }
 
   void _nextStep() {
+    final l10n = AppLocalizations.of(context);
     bool valid = false;
     switch (_currentStep) {
       case 0:
@@ -107,7 +110,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
       case 1:
         valid = _personalFormKey.currentState?.validate() ?? false;
         if (valid && _dob == null) {
-          Helpers.showErrorSnackBar(context, 'Please select date of birth');
+          Helpers.showErrorSnackBar(context, l10n.acreatePleaseSelectDob);
           return;
         }
         break;
@@ -140,7 +143,8 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   }
 
   Future<void> _submit() async {
-    Helpers.showLoadingDialog(context, 'Creating user...');
+    final l10n = AppLocalizations.of(context);
+    Helpers.showLoadingDialog(context, l10n.acreateCreatingUser);
     final age = int.tryParse(_ageCtrl.text.trim()) ?? 0;
     final userProvider = context.read<UserProvider>();
 
@@ -169,10 +173,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
 
     if (ok) {
       final fullName = [_givenNameCtrl.text.trim(), if (_middleNameCtrl.text.trim().isNotEmpty) _middleNameCtrl.text.trim(), _lastNameCtrl.text.trim()].join(' ');
-      Helpers.showSuccessSnackBar(
-        context,
-        'User "$fullName" created successfully',
-      );
+      Helpers.showSuccessSnackBar(context, l10n.acreateUserCreated(fullName));
       Navigator.pop(context);
     } else {
       final raw = userProvider.errorMessage ?? '';
@@ -187,7 +188,12 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const steps = ['Account', 'Personal', 'Address & Docs'];
+    final l10n = AppLocalizations.of(context);
+    final steps = [
+      l10n.acreateStepAccount,
+      l10n.acreateStepPersonal,
+      l10n.acreateStepAddressDocs,
+    ];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -218,10 +224,10 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                           ),
                           onPressed: _prevStep,
                         ),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Create New User',
-                            style: TextStyle(
+                            l10n.acreateTitle,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
@@ -229,7 +235,10 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                           ),
                         ),
                         Text(
-                          'Step ${_currentStep + 1}/${steps.length}',
+                          l10n.acreateStepProgress(
+                            _currentStep + 1,
+                            steps.length,
+                          ),
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.85),
                             fontSize: 13,
@@ -351,9 +360,9 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Back',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.commonBack,
+                        style: const TextStyle(
                           color: _kBlue,
                           fontWeight: FontWeight.w600,
                         ),
@@ -372,7 +381,9 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                       size: 18,
                     ),
                     label: Text(
-                      _currentStep == steps.length - 1 ? 'Create User' : 'Next',
+                      _currentStep == steps.length - 1
+                          ? l10n.auserCreateUser
+                          : l10n.commonNext,
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
@@ -399,28 +410,29 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   // ── Step 1: Account Info ─────────────────────────────────────────────────
 
   Widget _buildAccountStep() {
+    final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       child: Form(
         key: _accountFormKey,
         child: Column(
           children: [
-            _field(_givenNameCtrl, 'Given Name *', Icons.badge),
+            _field(_givenNameCtrl, l10n.acreateGivenNameLabel, Icons.badge),
             const SizedBox(height: 14),
-            _field(_middleNameCtrl, 'Middle Name', Icons.badge),
+            _field(_middleNameCtrl, l10n.acreateMiddleNameLabel, Icons.badge),
             const SizedBox(height: 14),
-            _field(_lastNameCtrl, 'Last Name *', Icons.badge),
+            _field(_lastNameCtrl, l10n.acreateLastNameLabel, Icons.badge),
             const SizedBox(height: 14),
-            _field(_usernameCtrl, 'Username', Icons.alternate_email),
+            _field(_usernameCtrl, l10n.commonUsername, Icons.alternate_email),
             const SizedBox(height: 14),
             _field(
               _emailCtrl,
-              'Email',
+              l10n.commonEmail,
               Icons.email_outlined,
               keyboardType: TextInputType.emailAddress,
               validator: (v) {
-                if (v == null || v.isEmpty) return 'Required';
-                if (!v.contains('@')) return 'Invalid email';
+                if (v == null || v.isEmpty) return l10n.commonRequired;
+                if (!v.contains('@')) return l10n.acreateInvalidEmail;
                 return null;
               },
             ),
@@ -429,7 +441,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
               controller: _passwordCtrl,
               obscureText: _obscurePassword,
               decoration: InputDecoration(
-                labelText: 'Password',
+                labelText: l10n.commonPassword,
                 prefixIcon: const Icon(Icons.lock_outline),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -444,14 +456,15 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                       setState(() => _obscurePassword = !_obscurePassword),
                 ),
               ),
-              validator: (v) =>
-                  (v == null || v.length < 6) ? 'Minimum 6 characters' : null,
+              validator: (v) => (v == null || v.length < 6)
+                  ? l10n.acreatePasswordMinLength
+                  : null,
             ),
             const SizedBox(height: 14),
             DropdownButtonFormField<String>(
               value: _role,
               decoration: InputDecoration(
-                labelText: 'Role',
+                labelText: l10n.commonRole,
                 prefixIcon: const Icon(Icons.admin_panel_settings_outlined),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -476,6 +489,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   // ── Step 2: Personal ─────────────────────────────────────────────────────
 
   Widget _buildPersonalStep() {
+    final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       child: Form(
@@ -484,19 +498,23 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
           children: [
             _field(
               _phoneCtrl,
-              'Phone Number',
+              l10n.commonPhoneNumber,
               Icons.phone_outlined,
               keyboardType: TextInputType.phone,
             ),
             const SizedBox(height: 14),
             _field(
               _ageCtrl,
-              'Age',
+              l10n.acreateAge,
               Icons.numbers,
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 14),
-            _field(_placeOfBirthCtrl, 'Place of Birth', Icons.place_outlined),
+            _field(
+              _placeOfBirthCtrl,
+              l10n.commonPlaceOfBirth,
+              Icons.place_outlined,
+            ),
             const SizedBox(height: 14),
             // Date of birth
             GestureDetector(
@@ -513,8 +531,12 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                 child: TextFormField(
                   decoration: InputDecoration(
                     labelText: _dob == null
-                        ? 'Date of Birth (tap to select)'
-                        : 'DOB: ${_dob!.year}-${_dob!.month.toString().padLeft(2, '0')}-${_dob!.day.toString().padLeft(2, '0')}',
+                        ? l10n.acreateDobTapToSelect
+                        : l10n.acreateDobSelected(
+                            _dob!.year,
+                            _dob!.month,
+                            _dob!.day,
+                          ),
                     prefixIcon: const Icon(Icons.calendar_today_outlined),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -527,14 +549,19 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
             DropdownButtonFormField<String>(
               value: _civilStatus,
               decoration: InputDecoration(
-                labelText: 'Civil Status',
+                labelText: l10n.commonCivilStatus,
                 prefixIcon: const Icon(Icons.family_restroom_outlined),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
               items: _civilStatuses
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                  .map(
+                    (s) => DropdownMenuItem(
+                      value: s,
+                      child: Text(_civilStatusLabel(s)),
+                    ),
+                  )
                   .toList(),
               onChanged: (v) =>
                   setState(() => _civilStatus = v ?? _civilStatus),
@@ -543,14 +570,19 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
             DropdownButtonFormField<String>(
               value: _gender,
               decoration: InputDecoration(
-                labelText: 'Gender',
+                labelText: l10n.commonGender,
                 prefixIcon: const Icon(Icons.wc_outlined),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
               items: _genders
-                  .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                  .map(
+                    (g) => DropdownMenuItem(
+                      value: g,
+                      child: Text(_genderLabel(g)),
+                    ),
+                  )
                   .toList(),
               onChanged: (v) => setState(() => _gender = v ?? _gender),
             ),
@@ -560,9 +592,40 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
     );
   }
 
+  String _civilStatusLabel(String value) {
+    final l10n = AppL10n.current;
+    switch (value) {
+      case 'Married':
+        return l10n.commonMarried;
+      case 'Widowed':
+        return l10n.commonWidowed;
+      case 'Divorced':
+        return l10n.commonDivorced;
+      case 'Single':
+        return l10n.commonSingle;
+      default:
+        return value;
+    }
+  }
+
+  String _genderLabel(String value) {
+    final l10n = AppL10n.current;
+    switch (value) {
+      case 'Male':
+        return l10n.commonMale;
+      case 'Female':
+        return l10n.commonFemale;
+      case 'Other':
+        return l10n.commonOther;
+      default:
+        return value;
+    }
+  }
+
   // ── Step 3: Address & Documents ──────────────────────────────────────────
 
   Widget _buildAddressDocsStep() {
+    final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       child: Form(
@@ -572,25 +635,25 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
           children: [
             _field(
               _addressCtrl,
-              'Home Address',
+              l10n.acreateHomeAddress,
               Icons.location_on_outlined,
               maxLines: 2,
             ),
             const SizedBox(height: 24),
 
             // Profile Photo
-            const Text(
-              'Profile Photo',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+            Text(
+              l10n.commonProfilePhoto,
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
             ),
             const SizedBox(height: 8),
             _buildProfilePhotoCard(),
             const SizedBox(height: 20),
 
             // Valid ID
-            const Text(
-              'Valid ID',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+            Text(
+              l10n.commonValidId,
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
             ),
             const SizedBox(height: 8),
             Row(
@@ -607,6 +670,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   }
 
   Widget _buildProfilePhotoCard() {
+    final l10n = AppLocalizations.of(context);
     return GestureDetector(
       onTap: () => _pickImage(true),
       child: Container(
@@ -647,16 +711,16 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Tap to upload photo',
-                    style: TextStyle(
+                  Text(
+                    l10n.acreateTapToUploadPhoto,
+                    style: const TextStyle(
                       color: Color(0xFF1976D2),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const Text(
-                    'Optional',
-                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                  Text(
+                    l10n.commonOptional,
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
                   ),
                 ],
               )
@@ -679,6 +743,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   }
 
   Widget _buildIdCard({required bool front}) {
+    final l10n = AppLocalizations.of(context);
     final file = front ? _validIdFront : _validIdBack;
     return GestureDetector(
       onTap: () => _pickImage(false, front: front),
@@ -718,15 +783,15 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    front ? 'ID Front' : 'ID Back',
+                    front ? l10n.acreateIdFront : l10n.acreateIdBack,
                     style: const TextStyle(
                       color: Colors.orange,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const Text(
-                    'Optional',
-                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                  Text(
+                    l10n.commonOptional,
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
                   ),
                 ],
               )
@@ -751,6 +816,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   // ── Helpers ──────────────────────────────────────────────────────────────
 
   Widget _changeOverlay(VoidCallback onTap) {
+    final l10n = AppLocalizations.of(context);
     return Positioned(
       bottom: 8,
       right: 8,
@@ -762,14 +828,14 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
             color: Colors.black54,
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.edit_outlined, color: Colors.white, size: 14),
-              SizedBox(width: 4),
+              const Icon(Icons.edit_outlined, color: Colors.white, size: 14),
+              const SizedBox(width: 4),
               Text(
-                'Change',
-                style: TextStyle(color: Colors.white, fontSize: 12),
+                l10n.acreateChange,
+                style: const TextStyle(color: Colors.white, fontSize: 12),
               ),
             ],
           ),
@@ -786,6 +852,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
     int maxLines = 1,
     String? Function(String?)? validator,
   }) {
+    final l10n = AppLocalizations.of(context);
     return TextFormField(
       controller: ctrl,
       keyboardType: keyboardType,
@@ -798,7 +865,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
       ),
       validator:
           validator ??
-          (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+          (v) => (v == null || v.trim().isEmpty) ? l10n.commonRequired : null,
     );
   }
 }

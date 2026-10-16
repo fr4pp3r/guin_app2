@@ -1,0 +1,172 @@
+{
+  "auregTitle": {
+    "en": "Registration Detail",
+    "fil": "Detalye ng Rehistrasyon",
+    "ceb": "Detalye sa Rehistrasyon"
+  },
+  "auregRegistrationApproved": {
+    "en": "Registration approved",
+    "fil": "Naaprubahan ang rehistrasyon",
+    "ceb": "Naaprobaran ang rehistrasyon"
+  },
+  "auregAwaitingReview": {
+    "en": "Awaiting review",
+    "fil": "Naghihintay ng pagsusuri",
+    "ceb": "Nagpaabot sa pagsusi"
+  },
+  "auregApprovedOn": {
+    "en": "Approved {date}",
+    "fil": "Naaprubahan noong {date}",
+    "ceb": "Naaprobaran niadtong {date}"
+  },
+  "@auregApprovedOn": {
+    "placeholders": {
+      "date": { "type": "String", "example": "Oct 5, 2026" }
+    }
+  },
+  "auregReviewedBy": {
+    "en": "· reviewed by {name}",
+    "fil": "· sinuri ni {name}",
+    "ceb": "· gisusi ni {name}"
+  },
+  "@auregReviewedBy": {
+    "placeholders": {
+      "name": { "type": "String", "example": "Juan Dela Cruz" }
+    }
+  },
+  "auregRejectionReason": {
+    "en": "Rejection reason",
+    "fil": "Dahilan ng pagtanggi",
+    "ceb": "Rason sa pagsalikway"
+  },
+  "auregReviewNotes": {
+    "en": "Review notes",
+    "fil": "Mga tala ng pagsusuri",
+    "ceb": "Mga nota sa pagsusi"
+  },
+  "auregPersonalDetails": {
+    "en": "Personal details",
+    "fil": "Personal na detalye",
+    "ceb": "Personal nga detalye"
+  },
+  "auregRegisteredLabel": {
+    "en": "Registered",
+    "fil": "Nakarehistro",
+    "ceb": "Narehistro"
+  },
+  "auregIdentityVerification": {
+    "en": "Identity verification",
+    "fil": "Beripikasyon ng pagkakakilanlan",
+    "ceb": "Beripikasyon sa pagkatao"
+  },
+  "auregIdTypeLabel": {
+    "en": "ID type",
+    "fil": "Uri ng ID",
+    "ceb": "Uri sa ID"
+  },
+  "auregIdNumberLabel": {
+    "en": "ID number",
+    "fil": "Numero ng ID",
+    "ceb": "Numero sa ID"
+  },
+  "auregNotProvided": {
+    "en": "Not provided",
+    "fil": "Hindi ibinigay",
+    "ceb": "Wala gihatag"
+  },
+  "auregIdIssuedLabel": {
+    "en": "ID issued",
+    "fil": "Petsa ng pag-isyu ng ID",
+    "ceb": "Petsa sa pag-issue sa ID"
+  },
+  "auregIdExpiresLabel": {
+    "en": "ID expires",
+    "fil": "Petsa ng pag-expire ng ID",
+    "ceb": "Petsa sa pag-expire sa ID"
+  },
+  "auregGovernmentId": {
+    "en": "Government ID",
+    "fil": "ID ng gobyerno",
+    "ceb": "ID sa gobyerno"
+  },
+  "auregLivenessCheck": {
+    "en": "Liveness check",
+    "fil": "Pagsusuri ng liveness",
+    "ceb": "Pagsusi sa liveness"
+  },
+  "auregVerified": {
+    "en": "Verified",
+    "fil": "Na-verify",
+    "ceb": "Na-verify"
+  },
+  "auregVerifiedOn": {
+    "en": "Verified on {date}",
+    "fil": "Na-verify noong {date}",
+    "ceb": "Na-verify niadtong {date}"
+  },
+  "@auregVerifiedOn": {
+    "placeholders": {
+      "date": { "type": "String", "example": "Oct 5, 2026" }
+    }
+  },
+  "auregNotCompleted": {
+    "en": "Not completed",
+    "fil": "Hindi natapos",
+    "ceb": "Wala mahuman"
+  },
+  "auregIndigentRegistration": {
+    "en": "Indigent registration",
+    "fil": "Rehistrasyon ng maralita",
+    "ceb": "Rehistrasyon sa kabus"
+  },
+  "auregIndigencyReasonLabel": {
+    "en": "Indigency reason",
+    "fil": "Dahilan ng kahirapan",
+    "ceb": "Rason sa kalisud"
+  },
+  "auregKycVerifiedLabel": {
+    "en": "KYC verified",
+    "fil": "Na-verify ang KYC",
+    "ceb": "Na-verify ang KYC"
+  },
+  "auregKycReviewedByLabel": {
+    "en": "KYC reviewed by",
+    "fil": "Sinuri ang KYC ni",
+    "ceb": "Gisusi ang KYC ni"
+  },
+  "auregKycRejectionReasonLabel": {
+    "en": "KYC rejection reason",
+    "fil": "Dahilan ng pagtanggi ng KYC",
+    "ceb": "Rason sa pagsalikway sa KYC"
+  },
+  "auregDocumentsPhotos": {
+    "en": "Documents & photos",
+    "fil": "Mga dokumento at larawan",
+    "ceb": "Mga dokumento ug litrato"
+  },
+  "auregTapPhotoHint": {
+    "en": "Tap any photo to open it full-screen and zoom in on the details.",
+    "fil": "I-tap ang anumang larawan upang buksan ito nang full-screen at i-zoom ang mga detalye.",
+    "ceb": "I-tap ang bisan unsang litrato aron ablihan kini og full-screen ug i-zoom ang mga detalye."
+  },
+  "auregStatusApproved": {
+    "en": "Approved",
+    "fil": "Naaprubahan",
+    "ceb": "Naaprobaran"
+  },
+  "auregStatusRejected": {
+    "en": "Rejected",
+    "fil": "Tinanggihan",
+    "ceb": "Gisalikway"
+  },
+  "auregStatusPendingReview": {
+    "en": "Pending review",
+    "fil": "Naghihintay ng pagsusuri",
+    "ceb": "Nagpaabot sa pagsusi"
+  },
+  "auregImageFailed": {
+    "en": "Image failed to load",
+    "fil": "Nabigo ang pag-load ng larawan",
+    "ceb": "Napakyas ang pag-load sa litrato"
+  }
+}

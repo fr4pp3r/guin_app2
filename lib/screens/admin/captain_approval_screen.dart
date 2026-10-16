@@ -13,6 +13,8 @@ import 'package:guin_app/providers/notification_provider.dart';
 import 'package:guin_app/screens/admin/document_request_detail_screen.dart';
 import 'package:guin_app/services/pdf_service.dart';
 import 'package:guin_app/services/user_service.dart';
+import 'package:guin_app/l10n/app_l10n.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/utils/role_access.dart';
@@ -39,11 +41,9 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
   // ── Approve + Release with e-signature ──────────────────────────────
 
   Future<void> _handleApprove(DocumentRequest request) async {
+    final l10n = AppLocalizations.of(context);
     if (kIsWeb) {
-      Helpers.showErrorSnackBar(
-        context,
-        'PDF generation is not available on web. Use mobile or desktop.',
-      );
+      Helpers.showErrorSnackBar(context, l10n.acapPdfWebUnavailable);
       return;
     }
 
@@ -51,7 +51,7 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
     //    BEFORE anything is generated. Dismissing the sheet aborts cleanly.
     final policy = await _showReleasePolicySheet();
     if (!mounted || policy == null) return;
-    final policyLine = 'Release policy: ${_describePolicy(policy)}';
+    final policyLine = l10n.acapReleasePolicyLine(_describePolicy(policy));
 
     final auth = context.read<AuthProvider>();
     final role = auth.userProfile!.role;
@@ -60,23 +60,18 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
     if (AppRoles.isKagawad(role)) {
       final ok = await Helpers.showConfirmDialog(
         context,
-        title: 'Kagawad Approval',
-        message:
-            'You are approving as Kagawad Representative.\n\n'
-            'This action is only allowed when the Captain is unavailable. '
-            'This will be logged.\n\n'
-            '$policyLine\n\nContinue?',
+        title: l10n.acapKagawadApproval,
+        message: l10n.acapKagawadApprovalMessage(policyLine),
       );
       if (!ok) return;
     } else {
       final ok = await Helpers.showConfirmDialog(
         context,
-        title: 'Approve & Sign',
-        message:
-            'Approve this ${request.documentTypeDisplay}?\n\n'
-            'Your digital signature will be applied and a final document '
-            'with QR verification will be released to the citizen.\n\n'
-            '$policyLine',
+        title: l10n.acapApproveAndSign,
+        message: l10n.acapApproveAndSignMessage(
+          request.documentTypeDisplay,
+          policyLine,
+        ),
       );
       if (!ok) return;
     }
@@ -85,7 +80,7 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
     final dp = context.read<DocumentProvider>();
     final bp = context.read<BarangayProvider>();
 
-    Helpers.showLoadingDialog(context, 'Generating final document...');
+    Helpers.showLoadingDialog(context, l10n.acapGeneratingFinalDocument);
 
     try {
       await bp.loadConfig();
@@ -280,16 +275,13 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
 
       if (!mounted) return;
       Helpers.dismissDialog(context);
-      Helpers.showSuccessSnackBar(
-        context,
-        'Document approved, signed & released with QR verification!',
-      );
+      Helpers.showSuccessSnackBar(context, l10n.acapApprovedSignedReleased);
     } catch (e) {
       if (!mounted) return;
       Helpers.dismissDialog(context);
       Helpers.showErrorSnackBar(
         context,
-        'Error: ${Helpers.parseSupabaseError(e.toString())}',
+        l10n.acapErrorFormatted(Helpers.parseSupabaseError(e.toString())),
       );
     }
   }
@@ -308,22 +300,23 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
   // ── Reject ──────────────────────────────────────────────────────────
 
   Future<void> _handleReject(DocumentRequest request) async {
+    final l10n = AppLocalizations.of(context);
     final reasonCtrl = TextEditingController();
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Reject Document'),
+        title: Text(l10n.acapRejectDocument),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Rejecting: ${request.documentTypeDisplay}'),
+            Text(l10n.acapRejectingDocument(request.documentTypeDisplay)),
             const SizedBox(height: 12),
             TextField(
               controller: reasonCtrl,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Reason for rejection',
-                hintText: 'Provide a reason...',
+              decoration: InputDecoration(
+                labelText: l10n.acapReasonForRejection,
+                hintText: l10n.commonProvideReason,
               ),
             ),
           ],
@@ -331,18 +324,18 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.commonCancel),
           ),
           ElevatedButton(
             onPressed: () {
               if (reasonCtrl.text.trim().isEmpty) {
-                Helpers.showErrorSnackBar(ctx, 'Please provide a reason');
+                Helpers.showErrorSnackBar(ctx, l10n.commonPleaseProvideReason);
                 return;
               }
               Navigator.pop(ctx, true);
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Reject'),
+            child: Text(l10n.commonReject),
           ),
         ],
       ),
@@ -351,7 +344,7 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
 
     final dp = context.read<DocumentProvider>();
     final auth = context.read<AuthProvider>();
-    Helpers.showLoadingDialog(context, 'Rejecting...');
+    Helpers.showLoadingDialog(context, l10n.acapRejecting);
     try {
       await dp.captainReject(
         requestId: request.id,
@@ -361,7 +354,7 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
       );
       if (!mounted) return;
       Helpers.dismissDialog(context);
-      Helpers.showSuccessSnackBar(context, 'Request rejected');
+      Helpers.showSuccessSnackBar(context, l10n.acapRequestRejected);
     } catch (e) {
       if (!mounted) return;
       Helpers.dismissDialog(context);
@@ -377,6 +370,7 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
   /// The decision buttons live only on the review page — the card just
   /// hands over its handlers, unchanged, as action descriptors.
   void _openRequestReview(DocumentRequest r) {
+    final l10n = AppLocalizations.of(context);
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -384,13 +378,13 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
           request: r,
           actions: [
             RequestAction(
-              label: 'Reject',
+              label: l10n.commonReject,
               icon: Icons.cancel_outlined,
               color: AppColors.error,
               onPressed: () => _handleReject(r),
             ),
             RequestAction(
-              label: 'Sign & Release',
+              label: l10n.acapSignAndRelease,
               icon: Icons.draw_outlined,
               color: const Color(0xFF0D47A1),
               filled: true,
@@ -406,6 +400,7 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final dp = context.watch<DocumentProvider>();
     final auth = context.watch<AuthProvider>();
     final roleLabel = AppRoles.displayName(auth.userProfile?.role ?? '');
@@ -450,16 +445,16 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '$roleLabel — Final Approval',
+                            l10n.acapTitle(roleLabel),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                          const Text(
-                            'Sign and release documents to citizens',
-                            style: TextStyle(
+                          Text(
+                            l10n.acapSubtitle,
+                            style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 12,
                             ),
@@ -498,9 +493,9 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              const Text(
-                                'No documents awaiting approval',
-                                style: TextStyle(
+                              Text(
+                                l10n.acapNoDocumentsAwaiting,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.grey,
@@ -525,6 +520,7 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
   }
 
   Widget _buildApprovalCard(DocumentRequest r) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       child: Material(
@@ -575,7 +571,9 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Requested ${Helpers.formatDate(r.requestedAt)}',
+                            l10n.acapRequestedAt(
+                              Helpers.formatDate(r.requestedAt),
+                            ),
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.grey,
@@ -593,9 +591,9 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
                         color: Colors.indigo.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text(
-                        'For Approval',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.acapForApproval,
+                        style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: Colors.indigo,
@@ -631,9 +629,9 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
                           ],
                         ),
                       ),
-                    const Text(
-                      'Purpose',
-                      style: TextStyle(
+                    Text(
+                      l10n.commonPurpose,
+                      style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: Colors.grey,
@@ -663,7 +661,10 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Payment: ₱${r.paymentAmount.toStringAsFixed(2)} — ${r.paymentStatus}',
+                            l10n.acapPaymentLine(
+                              r.paymentAmount.toStringAsFixed(2),
+                              r.paymentStatus,
+                            ),
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.green,
@@ -677,9 +678,9 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        const Text(
-                          'Review request',
-                          style: TextStyle(
+                        Text(
+                          l10n.acapReviewRequest,
+                          style: const TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF1976D2),
@@ -762,14 +763,15 @@ class _ReleasePolicy {
 /// One-line description of a policy — used in the confirmation dialog and as
 /// the live preview inside the policy sheet.
 String _describePolicy(_ReleasePolicy p) {
+  final l10n = AppL10n.current;
   final validity = p.noExpiry
-      ? 'No expiry'
-      : 'Valid for ${p.validFor?.inDays ?? 30} days';
+      ? l10n.acapPolicyNoExpiry
+      : l10n.acapPolicyValidForDays(p.validFor?.inDays ?? 30);
   final usage = p.singleUse
-      ? 'Single-use'
+      ? l10n.acapPolicySingleUse
       : p.maxUses == null
-      ? 'Multi-use (unlimited)'
-      : 'Multi-use (max ${p.maxUses} uses)';
+      ? l10n.acapPolicyMultiUseUnlimited
+      : l10n.acapPolicyMultiUseMax(p.maxUses!);
   return '$validity • $usage';
 }
 
@@ -787,12 +789,12 @@ class _ReleasePolicySheetState extends State<_ReleasePolicySheet> {
   static const Color _accent = Color(0xFF0D47A1);
 
   /// `(label, days)` — `days == null` is the "No expiry" option.
-  static const List<(String, int?)> _validityOptions = [
-    ('7 days', 7),
-    ('30 days', 30),
-    ('90 days', 90),
-    ('1 year (365 days)', 365),
-    ('No expiry', null),
+  static List<(String, int?)> _validityOptions(AppLocalizations l10n) => [
+    (l10n.acapValidityDays(7), 7),
+    (l10n.acapValidityDays(30), 30),
+    (l10n.acapValidityDays(90), 90),
+    (l10n.acapValidityOneYear, 365),
+    (l10n.acapPolicyNoExpiry, null),
   ];
 
   static const TextStyle _labelStyle = TextStyle(
@@ -852,6 +854,7 @@ class _ReleasePolicySheetState extends State<_ReleasePolicySheet> {
   }
 
   void _confirm() {
+    final l10n = AppLocalizations.of(context);
     int? maxUses;
     if (!_singleUse) {
       final raw = _maxUsesCtrl.text.trim();
@@ -861,7 +864,7 @@ class _ReleasePolicySheetState extends State<_ReleasePolicySheet> {
             : null;
         if (parsed == null || parsed < 1) {
           setState(() {
-            _maxUsesError = 'Enter a whole number of 1 or more, or leave blank';
+            _maxUsesError = l10n.acapMaxUsesError;
           });
           return;
         }
@@ -878,7 +881,7 @@ class _ReleasePolicySheetState extends State<_ReleasePolicySheet> {
       final parsed = int.tryParse(rawCustom);
       if (parsed == null || parsed <= 0) {
         setState(() {
-          _customDaysError = 'Enter a positive whole number';
+          _customDaysError = l10n.acapCustomDaysError;
         });
         return;
       }
@@ -937,6 +940,7 @@ class _ReleasePolicySheetState extends State<_ReleasePolicySheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final mediaQuery = MediaQuery.of(context);
     // Modal bottom sheets are not keyboard-aware on their own — lift the
     // content so the max-uses field and buttons stay visible.
@@ -988,21 +992,21 @@ class _ReleasePolicySheetState extends State<_ReleasePolicySheet> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Release Policy',
-                            style: TextStyle(
+                            l10n.acapReleasePolicyTitle,
+                            style: const TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text(
-                            'Set how the citizen can use this document.',
-                            style: TextStyle(
+                            l10n.acapReleasePolicySubtitle,
+                            style: const TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
                             ),
@@ -1015,7 +1019,7 @@ class _ReleasePolicySheetState extends State<_ReleasePolicySheet> {
                 const SizedBox(height: 20),
 
                 // Validity
-                _sectionLabel('VALIDITY'),
+                _sectionLabel(l10n.acapValiditySection),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(4),
@@ -1025,7 +1029,7 @@ class _ReleasePolicySheetState extends State<_ReleasePolicySheet> {
                   ),
                   child: Row(
                     children: [
-                      for (final (label, days) in _validityOptions)
+                      for (final (label, days) in _validityOptions(l10n))
                         _buildSegment(label, days),
                     ],
                   ),
@@ -1059,21 +1063,21 @@ class _ReleasePolicySheetState extends State<_ReleasePolicySheet> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Single-use',
-                              style: TextStyle(
+                              l10n.acapPolicySingleUse,
+                              style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
-                              'Only one claim allowed — no repeat uses.',
-                              style: TextStyle(
+                              l10n.acapSingleUseHelp,
+                              style: const TextStyle(
                                 fontSize: 11.5,
                                 color: AppColors.textSecondary,
                               ),
@@ -1098,7 +1102,7 @@ class _ReleasePolicySheetState extends State<_ReleasePolicySheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _sectionLabel('CUSTOM DAYS'),
+                      _sectionLabel(l10n.acapCustomDaysSection),
                       const SizedBox(height: 8),
                       TextField(
                         controller: _customDaysCtrl,
@@ -1106,9 +1110,9 @@ class _ReleasePolicySheetState extends State<_ReleasePolicySheet> {
                         onChanged: (_) =>
                             setState(() => _customDaysError = null),
                         decoration: InputDecoration(
-                          labelText: 'Custom days',
-                          hintText: 'Enter number of days',
-                          helperText: 'Positive whole number of days',
+                          labelText: l10n.acapCustomDaysLabel,
+                          hintText: l10n.acapCustomDaysHint,
+                          helperText: l10n.acapCustomDaysHelper,
                           errorText: _customDaysError,
                           filled: true,
                           fillColor: const Color(0xFFF5F7FA),
@@ -1168,7 +1172,7 @@ class _ReleasePolicySheetState extends State<_ReleasePolicySheet> {
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                        child: const Text('Cancel'),
+                        child: Text(l10n.commonCancel),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -1177,9 +1181,9 @@ class _ReleasePolicySheetState extends State<_ReleasePolicySheet> {
                       child: ElevatedButton.icon(
                         onPressed: _confirm,
                         icon: const Icon(Icons.check, size: 16),
-                        label: const Text(
-                          'Confirm Policy',
-                          style: TextStyle(fontWeight: FontWeight.w600),
+                        label: Text(
+                          l10n.acapConfirmPolicy,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _accent,
@@ -1210,13 +1214,14 @@ class _NotificationsBell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final unread = context.watch<NotificationProvider>().unreadCount;
     return Stack(
       alignment: Alignment.center,
       children: [
         IconButton(
           icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-          tooltip: 'Notifications',
+          tooltip: l10n.notificationsTitle,
           onPressed: () =>
               Navigator.pushNamed(context, AppRoutes.notifications),
         ),

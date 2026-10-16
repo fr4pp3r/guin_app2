@@ -9,6 +9,7 @@ import 'package:guin_app/providers/barangay_provider.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/utils/validators.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class AdminSettingsScreen extends StatefulWidget {
   const AdminSettingsScreen({super.key});
@@ -54,6 +55,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
 
   Future<void> _loadConfig() async {
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
     final barangayProvider = context.read<BarangayProvider>();
 
     try {
@@ -76,7 +78,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        Helpers.showErrorSnackBar(context, 'Failed to load configuration');
+        Helpers.showErrorSnackBar(context, l10n.asetLoadFailed);
       }
     }
   }
@@ -84,15 +86,16 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
   Future<void> _saveConfig() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final l10n = AppLocalizations.of(context);
     final barangayProvider = context.read<BarangayProvider>();
     final config = barangayProvider.config;
 
     if (config == null) {
-      Helpers.showErrorSnackBar(context, 'Configuration not loaded');
+      Helpers.showErrorSnackBar(context, l10n.asetConfigNotLoaded);
       return;
     }
 
-    Helpers.showLoadingDialog(context, 'Saving settings...');
+    Helpers.showLoadingDialog(context, l10n.asetSaving);
 
     try {
       await barangayProvider.updateConfig(
@@ -118,7 +121,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
 
       setState(() => _isEditing = false);
 
-      Helpers.showSuccessSnackBar(context, 'Settings updated successfully');
+      Helpers.showSuccessSnackBar(context, l10n.asetUpdated);
     } catch (e) {
       if (!mounted) return;
       Helpers.dismissDialog(context);
@@ -132,7 +135,8 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
   Future<void> _uploadLogo() async {
     if (!_isEditing) return;
 
-    Helpers.showLoadingDialog(context, 'Uploading logo...');
+    final l10n = AppLocalizations.of(context);
+    Helpers.showLoadingDialog(context, l10n.asetUploadingLogo);
 
     try {
       // Pick image file (returns List<PlatformFile> in newer versions)
@@ -153,13 +157,16 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
         if (fileBytes.isEmpty) {
           if (!mounted) return;
           Helpers.dismissDialog(context);
-          Helpers.showErrorSnackBar(context, 'Could not read file');
+          Helpers.showErrorSnackBar(context, l10n.asetCouldNotReadFile);
           return;
         }
       } else {
         if (!mounted) return;
         Helpers.dismissDialog(context);
-        Helpers.showErrorSnackBar(context, 'Could not read file: no path available');
+        Helpers.showErrorSnackBar(
+          context,
+          l10n.asetCouldNotReadFileNoPath,
+        );
         return;
       };
       final extension = file.extension ?? 'png';
@@ -189,13 +196,13 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
         _logoUrlController.text = publicUrl;
       });
 
-      Helpers.showSuccessSnackBar(context, 'Logo uploaded successfully');
+      Helpers.showSuccessSnackBar(context, l10n.asetLogoUploaded);
     } catch (e) {
       if (!mounted) return;
       Helpers.dismissDialog(context);
       Helpers.showErrorSnackBar(
         context,
-        'Upload failed: ${Helpers.parseSupabaseError(e.toString())}',
+        l10n.asetUploadFailed(Helpers.parseSupabaseError(e.toString())),
       );
     }
   }
@@ -211,6 +218,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: Column(
@@ -245,21 +253,21 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                       size: 22,
                     ),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Settings',
-                            style: TextStyle(
+                            l10n.asetTitle,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                           Text(
-                            'Configure barangay information',
-                            style: TextStyle(
+                            l10n.asetSubtitle,
+                            style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 12,
                             ),
@@ -273,7 +281,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                           Icons.edit_rounded,
                           color: Colors.white,
                         ),
-                        tooltip: 'Edit Settings',
+                        tooltip: l10n.asetEditSettingsTooltip,
                         onPressed: _toggleEdit,
                       ),
                   ],
@@ -293,7 +301,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                         children: [
                           // GCash Payment Section
                           _buildSectionHeader(
-                            'GCash Payment Information',
+                            l10n.asetGcashSection,
                             Icons.payment,
                             Colors.blue,
                           ),
@@ -318,7 +326,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                                     controller: _gcashNameController,
                                     enabled: _isEditing,
                                     decoration: InputDecoration(
-                                      labelText: 'GCash Account Name *',
+                                      labelText: l10n.asetGcashAccountName,
                                       hintText: 'Juan Dela Cruz',
                                       prefixIcon: const Icon(Icons.person),
                                       border: OutlineInputBorder(
@@ -328,7 +336,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                                     validator: (value) {
                                       if (value == null ||
                                           value.trim().isEmpty) {
-                                        return 'GCash name is required';
+                                        return l10n.asetGcashNameRequired;
                                       }
                                       return null;
                                     },
@@ -339,7 +347,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                                     enabled: _isEditing,
                                     keyboardType: TextInputType.phone,
                                     decoration: InputDecoration(
-                                      labelText: 'GCash Number *',
+                                      labelText: l10n.asetGcashNumber,
                                       hintText: '09171234567',
                                       prefixIcon: const Icon(Icons.phone),
                                       border: OutlineInputBorder(
@@ -349,12 +357,12 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                                     validator: (value) {
                                       if (value == null ||
                                           value.trim().isEmpty) {
-                                        return 'GCash number is required';
+                                        return l10n.asetGcashNumberRequired;
                                       }
                                       if (!RegExp(
                                         r'^09\d{9}$',
                                       ).hasMatch(value.trim())) {
-                                        return 'Invalid Philippine mobile number';
+                                        return l10n.asetInvalidPhMobile;
                                       }
                                       return null;
                                     },
@@ -368,7 +376,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
 
                           // Barangay Information Section
                           _buildSectionHeader(
-                            'Barangay Information',
+                            l10n.asetBarangaySection,
                             Icons.location_city,
                             Colors.green,
                           ),
@@ -393,7 +401,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                                     controller: _barangayNameController,
                                     enabled: _isEditing,
                                     decoration: InputDecoration(
-                                      labelText: 'Barangay Name *',
+                                      labelText: l10n.asetBarangayName,
                                       hintText: 'Barangay San Antonio',
                                       prefixIcon: const Icon(Icons.location_on),
                                       border: OutlineInputBorder(
@@ -403,7 +411,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                                     validator: (value) {
                                       if (value == null ||
                                           value.trim().isEmpty) {
-                                        return 'Barangay name is required';
+                                        return l10n.asetBarangayNameRequired;
                                       }
                                       return null;
                                     },
@@ -414,8 +422,8 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                                     enabled: _isEditing,
                                     maxLines: 2,
                                     decoration: InputDecoration(
-                                      labelText: 'Barangay Address *',
-                                      hintText: 'Complete address',
+                                      labelText: l10n.asetBarangayAddress,
+                                      hintText: l10n.asetCompleteAddressHint,
                                       prefixIcon: const Icon(Icons.home),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(8),
@@ -424,7 +432,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                                     validator: (value) {
                                       if (value == null ||
                                           value.trim().isEmpty) {
-                                        return 'Barangay address is required';
+                                        return l10n.asetBarangayAddressRequired;
                                       }
                                       return null;
                                     },
@@ -434,8 +442,8 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                                     controller: _barangayCaptainController,
                                     enabled: _isEditing,
                                     decoration: InputDecoration(
-                                      labelText: 'Barangay Captain',
-                                      hintText: 'Optional',
+                                      labelText: l10n.asetBarangayCaptain,
+                                      hintText: l10n.commonOptional,
                                       prefixIcon: const Icon(
                                         Icons.person_outline,
                                       ),
@@ -450,8 +458,8 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                                     enabled: _isEditing,
                                     keyboardType: TextInputType.phone,
                                     decoration: InputDecoration(
-                                      labelText: 'Contact Number',
-                                      hintText: 'Optional',
+                                      labelText: l10n.asetContactNumber,
+                                      hintText: l10n.commonOptional,
                                       prefixIcon: const Icon(
                                         Icons.phone_outlined,
                                       ),
@@ -470,7 +478,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                                           enabled: _isEditing,
                                           keyboardType: TextInputType.url,
                                           decoration: InputDecoration(
-                                            labelText: 'Barangay Logo URL',
+                                            labelText: l10n.asetBarangayLogoUrl,
                                             hintText: 'https://example.com/logo.png',
                                             prefixIcon: const Icon(Icons.image_outlined),
                                             border: OutlineInputBorder(
@@ -484,7 +492,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                                         OutlinedButton.icon(
                                           onPressed: _uploadLogo,
                                           icon: const Icon(Icons.cloud_upload_outlined, size: 18),
-                                          label: const Text('Upload'),
+                                          label: Text(l10n.commonUpload),
                                           style: OutlinedButton.styleFrom(
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 16,
@@ -500,8 +508,8 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                                     enabled: _isEditing,
                                     keyboardType: TextInputType.emailAddress,
                                     decoration: InputDecoration(
-                                      labelText: 'Email Address',
-                                      hintText: 'Optional',
+                                      labelText: l10n.asetEmailAddress,
+                                      hintText: l10n.commonOptional,
                                       prefixIcon: const Icon(
                                         Icons.email_outlined,
                                       ),
@@ -542,7 +550,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
-                                    child: const Text('Cancel'),
+                                    child: Text(l10n.commonCancel),
                                   ),
                                 ),
                                 const SizedBox(width: AppSizes.paddingM),
@@ -580,9 +588,9 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                                           ),
                                         ),
                                       ),
-                                      child: const Text(
-                                        'Save Changes',
-                                        style: TextStyle(
+                                      child: Text(
+                                        l10n.commonSaveChanges,
+                                        style: const TextStyle(
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),

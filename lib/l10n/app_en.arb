@@ -337,7 +337,7 @@
   "@citizenPayAmountPrompt": {
     "placeholders": {
       "amount": {
-        "type": "num",
+        "type": "String",
         "example": "25.00"
       }
     }
@@ -839,7 +839,7 @@
   "@acapPaymentLine": {
     "placeholders": {
       "amount": {
-        "type": "num",
+        "type": "String",
         "example": "25.00"
       },
       "status": {
@@ -1230,7 +1230,7 @@
   "@asecVerifyPaidMessage": {
     "placeholders": {
       "amount": {
-        "type": "num",
+        "type": "String",
         "example": "25.00"
       }
     }
@@ -1275,7 +1275,7 @@
   "@atreasAmountLabel": {
     "placeholders": {
       "amount": {
-        "type": "num",
+        "type": "String",
         "example": "25.00"
       }
     }
@@ -1287,7 +1287,7 @@
   "@atreasConfirmPaymentMessage": {
     "placeholders": {
       "amount": {
-        "type": "num",
+        "type": "String",
         "example": "25.00"
       }
     }
@@ -1660,5 +1660,141 @@
         "example": "3"
       }
     }
-  }
+  },
+  "acapReviewRequest": "Review request",
+  "adashAnnouncements": "Announcements",
+  "adocdetApprovedBy": "Approved by",
+  "adocdetApprovedOn": "Approved on",
+  "adocdetApprovedResident": "Approved resident",
+  "adocdetDetailsComplete": "The request details below are still complete.",
+  "adocdetDraftDocument": "Draft document",
+  "adocdetDraftGenerated": "Generated — available for review",
+  "adocdetImageFailed": "Image failed to load",
+  "adocdetInvoiceDescription": "Invoice description",
+  "adocdetInvoiceDueDate": "Invoice due date",
+  "adocdetMethod": "Method",
+  "adocdetNoAdditionalDetails": "No additional details were provided with this request.",
+  "adocdetPayment": "Payment",
+  "adocdetPaymentReceipt": "Payment receipt",
+  "adocdetPaymentStatus": "Payment {status}",
+  "@adocdetPaymentStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String",
+        "example": "Verified"
+      }
+    }
+  },
+  "adocdetPaymentStatusLabel": "Payment status",
+  "adocdetProfileUnavailable": "Requestor profile unavailable",
+  "adocdetReceiptUnavailable": "Receipt image unavailable",
+  "adocdetReferenceNumber": "Reference number",
+  "adocdetRegistrationPending": "Registration pending",
+  "adocdetRejectedResident": "Rejected resident",
+  "adocdetReleaseMethod": "Release method",
+  "adocdetReleasedOn": "Released on",
+  "adocdetRequestDetails": "Request details",
+  "adocdetRequestedBy": "Requested by {name}",
+  "@adocdetRequestedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Juan Dela Cruz"
+      }
+    }
+  },
+  "adocdetRequestor": "Requestor",
+  "adocdetSecretaryNotes": "Secretary notes",
+  "adocdetSubmittedDetails": "Submitted details",
+  "adocdetTapToZoom": "Tap to open full-screen and zoom in.",
+  "adocdetTitle": "Request Review",
+  "adocdetVerified": "Verified",
+  "adocdetWorkflowTrail": "Workflow trail",
+  "annBodyHint": "Write the announcement for residents…",
+  "annBodyLabel": "Body *",
+  "annCreateTitle": "New Announcement",
+  "annDeleteConfirmBody": "This announcement will be permanently removed for everyone. This cannot be undone.",
+  "annDeleteTitle": "Delete announcement",
+  "annDetailTitle": "Announcement",
+  "annFeedEmptyBody": "Announcements from barangay officials will appear here.",
+  "annFeedEmptyTitle": "No announcements yet",
+  "annFeedTitle": "Announcements",
+  "annLoadError": "Couldn't load announcements",
+  "annNew": "New announcement",
+  "annPinToTop": "Pin to top",
+  "annPinToTopBody": "Pinned announcements stay at the top of the feed.",
+  "annPinned": "Pinned",
+  "annPost": "Post",
+  "annPosted": "Announcement posted",
+  "annPostedBy": "Posted by {name}",
+  "@annPostedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "annReadyToPost": "Ready to post — everyone will see it.",
+  "annTitleBodyRequired": "Title and body are required to post.",
+  "annTitleHint": "e.g. Barangay assembly this Saturday",
+  "annTitleLabel": "Title *",
+  "areqViewEReceipt": "View E-Receipt",
+  "asecReviewRequest": "Review request",
+  "asetEmailAddress": "Email Address",
+  "auregApprovedOn": "Approved {date}",
+  "@auregApprovedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Oct 5, 2026"
+      }
+    }
+  },
+  "auregAwaitingReview": "Awaiting review",
+  "auregDocumentsPhotos": "Documents & photos",
+  "auregGovernmentId": "Government ID",
+  "auregIdExpiresLabel": "ID expires",
+  "auregIdIssuedLabel": "ID issued",
+  "auregIdNumberLabel": "ID number",
+  "auregIdTypeLabel": "ID type",
+  "auregIdentityVerification": "Identity verification",
+  "auregImageFailed": "Image failed to load",
+  "auregIndigencyReasonLabel": "Indigency reason",
+  "auregIndigentRegistration": "Indigent registration",
+  "auregKycRejectionReasonLabel": "KYC rejection reason",
+  "auregKycReviewedByLabel": "KYC reviewed by",
+  "auregKycVerifiedLabel": "KYC verified",
+  "auregLivenessCheck": "Liveness check",
+  "auregNotCompleted": "Not completed",
+  "auregNotProvided": "Not provided",
+  "auregPersonalDetails": "Personal details",
+  "auregRegisteredLabel": "Registered",
+  "auregRegistrationApproved": "Registration approved",
+  "auregRejectionReason": "Rejection reason",
+  "auregReviewNotes": "Review notes",
+  "auregReviewedBy": "· reviewed by {name}",
+  "@auregReviewedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Juan Dela Cruz"
+      }
+    }
+  },
+  "auregStatusApproved": "Approved",
+  "auregStatusPendingReview": "Pending review",
+  "auregStatusRejected": "Rejected",
+  "auregTapPhotoHint": "Tap any photo to open it full-screen and zoom in on the details.",
+  "auregTitle": "Registration Detail",
+  "auregVerified": "Verified",
+  "auregVerifiedOn": "Verified on {date}",
+  "@auregVerifiedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Oct 5, 2026"
+      }
+    }
+  },
+  "auserReviewRegistration": "Review registration"
 }

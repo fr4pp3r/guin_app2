@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/models/announcement.dart';
 import 'package:guin_app/providers/announcement_provider.dart';
 import 'package:guin_app/providers/auth_provider.dart';
@@ -26,13 +27,12 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
   bool _deleting = false;
 
   Future<void> _delete() async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await Helpers.showConfirmDialog(
       context,
-      title: 'Delete announcement',
-      message:
-          'This announcement will be permanently removed for everyone. '
-          'This cannot be undone.',
-      confirmText: 'Delete',
+      title: l10n.annDeleteTitle,
+      message: l10n.annDeleteConfirmBody,
+      confirmText: l10n.commonDelete,
     );
     if (!confirmed || !mounted || _deleting) return;
     setState(() => _deleting = true);
@@ -53,6 +53,7 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final role = context.watch<AuthProvider>().userProfile?.role ?? '';
     final canDelete = AppRoles.canPostAnnouncements(role);
     final announcement = widget.announcement;
@@ -61,9 +62,9 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
-        title: const Text(
-          'Announcement',
-          style: TextStyle(fontWeight: FontWeight.w600),
+        title: Text(
+          l10n.annDetailTitle,
+          style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -87,7 +88,7 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                       ),
                     )
                   : const Icon(Icons.delete_outline),
-              tooltip: 'Delete announcement',
+              tooltip: l10n.annDeleteTitle,
               onPressed: _deleting ? null : _delete,
             ),
         ],
@@ -121,18 +122,18 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                           color: AppColors.primary.withValues(alpha: 0.30),
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.push_pin,
                             size: 12,
                             color: AppColors.primary,
                           ),
-                          SizedBox(width: 5),
+                          const SizedBox(width: 5),
                           Text(
-                            'Pinned',
-                            style: TextStyle(
+                            l10n.annPinned,
+                            style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: AppColors.primary,
@@ -172,7 +173,7 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Posted by ${announcement.createdByName}',
+                              l10n.annPostedBy(announcement.createdByName),
                               style: const TextStyle(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w600,

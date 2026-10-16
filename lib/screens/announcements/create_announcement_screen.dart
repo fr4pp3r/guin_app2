@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/providers/announcement_provider.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
@@ -72,13 +73,14 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
-        title: const Text(
-          'New Announcement',
-          style: TextStyle(fontWeight: FontWeight.w600),
+        title: Text(
+          l10n.annCreateTitle,
+          style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -107,9 +109,9 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text(
-                      'Post',
-                      style: TextStyle(
+                  : Text(
+                      l10n.annPost,
+                      style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                       ),
@@ -134,9 +136,9 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Title *',
-                    style: TextStyle(
+                  Text(
+                    l10n.annTitleLabel,
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textSecondary,
@@ -150,16 +152,16 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
                     maxLength: 120,
                     decoration: InputDecoration(
                       counterText: '',
-                      hintText: 'e.g. Barangay assembly this Saturday',
+                      hintText: l10n.annTitleHint,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Body *',
-                    style: TextStyle(
+                  Text(
+                    l10n.annBodyLabel,
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textSecondary,
@@ -173,7 +175,7 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
                     maxLines: 8,
                     keyboardType: TextInputType.multiline,
                     decoration: InputDecoration(
-                      hintText: 'Write the announcement for residents…',
+                      hintText: l10n.annBodyHint,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -187,21 +189,21 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
                         onChanged: (value) => setState(() => _pinned = value),
                       ),
                       const SizedBox(width: 6),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Pin to top',
-                              style: TextStyle(
+                              l10n.annPinToTop,
+                              style: const TextStyle(
                                 fontSize: 14.5,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
-                              'Pinned announcements stay at the top of the feed.',
-                              style: TextStyle(
+                              l10n.annPinToTopBody,
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
                               ),
@@ -218,8 +220,8 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
           const SizedBox(height: 14),
           Text(
             _canSubmit
-                ? 'Ready to post — everyone will see it.'
-                : 'Title and body are required to post.',
+                ? l10n.annReadyToPost
+                : l10n.annTitleBodyRequired,
             style: TextStyle(
               fontSize: 12,
               fontStyle: FontStyle.italic,

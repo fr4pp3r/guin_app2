@@ -120,15 +120,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error loading statistics: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).adashLoadStatsError('$e'),
+            ),
+          ),
+        );
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final authProvider = context.watch<AuthProvider>();
     final userProfile = authProvider.userProfile;
     final role = userProfile?.role ?? '';
@@ -163,7 +168,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       appBar: AppBar(
         elevation: 0,
         title: Text(
-          '${AppRoles.displayName(userProfile?.role ?? 'admin')} Dashboard',
+          l10n.adashTitle(AppRoles.displayName(userProfile?.role ?? 'admin')),
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         flexibleSpace: Container(
@@ -182,7 +187,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               IconButton(
                 icon: const Icon(Icons.notifications_outlined),
-                tooltip: 'Notifications',
+                tooltip: l10n.notificationsTitle,
                 onPressed: () =>
                     Navigator.of(context).pushNamed(AppRoutes.notifications),
               ),
@@ -215,12 +220,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.person_outline_rounded),
-            tooltip: 'My Profile',
+            tooltip: l10n.profileMyProfile,
             onPressed: () => Navigator.of(context).pushNamed('/admin/profile'),
           ),
           IconButton(
             icon: const Icon(Icons.logout_rounded),
-            tooltip: 'Logout',
+            tooltip: l10n.commonLogout,
             onPressed: () async {
               final confirm = await showDialog<bool>(
                 context: context,
@@ -228,18 +233,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  title: const Row(
+                  title: Row(
                     children: [
-                      Icon(Icons.logout, color: Colors.orange),
-                      SizedBox(width: 12),
-                      Text('Confirm Logout'),
+                      const Icon(Icons.logout, color: Colors.orange),
+                      const SizedBox(width: 12),
+                      Text(l10n.adashConfirmLogoutTitle),
                     ],
                   ),
-                  content: const Text('Are you sure you want to logout?'),
+                  content: Text(l10n.adashConfirmLogoutMessage),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel'),
+                      child: Text(l10n.commonCancel),
                     ),
                     ElevatedButton(
                       onPressed: () => Navigator.pop(context, true),
@@ -249,7 +254,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text('Logout'),
+                      child: Text(l10n.commonLogout),
                     ),
                   ],
                 ),
@@ -311,9 +316,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Welcome Back!',
-                                style: TextStyle(
+                              Text(
+                                l10n.adashWelcomeBack,
+                                style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white,
@@ -321,7 +326,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                userProfile?.fullName ?? 'Admin',
+                                userProfile?.fullName ?? l10n.adashFallbackAdmin,
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: Colors.white.withValues(alpha: 0.9),
@@ -355,9 +360,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Text(
-                    'User Management',
-                    style: TextStyle(
+                  Text(
+                    l10n.adashUserManagement,
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5,
@@ -370,7 +375,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               children: [
                 Expanded(
                   child: _buildStatCard(
-                    'Pending Users',
+                    l10n.adashStatPendingUsers,
                     _userStats?['pending_users']?.toString() ?? '0',
                     Icons.person_add,
                     Colors.orange,
@@ -381,7 +386,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatCard(
-                    'Total Users',
+                    l10n.adashStatTotalUsers,
                     _userStats?['total_users']?.toString() ?? '0',
                     Icons.people,
                     Colors.blue,
@@ -408,9 +413,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Text(
-                    'Document Requests',
-                    style: TextStyle(
+                  Text(
+                    l10n.adashDocumentRequests,
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5,
@@ -427,7 +432,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   if (canVerifyPayments)
                     Expanded(
                       child: _buildStatCard(
-                        'Pending Payments',
+                        l10n.adashStatPendingPayments,
                         _documentStats?['pending_payment']?.toString() ?? '0',
                         Icons.payment,
                         Colors.purple,
@@ -443,7 +448,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   if (canReviewDocuments || canReleaseDocuments)
                     Expanded(
                       child: _buildStatCard(
-                        'Pending Reviews',
+                        l10n.adashStatPendingReviews,
                         _documentStats?['pending_review']?.toString() ?? '0',
                         Icons.rate_review,
                         Colors.indigo,
@@ -460,7 +465,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 children: [
                   Expanded(
                     child: _buildStatCard(
-                      'Approved',
+                      l10n.adashStatApproved,
                       _documentStats?['approved']?.toString() ?? '0',
                       Icons.check_circle,
                       Colors.green,
@@ -470,7 +475,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildStatCard(
-                      'Rejected',
+                      l10n.adashStatRejected,
                       _documentStats?['rejected']?.toString() ?? '0',
                       Icons.cancel,
                       Colors.red,
@@ -498,9 +503,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Text(
-                    'Quick Actions',
-                    style: TextStyle(
+                  Text(
+                    l10n.adashQuickActions,
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5,
@@ -513,7 +518,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 canReleaseDocuments ||
                 canVerifyPayments) ...[
               _buildActionButton(
-                'View All Requests',
+                l10n.adashViewAllRequests,
                 Icons.list_alt,
                 () => Navigator.of(context).pushNamed('/admin/all-requests'),
               ),
@@ -521,7 +526,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ],
             if (canManageUsers) ...[
               _buildActionButton(
-                'Manage Users',
+                l10n.adashManageUsers,
                 Icons.people,
                 () => Navigator.of(context).pushNamed('/admin/pending-users'),
                 badgeCount: userProvider.pendingUsers.length,
@@ -530,19 +535,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ],
             if (canManageSettings) ...[
               _buildActionButton(
-                'Barangay Settings',
+                l10n.adashBarangaySettings,
                 Icons.settings,
                 () => Navigator.of(context).pushNamed('/admin/settings'),
               ),
               const SizedBox(height: 8),
               _buildActionButton(
-                'Manage Document Fees',
+                l10n.adashManageDocumentFees,
                 Icons.money,
                 () => Navigator.of(context).pushNamed('/admin/document-fees'),
               ),
               const SizedBox(height: 8),
               _buildActionButton(
-                'View Document Formats',
+                l10n.adashViewDocumentFormats,
                 Icons.preview,
                 () =>
                     Navigator.of(context).pushNamed('/admin/document-formats'),
@@ -551,7 +556,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ],
             if (canApproveDocuments) ...[
               _buildActionButton(
-                'Captain Approval Queue',
+                l10n.adashCaptainApprovalQueue,
                 Icons.approval_outlined,
                 () =>
                     Navigator.of(context).pushNamed(AppRoutes.captainApproval),
@@ -561,7 +566,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ],
             if (canManageReports) ...[
               _buildActionButton(
-                'Incident Reports',
+                l10n.adashIncidentReports,
                 Icons.report,
                 () =>
                     Navigator.of(context).pushNamed(AppRoutes.incidentReports),
@@ -572,7 +577,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             // Announcements — every official can read; the create FAB inside
             // the feed handles posting rights, so no role gate here.
             _buildActionButton(
-              'Announcements',
+              l10n.adashAnnouncements,
               Icons.campaign_outlined,
               () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const AnnouncementsScreen()),
@@ -580,7 +585,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
             const SizedBox(height: 8),
             _buildActionButton(
-              'Verify Document',
+              l10n.adashVerifyDocument,
               Icons.qr_code_scanner,
               () => Navigator.of(context).pushNamed(AppRoutes.verifyDocument),
             ),

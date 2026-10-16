@@ -8,6 +8,8 @@ import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/utils/role_access.dart';
 import 'package:guin_app/screens/admin/create_user_screen.dart';
 import 'package:guin_app/screens/admin/user_registration_detail_screen.dart';
+import 'package:guin_app/l10n/app_l10n.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class ManageUsersScreen extends StatefulWidget {
   const ManageUsersScreen({super.key});
@@ -60,6 +62,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
   // ── All users actions ───────────────────────────────────────────────────
 
   Future<void> _handleChangeRole(UserProfile user) async {
+    final l10n = AppLocalizations.of(context);
     String selectedRole = user.role;
     final roles = [
       'citizen',
@@ -75,7 +78,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setS) => AlertDialog(
-          title: const Text('Change Role'),
+          title: Text(l10n.auserChangeRole),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,7 +90,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: selectedRole,
-                decoration: const InputDecoration(labelText: 'Role'),
+                decoration: InputDecoration(labelText: l10n.commonRole),
                 items: roles
                     .map(
                       (r) => DropdownMenuItem(
@@ -103,11 +106,11 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
+              child: Text(l10n.commonCancel),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Update'),
+              child: Text(l10n.commonUpdate),
             ),
           ],
         ),
@@ -115,7 +118,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
     );
 
     if (confirm != true || !mounted) return;
-    Helpers.showLoadingDialog(context, 'Updating role...');
+    Helpers.showLoadingDialog(context, l10n.auserUpdatingRole);
     final userProvider = context.read<UserProvider>();
     final ok = await userProvider.updateUserRole(user.id, selectedRole);
     if (!mounted) return;
@@ -123,7 +126,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
     if (ok) {
       Helpers.showSuccessSnackBar(
         context,
-        'Role updated to ${AppRoles.displayName(selectedRole)}',
+        l10n.auserRoleUpdated(AppRoles.displayName(selectedRole)),
       );
     } else {
       Helpers.showErrorSnackBar(
@@ -134,25 +137,26 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
   }
 
   Future<void> _handleDeleteUser(UserProfile user) async {
+    final l10n = AppLocalizations.of(context);
     final myId = context.read<AuthProvider>().userProfile?.id;
     if (user.id == myId) {
-      Helpers.showErrorSnackBar(context, 'You cannot delete your own account');
+      Helpers.showErrorSnackBar(context, l10n.auserCannotDeleteSelf);
       return;
     }
     final confirm = await Helpers.showConfirmDialog(
       context,
-      title: 'Delete User',
-      message: 'Permanently delete ${user.fullName}? This cannot be undone.',
+      title: l10n.auserDeleteUserTitle,
+      message: l10n.auserDeleteConfirm(user.fullName),
     );
     if (!confirm || !mounted) return;
 
-    Helpers.showLoadingDialog(context, 'Deleting...');
+    Helpers.showLoadingDialog(context, l10n.auserDeleting);
     final userProvider = context.read<UserProvider>();
     final ok = await userProvider.deleteUser(user.id);
     if (!mounted) return;
     Helpers.dismissDialog(context);
     if (ok) {
-      Helpers.showSuccessSnackBar(context, 'User deleted');
+      Helpers.showSuccessSnackBar(context, l10n.auserUserDeleted);
     } else {
       Helpers.showErrorSnackBar(
         context,
@@ -178,15 +182,16 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final userProvider = context.watch<UserProvider>();
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
-        title: const Text(
-          'Manage Users',
-          style: TextStyle(fontWeight: FontWeight.w600),
+        title: Text(
+          l10n.auserTitle,
+          style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -204,11 +209,11 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
           unselectedLabelColor: Colors.white70,
           tabs: [
             Tab(
-              text: 'Pending (${userProvider.pendingUsers.length})',
+              text: l10n.auserTabPending(userProvider.pendingUsers.length),
               icon: const Icon(Icons.hourglass_empty, size: 18),
             ),
             Tab(
-              text: 'All Users (${userProvider.allUsers.length})',
+              text: l10n.auserTabAllUsers(userProvider.allUsers.length),
               icon: const Icon(Icons.people, size: 18),
             ),
           ],
@@ -217,7 +222,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openCreateUserScreen,
         icon: const Icon(Icons.person_add),
-        label: const Text('Create User'),
+        label: Text(l10n.auserCreateUser),
         backgroundColor: const Color(0xFF1976D2),
         foregroundColor: Colors.white,
       ),
@@ -234,13 +239,14 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
   // ── Pending tab ─────────────────────────────────────────────────────────
 
   Widget _buildPendingTab(UserProvider userProvider) {
+    final l10n = AppLocalizations.of(context);
     return RefreshIndicator(
       onRefresh: () => userProvider.loadPendingUsers(),
       child: userProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
           : userProvider.pendingUsers.isEmpty
           ? _emptyState(
-              'No pending registrations',
+              l10n.auserNoPendingRegistrations,
               Icons.check_circle_outline,
               Colors.green,
             )
@@ -254,6 +260,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
   }
 
   Widget _buildPendingCard(UserProfile user) {
+    final l10n = AppLocalizations.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
@@ -317,13 +324,16 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
               const Divider(height: 20),
               _infoRow(Icons.location_on, user.address),
               const SizedBox(height: 4),
-              _infoRow(Icons.cake, '${user.age} years old · ${user.gender}'),
+              _infoRow(
+                Icons.cake,
+                l10n.auserAgeGenderInfo(user.age, user.gender),
+              ),
               const SizedBox(height: 4),
               _infoRow(Icons.phone, user.phoneNumber),
               const SizedBox(height: 4),
               _infoRow(
                 Icons.access_time,
-                'Registered: ${Helpers.formatDate(user.createdAt)}',
+                l10n.auserRegisteredAt(Helpers.formatDate(user.createdAt)),
               ),
               // ID info
               if (user.kycIdType != null) ...[
@@ -337,14 +347,14 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                 const SizedBox(height: 4),
                 _infoRow(
                   Icons.event_available,
-                  'ID issued: ${Helpers.formatDate(user.idIssuedAt!)}',
+                  l10n.auserIdIssuedAt(Helpers.formatDate(user.idIssuedAt!)),
                 ),
               ],
               if (user.idExpiryAt != null) ...[
                 const SizedBox(height: 4),
                 _infoRow(
                   Icons.event_busy,
-                  'ID expires: ${Helpers.formatDate(user.idExpiryAt!)}',
+                  l10n.auserIdExpiresAt(Helpers.formatDate(user.idExpiryAt!)),
                 ),
               ],
               // Liveness info
@@ -352,7 +362,11 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                 const SizedBox(height: 4),
                 _infoRow(
                   Icons.face_retouching_natural,
-                  'Liveness verified${user.livenessVerifiedAt != null ? " on ${Helpers.formatDate(user.livenessVerifiedAt!)}" : ""}',
+                  user.livenessVerifiedAt != null
+                      ? l10n.auserLivenessVerifiedOn(
+                          Helpers.formatDate(user.livenessVerifiedAt!),
+                        )
+                      : l10n.auserLivenessVerified,
                 ),
               ],
               // Indigent info
@@ -361,7 +375,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                 const SizedBox(height: 4),
                 _infoRow(
                   Icons.speaker_notes_outlined,
-                  'Indigency reason: ${user.indigencyReason}',
+                  l10n.auserIndigencyReason(user.indigencyReason!),
                 ),
               ],
               const SizedBox(height: 12),
@@ -374,9 +388,9 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  const Text(
-                    'Review registration',
-                    style: TextStyle(
+                  Text(
+                    l10n.auserReviewRegistration,
+                    style: const TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF1976D2),
@@ -402,22 +416,23 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
   ({String label, Color color, IconData icon})? _kycBadgeData(
     UserProfile user,
   ) {
+    final l10n = AppLocalizations.of(context);
     switch (user.kycMethod) {
       case 'ai_verified':
         return (
-          label: 'AI pre-checked',
+          label: l10n.auserKycAiPrechecked,
           color: const Color(0xFF1976D2),
           icon: Icons.auto_awesome,
         );
       case 'indigent_bypass':
         return (
-          label: 'Indigent — guarantor verification required',
+          label: l10n.auserKycIndigentBypass,
           color: Colors.orange[800]!,
           icon: Icons.priority_high,
         );
       case 'guarantor_verified':
         return (
-          label: 'Guarantor-backed',
+          label: l10n.auserKycGuarantorBacked,
           color: Colors.teal[700]!,
           icon: Icons.verified_user,
         );
@@ -457,15 +472,23 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
   /// Compact side-by-side thumbnails so the reviewer can compare the profile
   /// photo against the uploaded ID (front + back).
   Widget _kycPhotoRow(UserProfile user) {
+    final l10n = AppLocalizations.of(context);
     final idLabel = user.isIndigent ? 'Certificate of Indigency' : 'ID';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Expanded(child: _kycThumb(user.profilePhotoUrl, 'Profile photo')),
+            Expanded(
+              child: _kycThumb(user.profilePhotoUrl, l10n.commonProfilePhoto),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: _kycThumb(user.validIdUrl, '$idLabel — front')),
+            Expanded(
+              child: _kycThumb(
+                user.validIdUrl,
+                l10n.auserKycPhotoFront(idLabel),
+              ),
+            ),
           ],
         ),
         if (user.validIdBackUrl != null) ...[
@@ -473,7 +496,10 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
           Row(
             children: [
               Expanded(
-                child: _kycThumb(user.validIdBackUrl, '$idLabel — back'),
+                child: _kycThumb(
+                  user.validIdBackUrl,
+                  l10n.auserKycPhotoBack(idLabel),
+                ),
               ),
             ],
           ),
@@ -519,6 +545,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
   /// Collapsible, read-only summary of the stored AI pre-check. Keeps the
   /// card scannable while giving the reviewer the machine's reasoning.
   Widget _kycAiSummary(Map<String, dynamic> kyc) {
+    final l10n = AppLocalizations.of(context);
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: Material(
@@ -534,16 +561,16 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
             size: 16,
             color: Color(0xFF1976D2),
           ),
-          title: const Text(
-            'AI advisory summary',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          title: Text(
+            l10n.auserAiAdvisorySummary,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
           children: [
             ..._kycSummaryRows(kyc),
             const SizedBox(height: 4),
-            const Text(
-              'AI-assisted advisory — final review by the barangay.',
-              style: TextStyle(
+            Text(
+              l10n.auserAiAdvisoryNote,
+              style: const TextStyle(
                 fontSize: 10.5,
                 fontStyle: FontStyle.italic,
                 color: AppColors.textSecondary,
@@ -556,6 +583,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
   }
 
   List<Widget> _kycSummaryRows(Map<String, dynamic> kyc) {
+    final l10n = AppLocalizations.of(context);
     final rows = <Widget>[];
     void addRow(String label, String value) {
       rows.add(
@@ -589,28 +617,28 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
       'idAuthenticity',
     ]);
     if (idAuthenticity != null) {
-      addRow('ID authenticity', _idAuthenticityLabel(idAuthenticity));
+      addRow(l10n.auserKycIdAuthenticity, _idAuthenticityLabel(idAuthenticity));
     }
 
     // ID type guess/match
     final idTypeGuess = _kycString(kyc, ['id_type_guess', 'idTypeGuess']);
     final idTypeMatch = _kycString(kyc, ['id_type_match', 'idTypeMatch']);
     if (idTypeGuess != null) {
-      addRow('ID type detected', _idTypeGuessLabel(idTypeGuess));
+      addRow(l10n.auserKycIdTypeDetected, _idTypeGuessLabel(idTypeGuess));
     }
     if (idTypeMatch != null) {
       addRow(
-        'Type match',
+        l10n.auserKycTypeMatch,
         idTypeMatch == 'true'
-            ? 'Matches declared type'
-            : 'Does not match declared type',
+            ? l10n.auserKycMatchesDeclared
+            : l10n.auserKycDoesNotMatchDeclared,
       );
     }
 
     // Selfie quality
     final selfieQuality = _kycString(kyc, ['selfie_quality', 'selfieQuality']);
     if (selfieQuality != null) {
-      addRow('Selfie quality', _selfieQualityLabel(selfieQuality));
+      addRow(l10n.auserKycSelfieQuality, _selfieQualityLabel(selfieQuality));
     }
 
     // Liveness spoof signal
@@ -619,7 +647,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
         ? _kycString(liveness, ['spoof_signal', 'spoofSignal'])
         : _kycString(kyc, ['liveness_spoof_signal']);
     if (spoofSignal != null) {
-      addRow('Liveness signal', _spoofSignalLabel(spoofSignal));
+      addRow(l10n.auserKycLivenessSignal, _spoofSignalLabel(spoofSignal));
     }
 
     // Liveness notes
@@ -627,7 +655,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
         ? _kycString(liveness, ['notes'])
         : _kycString(kyc, ['liveness_notes']);
     if (livenessNotes != null) {
-      addRow('Liveness notes', livenessNotes);
+      addRow(l10n.auserKycLivenessNotes, livenessNotes);
     }
 
     // Field checks
@@ -641,7 +669,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
     // Recommendation
     final recommendation = _kycString(kyc, ['recommendation']);
     if (recommendation != null) {
-      addRow('Recommendation', _recommendationLabel(recommendation));
+      addRow(l10n.auserKycRecommendation, _recommendationLabel(recommendation));
     }
 
     // Reasons
@@ -672,7 +700,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
     // Prompt version
     final promptVersion = _kycString(kyc, ['prompt_version', 'promptVersion']);
     if (promptVersion != null) {
-      addRow('Check version', promptVersion);
+      addRow(l10n.auserKycCheckVersion, promptVersion);
     }
 
     return rows;
@@ -703,21 +731,23 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
   }
 
   String _idAuthenticityLabel(String value) {
+    final l10n = AppL10n.current;
     switch (value) {
       case 'authentic':
-        return 'Looks authentic';
+        return l10n.auserKycLooksAuthentic;
       case 'suspicious':
-        return 'Suspicious — needs closer look';
+        return l10n.auserKycSuspicious;
       case 'unreadable':
-        return 'Unreadable';
+        return l10n.auserKycUnreadable;
       case 'uncertain':
-        return 'Uncertain';
+        return l10n.auserKycUncertain;
       default:
         return value;
     }
   }
 
   String _idTypeGuessLabel(String value) {
+    final l10n = AppL10n.current;
     switch (value) {
       case 'barangay_id':
         return 'Barangay ID';
@@ -740,71 +770,76 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
       case 'voters_id':
         return "Voter's ID";
       case 'other':
-        return 'Other';
+        return l10n.commonOther;
       case 'unknown':
-        return 'Unknown';
+        return l10n.auserUnknown;
       default:
         return value;
     }
   }
 
   String _selfieQualityLabel(String value) {
+    final l10n = AppL10n.current;
     switch (value) {
       case 'good':
-        return 'Good quality';
+        return l10n.auserKycGoodQuality;
       case 'poor':
-        return 'Poor quality';
+        return l10n.auserKycPoorQuality;
       case 'no_face':
-        return 'No face detected';
+        return l10n.auserKycNoFaceDetected;
       case 'uncertain':
-        return 'Uncertain';
+        return l10n.auserKycUncertain;
       default:
         return value;
     }
   }
 
   String _spoofSignalLabel(String value) {
+    final l10n = AppL10n.current;
     switch (value) {
       case 'live_looking':
-        return 'Live-looking';
+        return l10n.auserKycLiveLooking;
       case 'spoof_suspected':
-        return 'Spoof suspected';
+        return l10n.auserKycSpoofSuspected;
       case 'uncertain':
-        return 'Uncertain';
+        return l10n.auserKycUncertain;
       default:
         return value;
     }
   }
 
   String _fieldCheckLabel(String key) {
+    final l10n = AppL10n.current;
     switch (key) {
       case 'full_name':
-        return 'Name check';
+        return l10n.auserKycNameCheck;
       case 'date_of_birth':
       case 'birth_date':
-        return 'Birth date check';
+        return l10n.auserKycBirthDateCheck;
       case 'address':
-        return 'Address check';
+        return l10n.auserKycAddressCheck;
       case 'gender':
-        return 'Gender check';
+        return l10n.auserKycGenderCheck;
       default:
         return key;
     }
   }
 
   String _fieldCheckValue(Object? value) {
-    if (value == 'match') return 'Matches';
-    if (value == 'mismatch') return 'Does not match';
-    if (value == 'unverifiable') return 'Unverifiable';
+    final l10n = AppL10n.current;
+    if (value == 'match') return l10n.auserKycMatches;
+    if (value == 'mismatch') return l10n.auserKycDoesNotMatch;
+    if (value == 'unverifiable') return l10n.auserKycUnverifiable;
     return value.toString();
   }
 
   String _recommendationLabel(String value) {
+    final l10n = AppL10n.current;
     switch (value) {
       case 'looks_ok':
-        return 'Looks OK — advisory only';
+        return l10n.auserKycLooksOk;
       case 'needs_review':
-        return 'Needs review — advisory only';
+        return l10n.auserKycNeedsReview;
       default:
         return value;
     }
@@ -813,6 +848,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
   // ── All Users tab ────────────────────────────────────────────────────────
 
   Widget _buildAllUsersTab(UserProvider userProvider) {
+    final l10n = AppLocalizations.of(context);
     final filtered = userProvider.allUsers.where((u) {
       final matchSearch =
           _searchQuery.isEmpty ||
@@ -835,7 +871,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                 TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Search by name, email, username...',
+                    hintText: l10n.auserSearchHint,
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
@@ -873,7 +909,9 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                             padding: const EdgeInsets.only(right: 6),
                             child: FilterChip(
                               label: Text(
-                                r == 'all' ? 'All' : AppRoles.displayName(r),
+                                r == 'all'
+                                    ? l10n.auserAll
+                                    : AppRoles.displayName(r),
                                 style: const TextStyle(fontSize: 12),
                               ),
                               selected: selected,
@@ -900,7 +938,11 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
             child: userProvider.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : filtered.isEmpty
-                ? _emptyState('No users found', Icons.search_off, Colors.grey)
+                ? _emptyState(
+                    l10n.auserNoUsersFound,
+                    Icons.search_off,
+                    Colors.grey,
+                  )
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
                     itemCount: filtered.length,
@@ -913,6 +955,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
   }
 
   Widget _buildUserTile(UserProfile user) {
+    final l10n = AppLocalizations.of(context);
     final roleColor = _roleColor(user.role);
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -1022,23 +1065,30 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
               if (action == 'delete') _handleDeleteUser(user);
             },
             itemBuilder: (_) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'role',
                 child: Row(
                   children: [
-                    Icon(Icons.swap_horiz, size: 18),
-                    SizedBox(width: 8),
-                    Text('Change Role'),
+                    const Icon(Icons.swap_horiz, size: 18),
+                    const SizedBox(width: 8),
+                    Text(l10n.auserChangeRole),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'delete',
                 child: Row(
                   children: [
-                    Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text('Delete', style: TextStyle(color: Colors.red)),
+                    const Icon(
+                      Icons.delete_outline,
+                      size: 18,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.commonDelete,
+                      style: const TextStyle(color: Colors.red),
+                    ),
                   ],
                 ),
               ),

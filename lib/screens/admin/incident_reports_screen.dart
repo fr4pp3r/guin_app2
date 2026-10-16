@@ -5,6 +5,7 @@ import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/incident_report_provider.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class IncidentReportsScreen extends StatefulWidget {
   const IncidentReportsScreen({super.key});
@@ -92,6 +93,7 @@ class _IncidentReportsScreenState extends State<IncidentReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: Column(
@@ -127,21 +129,21 @@ class _IncidentReportsScreenState extends State<IncidentReportsScreen> {
                       size: 22,
                     ),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Incident Reports',
-                            style: TextStyle(
+                            l10n.aincTitle,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                           Text(
-                            'All citizen-submitted reports',
-                            style: TextStyle(
+                            l10n.aincSubtitle,
+                            style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 12,
                             ),
@@ -184,9 +186,9 @@ class _IncidentReportsScreenState extends State<IncidentReportsScreen> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              const Text(
-                                'No incident reports yet',
-                                style: TextStyle(
+                              Text(
+                                l10n.aincNoReports,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textSecondary,
@@ -329,30 +331,33 @@ class _IncidentReportsScreenState extends State<IncidentReportsScreen> {
                                         ),
                                         onSelected: (v) =>
                                             _setStatus(report, v),
-                                        itemBuilder: (_) => const [
+                                        itemBuilder: (_) => [
                                           PopupMenuItem(
                                             value: 'received',
-                                            child: Text('Mark Received'),
+                                            child: Text(l10n.aincMarkReceived),
                                           ),
                                           PopupMenuItem(
                                             value: 'under_assessment',
-                                            child: Text('Under Assessment'),
+                                            child:
+                                                Text(l10n.aincUnderAssessment),
                                           ),
                                           PopupMenuItem(
                                             value: 'endorsed',
-                                            child: Text('Endorse / Escalate'),
+                                            child: Text(
+                                              l10n.aincEndorseEscalate,
+                                            ),
                                           ),
                                           PopupMenuItem(
                                             value: 'in_progress',
-                                            child: Text('In Progress'),
+                                            child: Text(l10n.aincInProgress),
                                           ),
                                           PopupMenuItem(
                                             value: 'resolved',
-                                            child: Text('Resolve'),
+                                            child: Text(l10n.aincResolve),
                                           ),
                                           PopupMenuItem(
                                             value: 'closed',
-                                            child: Text('Close'),
+                                            child: Text(l10n.aincClose),
                                           ),
                                         ],
                                       ),
@@ -389,9 +394,15 @@ class _IncidentReportsScreenState extends State<IncidentReportsScreen> {
                                       spacing: 6,
                                       children: [
                                         if (report.isAnonymous)
-                                          _badge('Anonymous', Colors.purple),
+                                          _badge(
+                                            l10n.commonAnonymous,
+                                            Colors.purple,
+                                          ),
                                         if (report.isSensitive)
-                                          _badge('Sensitive', Colors.orange),
+                                          _badge(
+                                            l10n.commonSensitive,
+                                            Colors.orange,
+                                          ),
                                       ],
                                     ),
                                   ],

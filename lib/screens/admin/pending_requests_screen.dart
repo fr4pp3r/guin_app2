@@ -13,6 +13,7 @@ import 'package:guin_app/services/pdf_service.dart';
 import 'package:guin_app/services/user_service.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:intl/intl.dart';
 
 class PendingRequestsScreen extends StatefulWidget {
@@ -39,20 +40,19 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   // ── Generate DRAFT PDF ───────────────────────────────────────────────
 
   Future<void> _handleGenerateDraft(DocumentRequest request) async {
+    final l10n = AppLocalizations.of(context);
     if (kIsWeb) {
       Helpers.showErrorSnackBar(
         context,
-        'PDF generation is not available on web. Use mobile or desktop.',
+        l10n.asecPdfWebUnavailable,
       );
       return;
     }
 
     final confirm = await Helpers.showConfirmDialog(
       context,
-      title: 'Generate Draft',
-      message:
-          'Generate a DRAFT ${request.documentTypeDisplay} for review?\n\n'
-          'The draft will be marked "NOT VALID FOR OFFICIAL USE".',
+      title: l10n.asecGenerateDraft,
+      message: l10n.asecGenerateDraftMessage(request.documentTypeDisplay),
     );
     if (!confirm) return;
 
@@ -60,7 +60,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
     final barangayProvider = context.read<BarangayProvider>();
     final authProvider = context.read<AuthProvider>();
 
-    Helpers.showLoadingDialog(context, 'Generating draft...');
+    Helpers.showLoadingDialog(context, l10n.asecGeneratingDraft);
 
     try {
       await barangayProvider.loadConfig();
@@ -203,13 +203,13 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
 
       if (!mounted) return;
       Helpers.dismissDialog(context);
-      Helpers.showSuccessSnackBar(context, 'Draft generated successfully');
+      Helpers.showSuccessSnackBar(context, l10n.asecDraftGeneratedSuccess);
     } catch (e) {
       if (!mounted) return;
       Helpers.dismissDialog(context);
       Helpers.showErrorSnackBar(
         context,
-        'Error: ${Helpers.parseSupabaseError(e.toString())}',
+        l10n.asecErrorFormatted(Helpers.parseSupabaseError(e.toString())),
       );
     }
   }
@@ -217,22 +217,25 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   // ── Request Revision ─────────────────────────────────────────────────
 
   Future<void> _handleRequestRevision(DocumentRequest request) async {
+    final l10n = AppLocalizations.of(context);
     final notesCtrl = TextEditingController();
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Request Revision'),
+        title: Text(l10n.asecRequestRevision),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Request changes to this ${request.documentTypeDisplay}'),
+            Text(
+              l10n.asecRequestChangesToDocument(request.documentTypeDisplay),
+            ),
             const SizedBox(height: 12),
             TextField(
               controller: notesCtrl,
               maxLines: 4,
               decoration: InputDecoration(
-                labelText: 'Revision notes for citizen',
-                hintText: 'Describe what needs to be changed...',
+                labelText: l10n.asecRevisionNotesForCitizen,
+                hintText: l10n.asecRevisionNotesHint,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -243,18 +246,18 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.commonCancel),
           ),
           ElevatedButton(
             onPressed: () {
               if (notesCtrl.text.trim().isEmpty) {
-                Helpers.showErrorSnackBar(ctx, 'Please provide notes');
+                Helpers.showErrorSnackBar(ctx, l10n.asecPleaseProvideNotes);
                 return;
               }
               Navigator.pop(ctx, true);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: const Text('Send Revision'),
+            child: Text(l10n.asecSendRevision),
           ),
         ],
       ),
@@ -263,7 +266,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
 
     final documentProvider = context.read<DocumentProvider>();
     final authProvider = context.read<AuthProvider>();
-    Helpers.showLoadingDialog(context, 'Requesting revision...');
+    Helpers.showLoadingDialog(context, l10n.asecRequestingRevision);
     try {
       await documentProvider.requestRevision(
         requestId: request.id,
@@ -274,7 +277,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       Helpers.dismissDialog(context);
       Helpers.showSuccessSnackBar(
         context,
-        'Revision requested — citizen notified',
+        l10n.asecRevisionRequestedNotified,
       );
     } catch (e) {
       if (!mounted) return;
@@ -289,18 +292,21 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   // ── Verify for Payment / Forward to Approval ─────────────────────────
 
   Future<void> _handleVerifyForPayment(DocumentRequest request) async {
+    final l10n = AppLocalizations.of(context);
     final confirm = await Helpers.showConfirmDialog(
       context,
-      title: 'Verify & Forward',
+      title: l10n.asecVerifyForwardTitle,
       message: request.paymentRequired
-          ? 'Mark as verified. An invoice will be created and the citizen will be notified to pay ₱${request.paymentAmount.toStringAsFixed(2)}.'
-          : 'No payment required. This will go directly to the Captain for final approval.',
+          ? l10n.asecVerifyPaidMessage(
+              request.paymentAmount.toStringAsFixed(2),
+            )
+          : l10n.asecVerifyNoPaymentMessage,
     );
     if (!confirm || !mounted) return;
 
     final documentProvider = context.read<DocumentProvider>();
     final authProvider = context.read<AuthProvider>();
-    Helpers.showLoadingDialog(context, 'Processing...');
+    Helpers.showLoadingDialog(context, l10n.asecProcessing);
     try {
       await documentProvider.markVerifiedForPayment(
         requestId: request.id,
@@ -312,8 +318,8 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       Helpers.showSuccessSnackBar(
         context,
         request.paymentRequired
-            ? 'Invoice sent to citizen'
-            : 'Forwarded to Captain for approval',
+            ? l10n.asecInvoiceSent
+            : l10n.asecForwardedToCaptain,
       );
     } catch (e) {
       if (!mounted) return;
@@ -328,22 +334,25 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   // ── Reject outright ──────────────────────────────────────────────────
 
   Future<void> _handleReject(DocumentRequest request) async {
+    final l10n = AppLocalizations.of(context);
     final reasonCtrl = TextEditingController();
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Reject Request'),
+        title: Text(l10n.asecRejectRequestTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Rejecting: ${request.documentTypeDisplay}'),
+            Text(
+              l10n.asecRejectingDocument(request.documentTypeDisplay),
+            ),
             const SizedBox(height: 12),
             TextField(
               controller: reasonCtrl,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Rejection Reason',
-                hintText: 'Provide a reason for rejection...',
+              decoration: InputDecoration(
+                labelText: l10n.commonRejectionReason,
+                hintText: l10n.asecProvideRejectionReasonHint,
               ),
             ),
           ],
@@ -351,18 +360,21 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.commonCancel),
           ),
           ElevatedButton(
             onPressed: () {
               if (reasonCtrl.text.trim().isEmpty) {
-                Helpers.showErrorSnackBar(ctx, 'Please provide a reason');
+                Helpers.showErrorSnackBar(
+                  ctx,
+                  l10n.commonPleaseProvideReason,
+                );
                 return;
               }
               Navigator.pop(ctx, true);
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Reject'),
+            child: Text(l10n.commonReject),
           ),
         ],
       ),
@@ -371,7 +383,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
 
     final documentProvider = context.read<DocumentProvider>();
     final authProvider = context.read<AuthProvider>();
-    Helpers.showLoadingDialog(context, 'Rejecting...');
+    Helpers.showLoadingDialog(context, l10n.asecRejecting);
     try {
       await documentProvider.rejectRequest(
         requestId: request.id,
@@ -380,7 +392,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       );
       if (!mounted) return;
       Helpers.dismissDialog(context);
-      Helpers.showSuccessSnackBar(context, 'Request rejected');
+      Helpers.showSuccessSnackBar(context, l10n.asecRequestRejected);
     } catch (e) {
       if (!mounted) return;
       Helpers.dismissDialog(context);
@@ -397,17 +409,18 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   /// same status-dependent set the cards used to show inline and hands the
   /// handlers over unchanged as action descriptors.
   List<RequestAction> _actionsFor(DocumentRequest r) {
+    final l10n = AppLocalizations.of(context);
     final status = r.requestStatus;
     if (status == DocStatus.submitted || status == DocStatus.pendingReview) {
       return [
         RequestAction(
-          label: 'Reject',
+          label: l10n.commonReject,
           icon: Icons.cancel_outlined,
           color: AppColors.error,
           onPressed: () => _handleReject(r),
         ),
         RequestAction(
-          label: 'Generate Draft',
+          label: l10n.asecGenerateDraft,
           icon: Icons.description_outlined,
           color: AppColors.primary,
           filled: true,
@@ -418,13 +431,15 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
     if (status == DocStatus.draftGenerated) {
       return [
         RequestAction(
-          label: 'Needs Revision',
+          label: l10n.asecNeedsRevision,
           icon: Icons.edit_note,
           color: Colors.orange,
           onPressed: () => _handleRequestRevision(r),
         ),
         RequestAction(
-          label: r.paymentRequired ? 'Send Invoice' : 'Forward to Captain',
+          label: r.paymentRequired
+              ? l10n.asecSendInvoice
+              : l10n.asecForwardToCaptain,
           icon: Icons.verified_outlined,
           color: Colors.teal,
           filled: true,
@@ -450,6 +465,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final dp = context.watch<DocumentProvider>();
 
     return Scaffold(
@@ -486,21 +502,21 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                       size: 22,
                     ),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Secretary — Review Requests',
-                            style: TextStyle(
+                            l10n.asecHeaderTitle,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                           Text(
-                            'Generate drafts, request revisions, verify for payment',
-                            style: TextStyle(
+                            l10n.asecHeaderSubtitle,
+                            style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 12,
                             ),
@@ -539,9 +555,9 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              const Text(
-                                'No pending requests',
-                                style: TextStyle(
+                              Text(
+                                l10n.asecNoPendingRequests,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.grey,
@@ -566,6 +582,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   }
 
   Widget _buildRequestCard(DocumentRequest r) {
+    final l10n = AppLocalizations.of(context);
     final status = r.requestStatus;
     final isSubmitted =
         status == DocStatus.submitted || status == DocStatus.pendingReview;
@@ -636,7 +653,9 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Requested ${Helpers.formatDate(r.requestedAt)}',
+                            l10n.asecRequestedAt(
+                              Helpers.formatDate(r.requestedAt),
+                            ),
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.grey,
@@ -692,9 +711,9 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                           ],
                         ),
                       ),
-                    const Text(
-                      'Purpose',
-                      style: TextStyle(
+                    Text(
+                      l10n.commonPurpose,
+                      style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: Colors.grey,
@@ -727,9 +746,9 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Revision Notes',
-                              style: TextStyle(
+                            Text(
+                              l10n.asecRevisionNotes,
+                              style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.orange,
@@ -748,9 +767,9 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        const Text(
-                          'Review request',
-                          style: TextStyle(
+                        Text(
+                          l10n.asecReviewRequest,
+                          style: const TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF1976D2),
@@ -808,13 +827,14 @@ class _NotificationsBell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final unread = context.watch<NotificationProvider>().unreadCount;
     return Stack(
       alignment: Alignment.center,
       children: [
         IconButton(
           icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-          tooltip: 'Notifications',
+          tooltip: l10n.notificationsTitle,
           onPressed: () =>
               Navigator.pushNamed(context, AppRoutes.notifications),
         ),

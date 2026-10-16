@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/models/announcement.dart';
 import 'package:guin_app/providers/announcement_provider.dart';
 import 'package:guin_app/providers/auth_provider.dart';
@@ -42,13 +43,14 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   }
 
   Future<void> _openCreate() async {
+    final l10n = AppLocalizations.of(context);
     final posted = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => const CreateAnnouncementScreen()),
     );
     if (!mounted) return;
     if (posted == true) {
       // Snackbar must fire on this route — it dies with the create route.
-      Helpers.showSuccessSnackBar(context, 'Announcement posted');
+      Helpers.showSuccessSnackBar(context, l10n.annPosted);
       // Refresh here so the new item shows even if realtime lags behind.
       _provider?.loadAnnouncements();
     }
@@ -68,6 +70,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final provider = context.watch<AnnouncementProvider>();
     final role = context.watch<AuthProvider>().userProfile?.role ?? '';
     final canPost = AppRoles.canPostAnnouncements(role);
@@ -76,9 +79,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
-        title: const Text(
-          'Announcements',
-          style: TextStyle(fontWeight: FontWeight.w600),
+        title: Text(
+          l10n.annFeedTitle,
+          style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -96,9 +99,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.add),
-              label: const Text(
-                'New announcement',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              label: Text(
+                l10n.annNew,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             )
           : null,
@@ -140,6 +143,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   }
 
   Widget _errorState(AnnouncementProvider provider) {
+    final l10n = AppLocalizations.of(context);
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
@@ -161,9 +165,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                "Couldn't load announcements",
-                style: TextStyle(
+              Text(
+                l10n.annLoadError,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
@@ -179,7 +183,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               TextButton.icon(
                 onPressed: provider.loadAnnouncements,
                 icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Try again'),
+                label: Text(l10n.commonRetry),
               ),
             ],
           ),
@@ -189,6 +193,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   }
 
   Widget _emptyState() {
+    final l10n = AppLocalizations.of(context);
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
@@ -210,9 +215,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'No announcements yet',
-                style: TextStyle(
+              Text(
+                l10n.annFeedEmptyTitle,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
@@ -220,7 +225,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Announcements from barangay officials will appear here.',
+                l10n.annFeedEmptyBody,
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
               ),
@@ -345,6 +350,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   }
 
   Widget _pinnedChip() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -352,9 +358,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.30)),
       ),
-      child: const Text(
-        'Pinned',
-        style: TextStyle(
+      child: Text(
+        l10n.annPinned,
+        style: const TextStyle(
           fontSize: 10.5,
           fontWeight: FontWeight.w700,
           color: AppColors.primary,

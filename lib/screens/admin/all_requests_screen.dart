@@ -9,6 +9,7 @@ import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/utils/role_access.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/automation/automation_constants.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class AllRequestsScreen extends StatefulWidget {
   const AllRequestsScreen({super.key});
@@ -61,6 +62,7 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: Column(
@@ -102,21 +104,21 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
                           size: 22,
                         ),
                         const SizedBox(width: 10),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'All Requests',
-                                style: TextStyle(
+                                l10n.areqTitle,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
                               Text(
-                                'Search and filter document requests',
-                                style: TextStyle(
+                                l10n.areqSubtitle,
+                                style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 12,
                                 ),
@@ -139,7 +141,7 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
                             onChanged: (value) =>
                                 setState(() => _searchQuery = value),
                             decoration: InputDecoration(
-                              hintText: 'Search by document type or status...',
+                              hintText: l10n.areqSearchHint,
                               prefixIcon: const Icon(
                                 Icons.search,
                                 color: Color(0xFF1976D2),
@@ -160,18 +162,27 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          _buildFilterChip('All', 'all'),
+                          _buildFilterChip(l10n.areqFilterAll, 'all'),
                           const SizedBox(width: 8),
                           _buildFilterChip(
-                            'Pending Payment',
+                            l10n.areqFilterPendingPayment,
                             'pending_payment',
                           ),
                           const SizedBox(width: 8),
-                          _buildFilterChip('Pending Review', 'pending_review'),
+                          _buildFilterChip(
+                            l10n.areqFilterPendingReview,
+                            'pending_review',
+                          ),
                           const SizedBox(width: 8),
-                          _buildFilterChip('Approved', 'approved'),
+                          _buildFilterChip(
+                            l10n.areqFilterApproved,
+                            'approved',
+                          ),
                           const SizedBox(width: 8),
-                          _buildFilterChip('Rejected', 'rejected'),
+                          _buildFilterChip(
+                            l10n.areqFilterRejected,
+                            'rejected',
+                          ),
                         ],
                       ),
                     ),
@@ -205,8 +216,8 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
                         const SizedBox(height: 16),
                         Text(
                           _searchQuery.isNotEmpty
-                              ? 'No requests found'
-                              : 'No requests yet',
+                              ? l10n.areqNoRequestsFound
+                              : l10n.areqNoRequestsYet,
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 16,
@@ -253,6 +264,7 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
   }
 
   Widget _buildRequestCard(DocumentRequest request) {
+    final l10n = AppLocalizations.of(context);
     final statusColor = _getStatusColor(request.requestStatus);
     final statusIcon = _getStatusIcon(request.requestStatus);
     final canDelete = AppRoles.canDeleteDocuments(_currentUserRole);
@@ -309,7 +321,7 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'ID: ${request.id.substring(0, 8)}...',
+                            l10n.areqIdPrefix(request.id.substring(0, 8)),
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
@@ -345,19 +357,19 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
                           }
                         },
                         itemBuilder: (context) => [
-                          const PopupMenuItem<String>(
+                          PopupMenuItem<String>(
                             value: 'delete',
                             child: Row(
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.delete_outline,
                                   size: 18,
                                   color: AppColors.error,
                                 ),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Text(
-                                  'Delete',
-                                  style: TextStyle(
+                                  l10n.commonDelete,
+                                  style: const TextStyle(
                                     color: AppColors.error,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -371,7 +383,7 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
                           size: 20,
                           color: Colors.grey[500],
                         ),
-                        tooltip: 'More actions',
+                        tooltip: l10n.areqMoreActions,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -389,7 +401,9 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'Requested: ${Helpers.formatDate(request.requestedAt)}',
+                      l10n.areqRequestedAt(
+                        Helpers.formatDate(request.requestedAt),
+                      ),
                       style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                     ),
                   ],
@@ -416,9 +430,9 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
                     child: ElevatedButton.icon(
                       onPressed: () => _openDocumentViewer(request),
                       icon: const Icon(Icons.visibility_outlined, size: 17),
-                      label: const Text(
-                        'View Document',
-                        style: TextStyle(
+                      label: Text(
+                        l10n.areqViewDocument,
+                        style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
@@ -440,9 +454,9 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
                     child: OutlinedButton.icon(
                       onPressed: () => _openERecceiptViewer(request),
                       icon: const Icon(Icons.receipt_long, size: 17),
-                      label: const Text(
-                        'View E-Receipt',
-                        style: TextStyle(
+                      label: Text(
+                        l10n.areqViewEReceipt,
+                        style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
@@ -466,6 +480,7 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
   }
 
   void _showRequestDetails(DocumentRequest request) {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -504,23 +519,23 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
                     ),
                     const SizedBox(height: 8),
                     _buildDetailRow(
-                      'Status',
+                      l10n.commonStatus,
                       _formatStatus(request.requestStatus),
                     ),
-                    _buildDetailRow('Request ID', request.id),
+                    _buildDetailRow(l10n.areqRequestID, request.id),
                     _buildDetailRow(
-                      'Requested At',
+                      l10n.areqRequestedAtLabel,
                       Helpers.formatDate(request.requestedAt),
                     ),
                     _buildDetailRow(
-                      'Amount',
+                      l10n.commonAmount,
                       '₱${request.paymentAmount.toStringAsFixed(2)}',
                     ),
                     if (request.purpose.isNotEmpty)
-                      _buildDetailRow('Purpose', request.purpose),
+                      _buildDetailRow(l10n.commonPurpose, request.purpose),
                     if (request.rejectionReason != null)
                       _buildDetailRow(
-                        'Rejection Reason',
+                        l10n.commonRejectionReason,
                         request.rejectionReason!,
                       ),
                     if (_canViewDocument(request)) ...[
@@ -533,9 +548,11 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
                             _openDocumentViewer(request);
                           },
                           icon: const Icon(Icons.visibility_outlined, size: 18),
-                          label: const Text(
-                            'View Document',
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                          label: Text(
+                            l10n.areqViewDocument,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF1976D2),
@@ -577,31 +594,34 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
   }
 
   Future<void> _showDeleteConfirmation(DocumentRequest request) async {
+    final l10n = AppLocalizations.of(context);
     final reasonCtrl = TextEditingController();
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Document'),
+        title: Text(l10n.areqDeleteDocument),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Deleting: ${_formatDocumentType(request.documentType)}'),
+            Text(
+              l10n.areqDeletingDocument(
+                _formatDocumentType(request.documentType),
+              ),
+            ),
             const SizedBox(height: 12),
-            const Text(
-              'This permanently removes the request, all drafts, '
-              'final PDF, payment receipts, verification records, '
-              'and print copies.',
-              style: TextStyle(fontSize: 13),
+            Text(
+              l10n.areqDeleteWarning,
+              style: const TextStyle(fontSize: 13),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: reasonCtrl,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Reason for deletion',
-                hintText: 'Provide a reason...',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.areqReasonForDeletion,
+                hintText: l10n.commonProvideReason,
+                border: const OutlineInputBorder(),
               ),
             ),
           ],
@@ -609,14 +629,14 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.commonCancel),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx, true);
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
+            child: Text(l10n.commonDelete),
           ),
         ],
       ),
@@ -627,7 +647,7 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
       return;
     }
 
-    Helpers.showLoadingDialog(context, 'Deleting...');
+    Helpers.showLoadingDialog(context, l10n.areqDeleting);
     try {
       await context.read<DocumentProvider>().deleteRequestAdmin(
         requestId: request.id,
@@ -635,7 +655,7 @@ class _AllRequestsScreenState extends State<AllRequestsScreen> {
       );
       if (!mounted) return;
       Helpers.dismissDialog(context);
-      Helpers.showSuccessSnackBar(context, 'Document deleted');
+      Helpers.showSuccessSnackBar(context, l10n.areqDocumentDeleted);
     } catch (e) {
       if (!mounted) return;
       Helpers.dismissDialog(context);

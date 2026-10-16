@@ -5,6 +5,7 @@ import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/document_provider.dart';
 import 'package:guin_app/models/document_request.dart';
 import 'package:guin_app/utils/helpers.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class PendingPaymentsScreen extends StatefulWidget {
   const PendingPaymentsScreen({super.key});
@@ -23,20 +24,21 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
   }
 
   Future<void> _verifyPayment(DocumentRequest request) async {
+    final l10n = AppLocalizations.of(context);
     final authProvider = context.read<AuthProvider>();
     final documentProvider = context.read<DocumentProvider>();
 
     final confirm = await Helpers.showConfirmDialog(
       context,
-      title: 'Confirm Payment',
-      message:
-          'Confirm this payment of ₱${request.paymentAmount.toStringAsFixed(2)}?\n\n'
-          'The request will be forwarded to the Captain for final approval.',
+      title: l10n.atreasConfirmPayment,
+      message: l10n.atreasConfirmPaymentMessage(
+        request.paymentAmount.toStringAsFixed(2),
+      ),
     );
 
     if (!confirm) return;
 
-    Helpers.showLoadingDialog(context, 'Confirming payment...');
+    Helpers.showLoadingDialog(context, l10n.atreasConfirmingPayment);
     try {
       await documentProvider.treasurerConfirmPayment(
         requestId: request.id,
@@ -47,19 +49,20 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
       Helpers.dismissDialog(context);
       Helpers.showSuccessSnackBar(
         context,
-        'Payment confirmed — forwarded to Captain for approval',
+        l10n.atreasPaymentConfirmedForwarded,
       );
     } catch (e) {
       if (!mounted) return;
       Helpers.dismissDialog(context);
       Helpers.showErrorSnackBar(
         context,
-        'Error: ${Helpers.parseSupabaseError(e.toString())}',
+        l10n.atreasErrorFormatted(Helpers.parseSupabaseError(e.toString())),
       );
     }
   }
 
   Future<void> _rejectPayment(DocumentRequest request) async {
+    final l10n = AppLocalizations.of(context);
     final authProvider = context.read<AuthProvider>();
     final documentProvider = context.read<DocumentProvider>();
 
@@ -68,18 +71,18 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Reject Payment'),
+        title: Text(l10n.atreasRejectPayment),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Please provide a reason for rejection:'),
+            Text(l10n.atreasRejectPaymentPrompt),
             const SizedBox(height: 16),
             TextField(
               controller: reasonController,
               maxLines: 3,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: 'Enter reason...',
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                hintText: l10n.atreasEnterReasonHint,
               ),
             ),
           ],
@@ -87,18 +90,21 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.commonCancel),
           ),
           ElevatedButton(
             onPressed: () {
               if (reasonController.text.trim().isEmpty) {
-                Helpers.showErrorSnackBar(ctx, 'Please provide a reason');
+                Helpers.showErrorSnackBar(
+                  ctx,
+                  l10n.commonPleaseProvideReason,
+                );
                 return;
               }
               Navigator.pop(ctx, true);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Reject'),
+            child: Text(l10n.commonReject),
           ),
         ],
       ),
@@ -109,7 +115,7 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
       return;
     }
 
-    Helpers.showLoadingDialog(context, 'Rejecting payment...');
+    Helpers.showLoadingDialog(context, l10n.atreasRejectingPayment);
     try {
       await documentProvider.treasurerRejectPayment(
         requestId: request.id,
@@ -122,7 +128,7 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
       Helpers.dismissDialog(context);
       Helpers.showSuccessSnackBar(
         context,
-        'Payment rejected — citizen notified',
+        l10n.atreasPaymentRejectedNotified,
       );
     } catch (e) {
       reasonController.dispose();
@@ -130,12 +136,13 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
       Helpers.dismissDialog(context);
       Helpers.showErrorSnackBar(
         context,
-        'Error: ${Helpers.parseSupabaseError(e.toString())}',
+        l10n.atreasErrorFormatted(Helpers.parseSupabaseError(e.toString())),
       );
     }
   }
 
   Future<void> _encodeCashPayment(DocumentRequest request) async {
+    final l10n = AppLocalizations.of(context);
     final authProvider = context.read<AuthProvider>();
     final documentProvider = context.read<DocumentProvider>();
     final referenceController = TextEditingController();
@@ -145,23 +152,29 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Encode Cash Payment'),
+          title: Text(l10n.atreasEncodeCashPayment),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Amount: ₱${request.paymentAmount.toStringAsFixed(2)}'),
+              Text(
+                l10n.atreasAmountLabel(
+                  request.paymentAmount.toStringAsFixed(2),
+                ),
+              ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: selectedMethod,
-                decoration: const InputDecoration(labelText: 'Payment Method'),
-                items: const [
+                decoration: InputDecoration(
+                  labelText: l10n.atreasPaymentMethod,
+                ),
+                items: [
                   DropdownMenuItem(
                     value: 'cash_onsite',
-                    child: Text('Cash On-Site'),
+                    child: Text(l10n.atreasCashOnSite),
                   ),
                   DropdownMenuItem(
                     value: 'manual_cashier',
-                    child: Text('Manual Cashier'),
+                    child: Text(l10n.atreasManualCashier),
                   ),
                 ],
                 onChanged: (v) => setDialogState(() => selectedMethod = v!),
@@ -169,9 +182,9 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: referenceController,
-                decoration: const InputDecoration(
-                  labelText: 'Reference / OR Number (optional)',
-                  hintText: 'e.g. OR-2025-001',
+                decoration: InputDecoration(
+                  labelText: l10n.atreasReferenceOrLabel,
+                  hintText: l10n.atreasReferenceExample,
                 ),
               ),
             ],
@@ -179,11 +192,11 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
+              child: Text(l10n.commonCancel),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Confirm Payment'),
+              child: Text(l10n.atreasConfirmPayment),
             ),
           ],
         ),
@@ -208,8 +221,8 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cash payment encoded & verified'),
+          SnackBar(
+            content: Text(l10n.atreasCashEncodedVerified),
             backgroundColor: Colors.green,
           ),
         );
@@ -218,13 +231,17 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
       referenceController.dispose();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(l10n.atreasErrorFormatted('$e')),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
   }
 
   void _viewReceipt(String receiptUrl) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -232,7 +249,7 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             AppBar(
-              title: const Text('Payment Receipt'),
+              title: Text(l10n.atreasPaymentReceipt),
               automaticallyImplyLeading: false,
               actions: [
                 IconButton(
@@ -260,6 +277,7 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: Column(
@@ -295,21 +313,21 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
                       size: 22,
                     ),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Treasurer — Payment Verification',
-                            style: TextStyle(
+                            l10n.atreasHeaderTitle,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                           Text(
-                            'Verify invoices and confirm/reject payments',
-                            style: TextStyle(
+                            l10n.atreasHeaderSubtitle,
+                            style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 12,
                             ),
@@ -352,9 +370,9 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              const Text(
-                                'No pending payments',
-                                style: TextStyle(
+                              Text(
+                                l10n.atreasNoPendingPayments,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.grey,
@@ -437,7 +455,8 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          request.userName ?? 'Unknown user',
+                                          request.userName ??
+                                              l10n.atreasUnknownUser,
                                           style: const TextStyle(
                                             fontSize: 12,
                                             color: Colors.grey,
@@ -477,20 +496,20 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
                                 children: [
                                   _infoRow(
                                     Icons.info_outline,
-                                    'Purpose',
+                                    l10n.commonPurpose,
                                     request.purpose,
                                   ),
                                   const SizedBox(height: 6),
                                   _infoRow(
                                     Icons.monetization_on_outlined,
-                                    'Amount',
+                                    l10n.commonAmount,
                                     '₱${request.paymentAmount.toStringAsFixed(2)}',
                                     valueColor: Colors.green.shade700,
                                   ),
                                   const SizedBox(height: 6),
                                   _infoRow(
                                     Icons.calendar_today_outlined,
-                                    'Requested',
+                                    l10n.commonRequested,
                                     _formatDate(request.requestedAt),
                                   ),
                                 ],
@@ -553,18 +572,18 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
                                               borderRadius:
                                                   BorderRadius.circular(12),
                                             ),
-                                            child: const Row(
+                                            child: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                Icon(
+                                                const Icon(
                                                   Icons.zoom_in,
                                                   color: Colors.white,
                                                   size: 14,
                                                 ),
-                                                SizedBox(width: 4),
+                                                const SizedBox(width: 4),
                                                 Text(
-                                                  'View',
-                                                  style: TextStyle(
+                                                  l10n.commonView,
+                                                  style: const TextStyle(
                                                     color: Colors.white,
                                                     fontSize: 12,
                                                   ),
@@ -598,9 +617,9 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
                                         Icons.point_of_sale_outlined,
                                         size: 18,
                                       ),
-                                      label: const Text(
-                                        'Encode Cash / Manual Payment',
-                                        style: TextStyle(
+                                      label: Text(
+                                        l10n.atreasEncodeCashManualPayment,
+                                        style: const TextStyle(
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
@@ -634,9 +653,9 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
                                               Icons.cancel_outlined,
                                               size: 16,
                                             ),
-                                            label: const Text(
-                                              'Reject',
-                                              style: TextStyle(
+                                            label: Text(
+                                              l10n.commonReject,
+                                              style: const TextStyle(
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),
@@ -661,9 +680,9 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
                                               Icons.check_circle_outlined,
                                               size: 16,
                                             ),
-                                            label: const Text(
-                                              'Verify GCash',
-                                              style: TextStyle(
+                                            label: Text(
+                                              l10n.atreasVerifyGCash,
+                                              style: const TextStyle(
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),

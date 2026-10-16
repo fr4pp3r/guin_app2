@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/providers/barangay_provider.dart';
 import 'package:guin_app/services/pdf_service.dart';
 import 'package:guin_app/models/document_request.dart';
@@ -19,6 +20,7 @@ class _DocumentFormatsScreenState extends State<DocumentFormatsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: Column(
@@ -53,21 +55,21 @@ class _DocumentFormatsScreenState extends State<DocumentFormatsScreen> {
                       size: 22,
                     ),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Document Formats',
-                            style: TextStyle(
+                            l10n.afmtTitle,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                           Text(
-                            'Preview and manage document templates',
-                            style: TextStyle(
+                            l10n.afmtSubtitle,
+                            style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 12,
                             ),
@@ -116,18 +118,18 @@ class _DocumentFormatsScreenState extends State<DocumentFormatsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Preview Document Templates',
-                                style: TextStyle(
+                              Text(
+                                l10n.afmtPreviewTitle,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
-                                'Generate sample PDFs to preview how documents will look when issued to citizens.',
-                                style: TextStyle(
+                              Text(
+                                l10n.afmtPreviewDesc,
+                                style: const TextStyle(
                                   fontSize: 12,
                                   color: Colors.white70,
                                 ),
@@ -152,9 +154,9 @@ class _DocumentFormatsScreenState extends State<DocumentFormatsScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
-                        'Available Document Formats',
-                        style: TextStyle(
+                      Text(
+                        l10n.afmtAvailableSection,
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -166,69 +168,63 @@ class _DocumentFormatsScreenState extends State<DocumentFormatsScreen> {
                   // Document Format Cards
                   _buildFormatCard(
                     title: 'Barangay Clearance',
-                    description:
-                        'Certificate of residence and good moral character',
+                    description: l10n.afmtBarangayClearanceDesc,
                     icon: Icons.description,
                     color: Colors.blue,
                     onPreview: () => _generatePreview('barangay_clearance'),
                   ),
                   _buildFormatCard(
                     title: 'Certificate of Indigency',
-                    description: 'Certificate for low-income families',
+                    description: l10n.afmtIndigencyDesc,
                     icon: Icons.volunteer_activism,
                     color: Colors.green,
                     onPreview: () => _generatePreview('indigency'),
                   ),
                   _buildFormatCard(
                     title: 'Community Tax Certificate (Cedula)',
-                    description: 'Annual community tax certificate',
+                    description: l10n.afmtCedulaDesc,
                     icon: Icons.receipt_long,
                     color: Colors.orange,
                     onPreview: () => _generatePreview('cedula'),
                   ),
                   _buildFormatCard(
                     title: 'Barangay ID Card',
-                    description:
-                        'Official barangay identification card (Front & Back)',
+                    description: l10n.afmtBarangayIdDesc,
                     icon: Icons.badge,
                     color: Colors.purple,
                     onPreview: () => _generatePreview('barangay_id'),
                   ),
                   _buildFormatCard(
                     title: 'Barangay Business Clearance',
-                    description:
-                        'Clearance for business permits and renewals',
+                    description: l10n.afmtBusinessClearanceDesc,
                     icon: Icons.storefront,
                     color: Colors.teal,
                     onPreview: () => _generatePreview('business_clearance'),
                   ),
                   _buildFormatCard(
                     title: 'Barangay Certification',
-                    description:
-                        'General certification of employment and salary',
+                    description: l10n.afmtCertificationDesc,
                     icon: Icons.verified,
                     color: Colors.indigo,
                     onPreview: () => _generatePreview('certification'),
                   ),
                   _buildFormatCard(
                     title: 'Certificate of Good Moral Character',
-                    description:
-                        'Certificate attesting good moral character',
+                    description: l10n.afmtGoodMoralDesc,
                     icon: Icons.workspace_premium,
                     color: Colors.cyan,
                     onPreview: () => _generatePreview('good_moral'),
                   ),
                   _buildFormatCard(
                     title: 'Certificate of Residency',
-                    description: 'Proof of residency in the barangay',
+                    description: l10n.afmtResidencyDesc,
                     icon: Icons.home,
                     color: Colors.brown,
                     onPreview: () => _generatePreview('residency'),
                   ),
                   _buildFormatCard(
                     title: 'Oath of Undertaking',
-                    description:
-                        'First-time jobseeker oath under R.A. 11261',
+                    description: l10n.afmtOathUndertakingDesc,
                     icon: Icons.assignment_turned_in,
                     color: Colors.blueGrey,
                     onPreview: () => _generatePreview('oath_undertaking'),
@@ -249,6 +245,7 @@ class _DocumentFormatsScreenState extends State<DocumentFormatsScreen> {
     required Color color,
     required VoidCallback onPreview,
   }) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -340,9 +337,9 @@ class _DocumentFormatsScreenState extends State<DocumentFormatsScreen> {
                     children: [
                       const Icon(Icons.preview, color: Colors.white, size: 18),
                       const SizedBox(width: 6),
-                      const Text(
-                        'Preview',
-                        style: TextStyle(
+                      Text(
+                        l10n.afmtPreviewButton,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
@@ -360,6 +357,7 @@ class _DocumentFormatsScreenState extends State<DocumentFormatsScreen> {
   }
 
   Future<void> _generatePreview(String documentType) async {
+    final l10n = AppLocalizations.of(context);
     // Check if running on web
     if (kIsWeb) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -368,10 +366,8 @@ class _DocumentFormatsScreenState extends State<DocumentFormatsScreen> {
             children: [
               const Icon(Icons.info_outline, color: Colors.white),
               const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'PDF preview is not available on web. Please use mobile or desktop app.',
-                ),
+              Expanded(
+                child: Text(l10n.afmtWebUnavailable),
               ),
             ],
           ),
@@ -543,7 +539,7 @@ class _DocumentFormatsScreenState extends State<DocumentFormatsScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Preview generated: ${pdfFile.path.split('/').last}',
+                    l10n.afmtPreviewGenerated(pdfFile.path.split('/').last),
                   ),
                 ),
               ],
@@ -564,7 +560,7 @@ class _DocumentFormatsScreenState extends State<DocumentFormatsScreen> {
               children: [
                 const Icon(Icons.error_outline, color: Colors.white),
                 const SizedBox(width: 12),
-                Expanded(child: Text('Error generating preview: $e')),
+                Expanded(child: Text(l10n.afmtPreviewError(e))),
               ],
             ),
             backgroundColor: Colors.red,
