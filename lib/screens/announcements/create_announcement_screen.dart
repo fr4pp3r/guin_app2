@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/providers/announcement_provider.dart';
@@ -25,6 +27,8 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
   bool _pinned = false;
   bool _busy = false;
   bool _canSubmit = false;
+  File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -49,6 +53,13 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
     }
   }
 
+  Future<void> _pickImage() async {
+    final picked = await _picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() => _selectedImage = File(picked.path));
+    }
+  }
+
   Future<void> _submit() async {
     if (!_canSubmit || _busy) return;
     setState(() => _busy = true);
@@ -58,6 +69,7 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
       title: _titleController.text.trim(),
       body: _bodyController.text.trim(),
       isPinned: _pinned,
+      imageFile: _selectedImage,
     );
     if (!mounted) return;
     if (ok) {
@@ -181,6 +193,50 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Image (optional)',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_selectedImage != null)
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.file(
+                            _selectedImage!,
+                            height: 180,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: IconButton.filled(
+                            onPressed: _busy
+                                ? null
+                                : () => setState(() => _selectedImage = null),
+                            icon: const Icon(Icons.close, size: 18),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.black54,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _pickImage,
+                      icon: const Icon(Icons.image_outlined),
+                      label: const Text('Add image'),
+                    ),
                   const SizedBox(height: 16),
                   Row(
                     children: [

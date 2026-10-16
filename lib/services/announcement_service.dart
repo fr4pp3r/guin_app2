@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:guin_app/config/supabase_config.dart';
 import 'package:guin_app/models/announcement.dart';
@@ -22,12 +23,21 @@ class AnnouncementService {
         .toList();
   }
 
+  Future<String> uploadImage(File file) async {
+    final bucket = _supabase.storage.from('announcement-images');
+    final path =
+        '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
+    await bucket.upload(path, file, fileOptions: const FileOptions(upsert: true));
+    return bucket.getPublicUrl(path);
+  }
+
   Future<Announcement> createAnnouncement({
     required String title,
     required String body,
     required bool isPinned,
     String? createdBy,
     required String createdByName,
+    String? imageUrl,
   }) async {
     final response = await _supabase
         .from('announcements')
@@ -37,6 +47,7 @@ class AnnouncementService {
           'is_pinned': isPinned,
           'created_by': createdBy,
           'created_by_name': createdByName,
+          if (imageUrl != null) 'image_url': imageUrl,
         })
         .select()
         .single();

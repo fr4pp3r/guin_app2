@@ -12,6 +12,7 @@ class Announcement {
   final String createdByName;
   final bool isPinned;
   final DateTime createdAt;
+  final String? imageUrl;
 
   Announcement({
     required this.id,
@@ -21,6 +22,7 @@ class Announcement {
     required this.createdByName,
     required this.isPinned,
     required this.createdAt,
+    this.imageUrl,
   });
 
   factory Announcement.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class Announcement {
       createdByName: (json['created_by_name'] as String?) ?? 'Barangay Official',
       isPinned: (json['is_pinned'] as bool?) ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
+      imageUrl: json['image_url'] as String?,
     );
   }
 
@@ -44,6 +47,7 @@ class Announcement {
       'created_by_name': createdByName,
       'is_pinned': isPinned,
       'created_at': createdAt.toIso8601String(),
+      if (imageUrl != null) 'image_url': imageUrl,
     };
   }
 }

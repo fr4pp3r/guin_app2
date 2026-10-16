@@ -82,12 +82,18 @@ class AnnouncementProvider extends ChangeNotifier {
     required String title,
     required String body,
     required bool isPinned,
+    dynamic imageFile,
   }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
+      String? imageUrl;
+      if (imageFile != null) {
+        imageUrl = await _announcementService.uploadImage(imageFile as dynamic);
+      }
+
       final authorId = await SessionManager.getUserId();
       final authorName = await _resolveAuthorName(authorId);
 
@@ -97,6 +103,7 @@ class AnnouncementProvider extends ChangeNotifier {
         isPinned: isPinned,
         createdBy: authorId,
         createdByName: authorName,
+        imageUrl: imageUrl,
       );
 
       await loadAnnouncements();

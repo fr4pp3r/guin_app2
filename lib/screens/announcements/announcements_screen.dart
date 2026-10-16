@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
@@ -303,6 +304,27 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
+                if (announcement.imageUrl != null) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: CachedNetworkImage(
+                      imageUrl: announcement.imageUrl!,
+                      width: double.infinity,
+                      height: 140,
+                      fit: BoxFit.cover,
+                      placeholder: (context, _) => Container(
+                        height: 140,
+                        color: Colors.grey.shade200,
+                      ),
+                      errorWidget: (context, _, __) => Container(
+                        height: 140,
+                        color: Colors.grey.shade200,
+                        child: const Icon(Icons.broken_image_outlined),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 Text(
                   announcement.body,
                   maxLines: 2,
