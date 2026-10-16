@@ -669,6 +669,24 @@ class DocumentProvider with ChangeNotifier {
         );
       }
 
+      // Citizen-side notify: the invoice is now sent (paid docs) or the
+      // request moved forward (free docs). Invoicing became a human decision,
+      // so this replaces the automation's old "Invoice created" notice.
+      if (verified != null) {
+        await _safeNotifyUser(
+          verified.userId,
+          paymentRequired ? 'Invoice sent' : 'Request forwarded',
+          paymentRequired
+              ? 'Your invoice for ${verified.documentTypeDisplay} is ready: '
+                  '₱${verified.paymentAmount.toStringAsFixed(2)}. Open your '
+                  'dashboard to see the GCash details and upload your payment '
+                  'receipt.'
+              : 'Your ${verified.documentTypeDisplay} request passed review and '
+                  'was forwarded for final approval.',
+          'system',
+        );
+      }
+
       await loadPendingReviews();
       _isLoading = false;
       notifyListeners();

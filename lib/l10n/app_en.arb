@@ -316,6 +316,21 @@
   "citizenFilterPayment": "Payment",
   "citizenFilterPending": "Pending",
   "citizenFilterRejected": "Rejected",
+  "citizenInvoiceAmount": "Amount",
+  "citizenInvoiceCopyGcashNumber": "Copy GCash number",
+  "citizenInvoiceDueDate": "Due {date}",
+  "@citizenInvoiceDueDate": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Oct 23, 2026"
+      }
+    }
+  },
+  "citizenInvoiceGcashNumberCopied": "GCash number copied",
+  "citizenInvoiceNoDueDate": "No due date",
+  "citizenInvoicePaymentDue": "Payment due",
+  "citizenInvoiceViewAllRequests": "View all requests",
   "citizenLoadReportsError": "Couldn't load your reports",
   "citizenLoadReportsErrorMessage": "Your reports didn't load. Check your connection and try again.",
   "citizenLoadingRequests": "Loading your requests...",

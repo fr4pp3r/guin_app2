@@ -188,10 +188,14 @@ role-gated pipeline:
       │                                        │        (citizen edits, resubmits)
       │                                        │
       │                                        └── markVerifiedForPayment()
+      │                                             (SECRETARY sends invoice)
       │                                                 │
       │                          fee == 0 ──────────────┼──────────────► [for_approval]
       │                                                 │
       │                          fee > 0 ──► [invoiced] │
+      │                                    (citizen notified; invoice card on
+      │                                     their dashboard: amount, due date,
+      │                                     GCash name + number)
       │                                        │
       │                             submitPaymentReceipt()  (citizen uploads
       │                                          GCash receipt screenshot)
@@ -285,7 +289,9 @@ Pure-Dart rules in `lib/automation/` (no Supabase dependency, fully unit-testabl
 | `release_payload.dart` | Builds verification identity (document ID, token, QR URL, content hash) |
 | `automation_constants.dart` | Shared constants (invoice due window, display labels) |
 
-`DocumentAutomationService` orchestrates: `afterSubmission` (auto-draft + route), `afterPaymentReceipt`
+`DocumentAutomationService` orchestrates: `afterSubmission` (auto-draft; routes free
+docs to `for_approval` but **stops paid docs at `draft_generated`/`submitted` — invoicing
+is a human secretary decision**, never automatic), `afterPaymentReceipt`
 (canonicalize status + notify), `afterPaymentConfirmed/Rejected` (notify), `afterCaptainApproved`
 (generate final PDF + release).
 

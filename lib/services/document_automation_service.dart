@@ -159,23 +159,51 @@ class DocumentAutomationService {
       );
     }
 
-    if (draftUrl != null || nextStatus != DocStatus.draftGenerated) {
-      await _documentService.markVerifiedForPayment(
-        requestId: request.id,
-        secretaryId: null, // automation acts as system, not as a secretary
-        paymentRequired: feeRequired,
+    // Paid requests require a human secretary to review the request and send
+    // the invoice. Automation only prepares the draft and never reaches
+    // `invoiced` on its own; free docs may still auto-advance.
+    if (feeRequired) {
+      final leftStatus =
+          draftUrl != null ? DocStatus.draftGenerated : DocStatus.submitted;
+
+      await _safeNotify(
+        userId: request.userId,
+        title: 'Request under review',
+        message:
+            'Your ${AutomationConstants.labelFor(request.documentType)} request is awaiting barangay review. You will receive an invoice with payment instructions once it is verified.',
+        type: 'system',
+      );
+
+      // Generate initial e-receipt (fire-and-forget, never blocks)
+      try {
+        await _generateAndUploadERecceipt(
+          request: request,
+          paymentReceiptUrl: null,
+        );
+      } catch (_) {}
+
+      return AutomationOutcome(
+        processed: true,
+        finalStatus: leftStatus,
+        message: draftUrl != null
+            ? 'Draft generated; awaiting secretary review and invoice'
+            : 'Awaiting secretary review',
+        pdfGenerated: pdfGenerated,
       );
     }
 
+    await _documentService.markVerifiedForPayment(
+      requestId: request.id,
+      secretaryId: null, // automation acts as system, not as a secretary
+      paymentRequired: false,
+    );
+
     await _safeNotify(
       userId: request.userId,
-      title: feeRequired
-          ? 'Invoice created'
-          : 'Request ready for approval',
-      message: feeRequired
-          ? 'Your ${AutomationConstants.labelFor(request.documentType)} request was verified. Please pay ₱${request.paymentAmount.toStringAsFixed(2)} and upload your GCash receipt.'
-          : 'Your ${AutomationConstants.labelFor(request.documentType)} request was verified and forwarded for final approval.',
-      type: feeRequired ? 'payment_verified' : 'request_approved',
+      title: 'Request ready for approval',
+      message:
+          'Your ${AutomationConstants.labelFor(request.documentType)} request was verified and forwarded for final approval.',
+      type: 'request_approved',
     );
 
     // Generate initial e-receipt (fire-and-forget, never blocks)
@@ -189,9 +217,7 @@ class DocumentAutomationService {
     return AutomationOutcome(
       processed: true,
       finalStatus: nextStatus,
-      message: feeRequired
-          ? 'Auto-verified; invoice created'
-          : 'Auto-verified; forwarded for captain approval',
+      message: 'Auto-verified; forwarded for captain approval',
       pdfGenerated: pdfGenerated,
     );
   }

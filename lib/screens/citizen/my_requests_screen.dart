@@ -45,12 +45,19 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
   List<DocumentRequest> _getFilteredRequests(List<DocumentRequest> requests) {
     switch (_filter) {
       case 'pending':
+        // Anything still moving through the pipeline (review, draft, invoice,
+        // payment, approval). Uses the canonical status set — the old
+        // `pending_review`-only filter hid submitted/invoiced requests.
         return requests
-            .where((r) => r.requestStatus == 'pending_review')
+            .where((r) => !r.isReleased && !r.isRejected && !r.isCancelled)
             .toList();
       case 'payment':
         return requests
-            .where((r) => r.requestStatus == 'pending_payment')
+            .where((r) =>
+                r.isInvoiced ||
+                r.requestStatus == DocStatus.paymentSubmitted ||
+                r.requestStatus == DocStatus.paymentRejected ||
+                r.requestStatus == DocStatus.pendingPayment)
             .toList();
       case 'approved':
         return requests.where((r) => r.isApproved || r.isReleased).toList();
@@ -548,9 +555,50 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                   ),
                 ],
 
-                // Payment needed
-                if (request.requestStatus == 'pending_payment' &&
-                    request.paymentReceiptUrl == null) ...[
+                // Payment rejection reason (treasurer sent the receipt back)
+                if (request.requestStatus == DocStatus.paymentRejected &&
+                    request.paymentRejectionReason != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppColors.error.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.info_outline,
+                          color: AppColors.error,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            request.paymentRejectionReason!,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.error,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // Payment needed: invoice sent (no receipt yet) or the last
+                // receipt was rejected (citizen must upload a new one).
+                // Canonical statuses — `pending_payment` is legacy only.
+                if ((request.isInvoiced ||
+                        request.requestStatus == DocStatus.paymentRejected ||
+                        request.requestStatus == DocStatus.pendingPayment) &&
+                    (request.paymentReceiptUrl == null ||
+                        request.requestStatus ==
+                            DocStatus.paymentRejected)) ...[
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -614,8 +662,9 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                 ],
 
                 // Payment submitted, awaiting verification
-                if (request.requestStatus == 'pending_payment' &&
-                    request.paymentReceiptUrl != null) ...[
+                if (request.requestStatus == DocStatus.paymentSubmitted ||
+                    (request.requestStatus == DocStatus.pendingPayment &&
+                        request.paymentReceiptUrl != null)) ...[
                   const SizedBox(height: 10),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -645,9 +694,13 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                   ),
                 ],
 
-                // Pending review
-                if (request.requestStatus == 'pending_review' ||
-                    request.requestStatus == 'pending_secretary_review') ...[
+                // Pending review / earlier pipeline stages
+                if (request.isPendingReview ||
+                    request.requestStatus == DocStatus.submitted ||
+                    request.requestStatus == DocStatus.draftGenerated ||
+                    request.requestStatus == DocStatus.needsRevision ||
+                    request.requestStatus == DocStatus.verifiedForPayment ||
+                    request.requestStatus == DocStatus.forApproval) ...[
                   const SizedBox(height: 10),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -713,8 +766,19 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
         return AppColors.warning;
       case 'pending_payment':
         return const Color(0xFF7B1FA2);
+      case 'submitted':
+      case 'draft_generated':
+      case 'verified_for_payment':
+      case 'for_approval':
+        return AppColors.primary;
+      case 'invoiced':
+        // Matches the dashboard invoice card accent.
+        return AppColors.accent;
       case 'payment_submitted':
         return Colors.teal;
+      case 'payment_rejected':
+        return AppColors.error;
+      case 'payment_confirmed':
       case 'payment_verified':
       case 'generated':
       case 'approved':
