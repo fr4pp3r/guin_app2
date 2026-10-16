@@ -369,6 +369,16 @@ class DocumentRequest {
   bool get isGenerated => isDraftGenerated;
   bool get isPending => isPendingPayment || isPendingReview;
 
+  /// Still moving through the pipeline (not yet released, rejected, or
+  /// cancelled). This is the canonical "pending" for the citizen views — the
+  /// narrow legacy [isPending] misses draft/invoice/payment/approval stages.
+  bool get isInProgress => !isReleased && !isRejected && !isCancelled;
+
+  /// Finished successfully: approved (incl. awaiting release) or released.
+  /// The live captain flow ends at `released`, so a plain [isApproved] check
+  /// never counts completed documents.
+  bool get isApprovedOrReleased => isApproved || isReleased;
+
   bool get isPaymentPending => paymentStatus == 'pending';
   bool get isPaymentVerified => paymentStatus == 'verified';
   bool get isPaymentRejected => paymentStatus == 'rejected';

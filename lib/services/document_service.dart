@@ -675,36 +675,51 @@ class DocumentService {
 
   Future<Map<String, int>> getStatistics() async {
     try {
-      final pendingPayment = await _supabase
+      // Buckets mirror the live queue queries (getPendingPayments /
+      // getPendingReviews) and the canonical 16-status pipeline — NOT the
+      // legacy `pending_payment` / `pending_review` / `approved` values that
+      // the workflow no longer writes (documented in DOCUMENTATION §13.5).
+      final response = await _supabase
           .from('document_requests')
-          .select('id')
-          .eq('request_status', 'pending_payment');
+          .select('request_status');
 
-      final pendingReview = await _supabase
-          .from('document_requests')
-          .select('id')
-          .eq('request_status', 'pending_review');
+      final rows = response as List;
+      int countWhere(bool Function(String status) test) => rows
+          .where(
+            (r) => test(
+              (r as Map<String, dynamic>)['request_status'] as String? ?? '',
+            ),
+          )
+          .length;
 
-      final approved = await _supabase
-          .from('document_requests')
-          .select('id')
-          .eq('request_status', 'approved');
-
-      final rejected = await _supabase
-          .from('document_requests')
-          .select('id')
-          .eq('request_status', 'rejected');
+      final pendingPayment = countWhere(
+        (s) =>
+            s == DocStatus.invoiced ||
+            s == DocStatus.paymentSubmitted ||
+            s == DocStatus.pendingPayment,
+      );
+      final pendingReview = countWhere(
+        (s) =>
+            s == DocStatus.submitted ||
+            s == DocStatus.draftGenerated ||
+            s == DocStatus.needsRevision ||
+            s == DocStatus.pendingReview ||
+            s == DocStatus.approvedForRelease,
+      );
+      final approved = countWhere(
+        (s) =>
+            s == DocStatus.approved ||
+            s == DocStatus.approvedForRelease ||
+            s == DocStatus.released,
+      );
+      final rejected = countWhere((s) => s == DocStatus.rejected);
 
       return {
-        'pending_payment': (pendingPayment as List).length,
-        'pending_review': (pendingReview as List).length,
-        'approved': (approved as List).length,
-        'rejected': (rejected as List).length,
-        'total':
-            (pendingPayment as List).length +
-            (pendingReview as List).length +
-            (approved as List).length +
-            (rejected as List).length,
+        'pending_payment': pendingPayment,
+        'pending_review': pendingReview,
+        'approved': approved,
+        'rejected': rejected,
+        'total': rows.length,
       };
     } catch (e) {
       rethrow;

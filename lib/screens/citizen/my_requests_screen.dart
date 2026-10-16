@@ -48,9 +48,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
         // Anything still moving through the pipeline (review, draft, invoice,
         // payment, approval). Uses the canonical status set — the old
         // `pending_review`-only filter hid submitted/invoiced requests.
-        return requests
-            .where((r) => !r.isReleased && !r.isRejected && !r.isCancelled)
-            .toList();
+        return requests.where((r) => r.isInProgress).toList();
       case 'payment':
         return requests
             .where((r) =>
@@ -60,7 +58,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                 r.requestStatus == DocStatus.pendingPayment)
             .toList();
       case 'approved':
-        return requests.where((r) => r.isApproved || r.isReleased).toList();
+        return requests.where((r) => r.isApprovedOrReleased).toList();
       case 'rejected':
         return requests.where((r) => r.isRejected).toList();
       default:

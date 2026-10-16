@@ -827,6 +827,15 @@ Alongside the new pipeline, older methods remain: `verifyPayment()`, `rejectPaym
 counts only `pending_payment` / `pending_review` / `approved` / `rejected`). Confirm which
 call sites are live before relying on them.
 
+> **Fixed (2026-10-16):** `getStatistics()` now buckets the canonical 16-status set and
+> mirrors the live queue queries (`getPendingPayments` / `getPendingReviews`), so the admin
+> dashboard's Pending Payments / Pending Reviews / Approved cards are accurate (previously
+> `approved` was always 0 because the pipeline never writes that status). At the same time
+> the citizen dashboard counters were aligned with the My Requests filters via the new
+> `DocumentRequest.isInProgress` / `DocumentRequest.isApprovedOrReleased` getters — the
+> "Approved" card previously missed `released`, the live terminal state. The other legacy
+> methods (`verifyPayment`, `rejectPayment`, `approveRequest`, `rejectRequest`) remain.
+
 > **Fixed (2026-10-13):** `verifyPayment()` and `encodeCashPayment()` previously set
 > `request_status` to `'pending_review'` instead of `for_approval` after payment confirmation,
 > causing paid documents to loop between the secretary review queue and the payment queue

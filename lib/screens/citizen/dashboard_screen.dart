@@ -483,7 +483,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                           child: _buildStatCard(
                             l10n.citizenStatPending,
                             documentProvider.myRequests
-                                .where((r) => r.isPending)
+                                .where((r) => r.isInProgress)
                                 .length
                                 .toString(),
                             Icons.pending,
@@ -501,7 +501,7 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                           child: _buildStatCard(
                             l10n.citizenStatApproved,
                             documentProvider.myRequests
-                                .where((r) => r.isApproved)
+                                .where((r) => r.isApprovedOrReleased)
                                 .length
                                 .toString(),
                             Icons.check_circle,
