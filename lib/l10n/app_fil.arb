@@ -939,5 +939,46 @@
   "auregTitle": "Detalye ng Rehistrasyon",
   "auregVerified": "Na-verify",
   "auregVerifiedOn": "Na-verify noong {date}",
-  "auserReviewRegistration": "Suriin ang rehistrasyon"
+  "auserReviewRegistration": "Suriin ang rehistrasyon",
+  "tdashTitle": "Dashboard ng Tanod",
+  "tdashDutySubtitle": "Puesto ng kapayapaan at kaayusan",
+  "tdashOpenIncidents": "Bukas na insidente",
+  "tdashUrgentOpen": "{count, plural, =0{Walang urgent na kaso} =1{1 urgent na kaso} other{{count} urgent na kaso}}",
+  "@tdashUrgentOpen": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tdashNeedsAttention": "Kailangan ng Pansin",
+  "tdashFeedEmpty": "Walang bukas na insidente ngayon",
+  "tdashFeedEmptyHint": "Hilahin pababa para i-refresh.",
+  "tdashHandledSection": "Kamakailang Natapos",
+  "tdashViewAllReports": "Tingnan Lahat ng Ulat",
+  "tdashLoadError": "Hindi ma-load ang mga ulat ng insidente.",
+  "tdashRefreshError": "Hindi ma-refresh ang mga ulat ng insidente.",
+  "tdashFilterAll": "Lahat",
+  "tdashPriorityUrgent": "Urgent",
+  "tdashPriorityHigh": "Mataas",
+  "tdashPriorityNormal": "Karaniwan",
+  "tdashPriorityLow": "Mababa",
+  "tdashStatusSubmitted": "Naisumite",
+  "tdashStatusReceived": "Natanggap",
+  "tdashStatusUnderAssessment": "Sinusuri",
+  "tdashStatusEndorsed": "Nai-endorso",
+  "tdashStatusInProgress": "Isinasagawa",
+  "tdashStatusResolved": "Nalutasan",
+  "tdashStatusClosed": "Isinara",
+  "tdashStatusRejected": "Tinanggihan",
+  "tdashUpdateStatusTitle": "I-update ang Status",
+  "tdashUpdateStatusHint": "Piliin ang bagong status para sa ulat na ito.",
+  "tdashUpdateStatusRemark": "In-update mula sa tanod dashboard",
+  "tdashStatusUpdated": "Na-update ang status",
+  "tdashStatusUpdateFailed": "Hindi ma-update ang status.",
+  "tdetTitle": "Ulat ng Insidente",
+  "tdetReportNumber": "Numero ng ulat",
+  "tdetIncidentDate": "Petsa ng insidente",
+  "tdetReportedAt": "Isinumite",
+  "tdetNoDescription": "Walang ibinigay na paglalarawan."
 }

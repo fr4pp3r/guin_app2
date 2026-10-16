@@ -939,5 +939,46 @@
   "auregTitle": "Detalye sa Rehistrasyon",
   "auregVerified": "Na-verify",
   "auregVerifiedOn": "Na-verify niadtong {date}",
-  "auserReviewRegistration": "Susiha ang rehistrasyon"
+  "auserReviewRegistration": "Susiha ang rehistrasyon",
+  "tdashTitle": "Dashboard sa Tanod",
+  "tdashDutySubtitle": "Puesto sa kalinaw ug kaayusan",
+  "tdashOpenIncidents": "Mga bukas nga insidente",
+  "tdashUrgentOpen": "{count, plural, =0{Walay urgent nga kaso} =1{1 urgent nga kaso} other{{count} urgent nga kaso}}",
+  "@tdashUrgentOpen": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tdashNeedsAttention": "Nanginahanglan ug Pagtagad",
+  "tdashFeedEmpty": "Walay bukas nga insidente karon",
+  "tdashFeedEmptyHint": "Ihiki palubos aron i-refresh.",
+  "tdashHandledSection": "Bag-ong Nahuman",
+  "tdashViewAllReports": "Tan-aha ang Tanang mga Report",
+  "tdashLoadError": "Mao ma-load ang mga report sa insidente.",
+  "tdashRefreshError": "Mao ma-refresh ang mga report sa insidente.",
+  "tdashFilterAll": "Tanan",
+  "tdashPriorityUrgent": "Urgent",
+  "tdashPriorityHigh": "Taas",
+  "tdashPriorityNormal": "Normal",
+  "tdashPriorityLow": "Ubos",
+  "tdashStatusSubmitted": "Nasumite",
+  "tdashStatusReceived": "Nadawat",
+  "tdashStatusUnderAssessment": "Gisusi",
+  "tdashStatusEndorsed": "Gi-endorso",
+  "tdashStatusInProgress": "Padayon",
+  "tdashStatusResolved": "Nasulbad",
+  "tdashStatusClosed": "Sirado",
+  "tdashStatusRejected": "Gisalikway",
+  "tdashUpdateStatusTitle": "I-update ang Status",
+  "tdashUpdateStatusHint": "Pilia ang bag-ong status para niining report.",
+  "tdashUpdateStatusRemark": "Gi-update gikan sa tanod dashboard",
+  "tdashStatusUpdated": "Na-update ang status",
+  "tdashStatusUpdateFailed": "Mao ma-update ang status.",
+  "tdetTitle": "Report sa Insidente",
+  "tdetReportNumber": "Numero sa report",
+  "tdetIncidentDate": "Adlaw sa insidente",
+  "tdetReportedAt": "Gisumite",
+  "tdetNoDescription": "Walay gihatag nga paglarawan."
 }

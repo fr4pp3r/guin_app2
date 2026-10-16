@@ -1811,5 +1811,47 @@
       }
     }
   },
-  "auserReviewRegistration": "Review registration"
+  "auserReviewRegistration": "Review registration",
+  "tdashTitle": "Tanod Dashboard",
+  "tdashDutySubtitle": "Peace and order desk",
+  "tdashOpenIncidents": "Open incidents",
+  "tdashUrgentOpen": "{count, plural, =0{No urgent cases} =1{1 urgent case} other{{count} urgent cases}}",
+  "@tdashUrgentOpen": {
+    "description": "Urgent-priority count among open incidents, hero card pill",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tdashNeedsAttention": "Needs Attention",
+  "tdashFeedEmpty": "No open incidents right now",
+  "tdashFeedEmptyHint": "Pull down to refresh.",
+  "tdashHandledSection": "Recently Handled",
+  "tdashViewAllReports": "View All Reports",
+  "tdashLoadError": "Could not load incident reports.",
+  "tdashRefreshError": "Could not refresh incident reports.",
+  "tdashFilterAll": "All",
+  "tdashPriorityUrgent": "Urgent",
+  "tdashPriorityHigh": "High",
+  "tdashPriorityNormal": "Normal",
+  "tdashPriorityLow": "Low",
+  "tdashStatusSubmitted": "Submitted",
+  "tdashStatusReceived": "Received",
+  "tdashStatusUnderAssessment": "Under Assessment",
+  "tdashStatusEndorsed": "Endorsed",
+  "tdashStatusInProgress": "In Progress",
+  "tdashStatusResolved": "Resolved",
+  "tdashStatusClosed": "Closed",
+  "tdashStatusRejected": "Rejected",
+  "tdashUpdateStatusTitle": "Update Status",
+  "tdashUpdateStatusHint": "Choose the new status for this report.",
+  "tdashUpdateStatusRemark": "Updated from the tanod dashboard",
+  "tdashStatusUpdated": "Status updated",
+  "tdashStatusUpdateFailed": "Could not update the status.",
+  "tdetTitle": "Incident Report",
+  "tdetReportNumber": "Report number",
+  "tdetIncidentDate": "Incident date",
+  "tdetReportedAt": "Reported",
+  "tdetNoDescription": "No description provided."
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/config/routes.dart';
+import 'package:guin_app/utils/role_access.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -54,6 +55,10 @@ class _SplashScreenState extends State<SplashScreen>
       if (userProfile != null) {
         if (!userProfile.isApproved) {
           Navigator.of(context).pushReplacementNamed(AppRoutes.pendingApproval);
+        } else if (userProfile.isAdmin &&
+            userProfile.role == AppRoles.barangayTanod) {
+          // Tanods resume into their incident-first dashboard.
+          Navigator.of(context).pushReplacementNamed(AppRoutes.tanodDashboard);
         } else if (userProfile.isAdmin) {
           Navigator.of(context).pushReplacementNamed(AppRoutes.adminDashboard);
         } else {

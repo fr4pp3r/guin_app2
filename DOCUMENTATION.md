@@ -109,6 +109,8 @@ lib/
 │                                 # pending_payments, captain_approval, all_requests, profile,
 │                                 # settings, document_fees, document_formats, incident_reports,
 │                                 # user_registration_detail, document_request_detail
+│   └── tanod/                    # dashboard (incident-first tanod home), incident_detail,
+│                                 # incident_visuals (shared status/priority helpers)
 ├── services/                     # Backend/data access (Supabase queries, AI, cache)
 ├── automation/                   # Pure-Dart pipeline rules, validators, PDF payloads
 ├── widgets/                      # Shared widgets (connectivity_banner)
@@ -360,6 +362,12 @@ via the manage-users screen.
 Citizens file incident reports; officials (captain, tanod, kagawad) triage them.
 Reporter identity is treated as sensitive — `canRevealSensitiveReporter()` restricts
 anonymity protection to the captain and admin.
+
+Tanods land on their own incident-first home (`lib/screens/tanod/dashboard_screen.dart`,
+route `/tanod/dashboard`) instead of the admin dashboard; it summarizes open reports by
+priority, feeds them urgent-first, and moves statuses via `updateStatus` on the detail
+screen (`lib/screens/tanod/incident_detail_screen.dart`). The captain/secretary keep the
+original triage screen at `/admin/incident-reports`.
 
 Supporting tables: `incident_reports`, `incident_updates`, `incident_attachments`.
 The provider is `IncidentReportProvider` (registered in `main.dart`).
@@ -979,6 +987,7 @@ English (default), Filipino, Cebuano — ARB files + generated localizations
 | `/admin/settings`               | Barangay + GCash config      |
 | `/admin/document-fees`          | Fee management               |
 | `/admin/document-formats`       | PDF template preview         |
+| `/tanod/dashboard`              | Tanod incident dashboard     |
 | `/verify`                       | Public document verification |
 
 `/citizen/notifications` is shared by every role: it renders the signed-in user's own
@@ -994,6 +1003,7 @@ These screens are reached with `Navigator.push(MaterialPageRoute(...))` and deli
 | `announcements/create_announcement_screen` | Feed FAB (posting roles only)                 |
 | `admin/user_registration_detail_screen` | Pending registration cards (manage users)       |
 | `admin/document_request_detail_screen` | Secretary review queue + captain/kagawad queue cards |
+| `tanod/incident_detail_screen` | Tanod dashboard incident cards (open + recently handled) |
 
 ---
 
@@ -1004,6 +1014,7 @@ consolidated into this document. Listed newest-first by their own stated dates.
 
 | Date        | Milestone                                                                 |
 | ----------- | ------------------------------------------------------------------------- |
+| 2026-10-16  | Tanod incident dashboard (`/tanod/dashboard`): open-incident counts, priority-filterable urgent-first feed, status transitions via the existing `updateStatus`; tanods now land here from login and splash |
 | 2026-10-15  | Approval review pages (full registration / request + requestor detail before approve/refuse), notifications for every role with in-app queue badges, and the announcement board |
 | 2026-10    | AI features (ID verifier, document processor, receipt parser, incident classifier), automation pipeline, offline cache, i18n, guarantor system, profile screens |
 | Dec 2025    | Phase 1 foundation: schema, models, services, theme, routing               |

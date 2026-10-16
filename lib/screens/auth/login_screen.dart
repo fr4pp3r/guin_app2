@@ -5,6 +5,7 @@ import 'package:guin_app/config/routes.dart';
 import 'package:guin_app/utils/validators.dart';
 import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/utils/constants.dart';
+import 'package:guin_app/utils/role_access.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -57,7 +58,13 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       if (userProfile.isAdmin) {
-        Navigator.pushReplacementNamed(context, AppRoutes.adminDashboard);
+        // Tanods get their incident-first dashboard; everyone else keeps
+        // the admin dashboard.
+        if (userProfile.role == AppRoles.barangayTanod) {
+          Navigator.pushReplacementNamed(context, AppRoutes.tanodDashboard);
+        } else {
+          Navigator.pushReplacementNamed(context, AppRoutes.adminDashboard);
+        }
       } else {
         Navigator.pushReplacementNamed(context, AppRoutes.citizenDashboard);
       }

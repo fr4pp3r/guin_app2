@@ -11,6 +11,7 @@ import 'package:guin_app/screens/citizen/my_reports_screen.dart';
 import 'package:guin_app/screens/citizen/notifications_screen.dart';
 import 'package:guin_app/screens/citizen/e_receipt_viewer_screen.dart';
 import 'package:guin_app/screens/admin/dashboard_screen.dart' as admin;
+import 'package:guin_app/screens/tanod/dashboard_screen.dart' as tanod;
 import 'package:guin_app/screens/admin/manage_users_screen.dart';
 import 'package:guin_app/screens/admin/pending_requests_screen.dart';
 import 'package:guin_app/screens/admin/pending_payments_screen.dart';
@@ -48,6 +49,9 @@ class AppRoutes {
 
   // Admin Routes
   static const String adminDashboard = '/admin/dashboard';
+
+  // Tanod Routes
+  static const String tanodDashboard = '/tanod/dashboard';
   static const String pendingUsers = '/admin/pending-users';
   static const String pendingRequests = '/admin/pending-requests';
   static const String pendingPayments = '/admin/pending-payments';
@@ -75,6 +79,7 @@ class AppRoutes {
       incidentReports: (context) => const IncidentReportsScreen(),
       verifyDocument: (context) => const VerifyDocumentScreen(),
       adminDashboard: (context) => const admin.AdminDashboardScreen(),
+      tanodDashboard: (context) => const tanod.TanodDashboardScreen(),
       pendingUsers: (context) => const ManageUsersScreen(),
       pendingRequests: (context) => const PendingRequestsScreen(),
       pendingPayments: (context) => const PendingPaymentsScreen(),
@@ -141,6 +146,10 @@ class AppRoutes {
       case adminDashboard:
         return MaterialPageRoute(
           builder: (context) => const admin.AdminDashboardScreen(),
+        );
+      case tanodDashboard:
+        return MaterialPageRoute(
+          builder: (context) => const tanod.TanodDashboardScreen(),
         );
       case pendingUsers:
         return MaterialPageRoute(
