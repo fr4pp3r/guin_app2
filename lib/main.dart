@@ -12,6 +12,7 @@ import 'package:guin_app/providers/announcement_provider.dart';
 import 'package:guin_app/providers/incident_report_provider.dart';
 import 'package:guin_app/providers/connectivity_provider.dart';
 import 'package:guin_app/providers/locale_provider.dart';
+import 'package:guin_app/providers/hotline_provider.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/l10n/app_l10n.dart';
 import 'package:guin_app/widgets/connectivity_banner.dart';
@@ -72,6 +73,7 @@ class MainApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => IncidentReportProvider()),
         ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ChangeNotifierProvider(create: (_) => HotlineProvider()),
       ],
       child: Consumer<LocaleProvider>(
         builder: (context, localeProvider, _) => MaterialApp(

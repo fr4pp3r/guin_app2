@@ -25,6 +25,12 @@ class AppRoles {
   static bool canPostAnnouncements(String role) =>
       role == captain || role == secretary || role == legacyAdmin;
 
+  // Emergency hotlines: every signed-in user reads the directory; only the
+  // communications set (captain / secretary / admin) may add/edit/remove
+  // entries.
+  static bool canManageHotlines(String role) =>
+      role == captain || role == secretary || role == legacyAdmin;
+
   // ── Workflow-specific permissions ────────────────────────────────────
   // Secretary: draft generation, revision requests, verified-for-payment
   static bool canGenerateDrafts(String role) =>

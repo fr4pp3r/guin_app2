@@ -906,6 +906,38 @@
   "annTitleHint": "pananglitan: Asembleya sa barangay karong Sabado",
   "annTitleLabel": "Titulo *",
   "areqViewEReceipt": "Tan-awa ang E-Resibo",
+  "adashHotlines": "Mga Emergency Hotline",
+  "hotlineActiveBody": "Ang mga inactive entry magpibilin sa listahan pero naka-dim.",
+  "hotlineActiveLabel": "Aktibo",
+  "hotlineAddTitle": "Magdugang ug Hotline",
+  "hotlineAdded": "Naidugang ang hotline",
+  "hotlineDashboardSubtitle": "Importante nga numero nga tawagon sa emergency",
+  "hotlineDeleteConfirmBody": "Permanenteng tangtangon ang {name} gikan sa listahan sa hotline. Dili na kini mauli.",
+  "@hotlineDeleteConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "hotlineDeleteTitle": "I-delete ang hotline?",
+  "hotlineDeleted": "Gitangtang ang hotline",
+  "hotlineDescHint": "pananglitan: 24/7 emergency hotline",
+  "hotlineDescLabel": "Paghulagway (opsyonal)",
+  "hotlineEditTitle": "I-edit ang Hotline",
+  "hotlineEmptyBody": "Makita dinhi ang mga numero sa emergency hotline gikan sa mga opisyal sa barangay.",
+  "hotlineEmptyTitle": "Wala pa'y hotline",
+  "hotlineInactive": "Dili aktibo",
+  "hotlineLoadError": "Wala ma-load ang mga hotline",
+  "hotlineNameHint": "pananglitan: Barangay Hall",
+  "hotlineNameLabel": "Ngalan *",
+  "hotlineNameNumberRequired": "Kinahanglan ang ngalan ug numero.",
+  "hotlineNew": "Magdugang ug hotline",
+  "hotlineNumberHint": "pananglitan: 0917 123 4567",
+  "hotlineNumberLabel": "Numero sa telepono *",
+  "hotlineReadyToSave": "Andam nga i-save.",
+  "hotlineTitle": "Mga Emergency Hotline",
+  "hotlineUpdated": "Na-update ang hotline",
   "asecReviewRequest": "Ribyuha ang hangyo",
   "asetEmailAddress": "Email Address",
   "auregApprovedOn": "Naaprobaran niadtong {date}",

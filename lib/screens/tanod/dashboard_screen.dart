@@ -335,6 +335,14 @@ class _TanodDashboardScreenState extends State<TanodDashboardScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                  // Emergency hotlines — full-width so it stands out; every
+                  // signed-in user (tanod included) can open the directory.
+                  _buildQuickTile(
+                    l10n.adashHotlines,
+                    Icons.emergency,
+                    () => Navigator.of(context).pushNamed(AppRoutes.hotlines),
+                  ),
                   const SizedBox(height: 32),
                 ],
               ),

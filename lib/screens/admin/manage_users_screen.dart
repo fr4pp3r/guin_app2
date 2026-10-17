@@ -12,7 +12,21 @@ import 'package:guin_app/l10n/app_l10n.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class ManageUsersScreen extends StatefulWidget {
-  const ManageUsersScreen({super.key});
+  /// 0 = pending users tab, 1 = all users tab.
+  final int initialTab;
+
+  /// When true, only the pending-users list is shown (no tabs).
+  final bool pendingOnly;
+
+  /// When true, only the all-users list is shown (no tabs).
+  final bool allUsersOnly;
+
+  const ManageUsersScreen({
+    super.key,
+    this.initialTab = 0,
+    this.pendingOnly = false,
+    this.allUsersOnly = false,
+  });
 
   @override
   State<ManageUsersScreen> createState() => _ManageUsersScreenState();
@@ -25,14 +39,31 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
   String _searchQuery = '';
   String _roleFilter = 'all';
 
+  bool get _showPending => !widget.allUsersOnly;
+  bool get _showAllUsers => !widget.pendingOnly;
+  int get _tabCount => (_showPending ? 1 : 0) + (_showAllUsers ? 1 : 0);
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(
+      length: _tabCount < 1 ? 1 : _tabCount,
+      vsync: this,
+      initialIndex: _initialTabIndex(),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<UserProvider>().loadPendingUsers();
-      context.read<UserProvider>().loadAllUsers();
+      if (_showPending) context.read<UserProvider>().loadPendingUsers();
+      if (_showAllUsers) context.read<UserProvider>().loadAllUsers();
     });
+  }
+
+  int _initialTabIndex() {
+    if (_tabCount <= 1) return 0;
+    // Map requested tab onto the visible (possibly filtered) tab list.
+    if (widget.initialTab == 1 && _showAllUsers) {
+      return _showPending ? 1 : 0;
+    }
+    return 0;
   }
 
   @override
@@ -174,7 +205,9 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
     );
     if (mounted) {
       context.read<UserProvider>().loadAllUsers();
-      _tabController.animateTo(1);
+      if (_tabCount > 1 && _showAllUsers) {
+        _tabController.animateTo(_showPending ? 1 : 0);
+      }
     }
   }
 
@@ -202,22 +235,26 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
             ),
           ),
         ),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          tabs: [
-            Tab(
-              text: l10n.auserTabPending(userProvider.pendingUsers.length),
-              icon: const Icon(Icons.hourglass_empty, size: 18),
-            ),
-            Tab(
-              text: l10n.auserTabAllUsers(userProvider.allUsers.length),
-              icon: const Icon(Icons.people, size: 18),
-            ),
-          ],
-        ),
+        bottom: _tabCount > 1
+            ? TabBar(
+                controller: _tabController,
+                indicatorColor: Colors.white,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white70,
+                tabs: [
+                  if (_showPending)
+                    Tab(
+                      text: l10n.auserTabPending(userProvider.pendingUsers.length),
+                      icon: const Icon(Icons.hourglass_empty, size: 18),
+                    ),
+                  if (_showAllUsers)
+                    Tab(
+                      text: l10n.auserTabAllUsers(userProvider.allUsers.length),
+                      icon: const Icon(Icons.people, size: 18),
+                    ),
+                ],
+              )
+            : null,
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openCreateUserScreen,
@@ -226,13 +263,17 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
         backgroundColor: const Color(0xFF1976D2),
         foregroundColor: Colors.white,
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildPendingTab(userProvider),
-          _buildAllUsersTab(userProvider),
-        ],
-      ),
+      body: _tabCount > 1
+          ? TabBarView(
+              controller: _tabController,
+              children: [
+                if (_showPending) _buildPendingTab(userProvider),
+                if (_showAllUsers) _buildAllUsersTab(userProvider),
+              ],
+            )
+          : (_showPending
+                ? _buildPendingTab(userProvider)
+                : _buildAllUsersTab(userProvider)),
     );
   }
 

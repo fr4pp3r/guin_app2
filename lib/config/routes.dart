@@ -29,6 +29,7 @@ import 'package:guin_app/screens/citizen/submit_report_screen.dart';
 import 'package:guin_app/screens/citizen/profile_screen.dart';
 import 'package:guin_app/screens/citizen/chatbot_screen.dart';
 import 'package:guin_app/screens/admin/profile_screen.dart';
+import 'package:guin_app/screens/hotlines/hotlines_screen.dart';
 
 class AppRoutes {
   // Splash
@@ -72,6 +73,10 @@ class AppRoutes {
   static const String captainApproval = '/admin/captain-approval';
   static const String adminProfile = '/admin/profile';
 
+  /// Emergency hotline directory — every signed-in user reads the list;
+  /// captain / secretary / admin may edit.
+  static const String hotlines = '/hotlines';
+
   static Map<String, WidgetBuilder> get routes {
     return {
       splash: (context) => const SplashScreen(),
@@ -99,6 +104,7 @@ class AppRoutes {
       documentFormats: (context) => const DocumentFormatsScreen(),
       captainApproval: (context) => const CaptainApprovalScreen(),
       adminProfile: (context) => const AdminProfileScreen(),
+      hotlines: (context) => const HotlinesScreen(),
     };
   }
 
@@ -221,6 +227,8 @@ class AppRoutes {
         return MaterialPageRoute(
           builder: (context) => const AdminProfileScreen(),
         );
+      case AppRoutes.hotlines:
+        return MaterialPageRoute(builder: (_) => const HotlinesScreen());
       default:
         return MaterialPageRoute(
           builder: (context) => Scaffold(

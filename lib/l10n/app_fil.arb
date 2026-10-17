@@ -906,6 +906,38 @@
   "annTitleHint": "hal. Asembleya ng barangay ngayong Sabado",
   "annTitleLabel": "Pamagat *",
   "areqViewEReceipt": "Tingnan ang E-Resibo",
+  "adashHotlines": "Mga Emergency Hotline",
+  "hotlineActiveBody": "Ang mga inactive entry ay nananatili sa listunit ngunit naka-dim.",
+  "hotlineActiveLabel": "Aktibo",
+  "hotlineAddTitle": "Magdagdag ng Hotline",
+  "hotlineAdded": "Naidagdag ang hotline",
+  "hotlineDashboardSubtitle": "Mga mahahagang numero na tawagan sa emergency",
+  "hotlineDeleteConfirmBody": "Permanenteng tatanggalin ang {name} mula sa listahan ng hotline. Hindi na ito maibabalik.",
+  "@hotlineDeleteConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "hotlineDeleteTitle": "I-delete ang hotline?",
+  "hotlineDeleted": "Tinanggal ang hotline",
+  "hotlineDescHint": "hal. 24/7 emergency hotline",
+  "hotlineDescLabel": "Paglalarawan (opsyonal)",
+  "hotlineEditTitle": "I-edit ang Hotline",
+  "hotlineEmptyBody": "Lalabas dito ang mga numero ng emergency hotline mula sa mga opisyal ng barangay.",
+  "hotlineEmptyTitle": "Wala pang hotline",
+  "hotlineInactive": "Hindi aktibo",
+  "hotlineLoadError": "Hindi ma-load ang mga hotline",
+  "hotlineNameHint": "hal. Barangay Hall",
+  "hotlineNameLabel": "Pangalan *",
+  "hotlineNameNumberRequired": "Kailangan ang pangalan at numero.",
+  "hotlineNew": "Magdagdag ng hotline",
+  "hotlineNumberHint": "hal. 0917 123 4567",
+  "hotlineNumberLabel": "Numero ng telepono *",
+  "hotlineReadyToSave": "Handa nang i-save.",
+  "hotlineTitle": "Mga Emergency Hotline",
+  "hotlineUpdated": "Na-update ang hotline",
   "asecReviewRequest": "Suriin ang kahilingan",
   "asetEmailAddress": "Email Address",
   "auregApprovedOn": "Naaprubahan noong {date}",

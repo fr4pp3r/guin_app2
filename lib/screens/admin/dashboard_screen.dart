@@ -8,6 +8,7 @@ import 'package:guin_app/providers/notification_provider.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/role_access.dart';
 import 'package:guin_app/config/routes.dart';
+import 'package:guin_app/screens/admin/manage_users_screen.dart';
 import 'package:guin_app/screens/announcements/announcements_screen.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 
@@ -379,8 +380,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     _userStats?['pending_users']?.toString() ?? '0',
                     Icons.person_add,
                     Colors.orange,
-                    () =>
-                        Navigator.of(context).pushNamed('/admin/pending-users'),
+                    () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ManageUsersScreen(pendingOnly: true),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -390,7 +394,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     _userStats?['total_users']?.toString() ?? '0',
                     Icons.people,
                     Colors.blue,
-                    null,
+                    () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ManageUsersScreen(allUsersOnly: true),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -582,6 +590,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const AnnouncementsScreen()),
               ),
+            ),
+            const SizedBox(height: 8),
+            // Emergency hotlines — every official can read the directory; the
+            // FAB inside handles edit rights, so no role gate here.
+            _buildActionButton(
+              l10n.adashHotlines,
+              Icons.emergency,
+              () => Navigator.of(context).pushNamed(AppRoutes.hotlines),
             ),
             const SizedBox(height: 8),
             _buildActionButton(

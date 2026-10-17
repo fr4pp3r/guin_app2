@@ -121,7 +121,7 @@ with the same graceful-degradation rule.
   path is the viewer's "Request printable copy" → `VerificationService.issuePrintCopy` →
   `DocumentAutomationService.generatePrintableCopyPdf` (`printing` package, native-only —
   PDF gen uses `dart:io`, so web/desktop degrade gracefully). Live-DB migration:
-  `supabase/migrations/20261007_document_print_copies.sql` (additive); `setup.sql` is 20 tables now.
+  `supabase/migrations/20261007_document_print_copies.sql` (additive); `setup.sql` is 21 tables now.
   Live DBs from before the security work also need
   `supabase/migrations/20261007_document_policy_columns.sql` (additive;
   `expires_at`/`single_use`/`max_uses`/`use_count`/`used_at` on both

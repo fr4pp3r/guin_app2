@@ -615,6 +615,24 @@ CREATE TABLE public.announcements (
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- 3m. Emergency hotlines --------------------------------------------------
+-- Emergency contact numbers displayed to every signed-in user. Only
+-- captain / secretary / admin may add/edit/remove entries (client-side
+-- gate via AppRoles.canManageHotlines).
+-- See supabase/migrations/20261017_emergency_hotlines.sql for the additive
+-- version of this table for existing databases.
+CREATE TABLE public.emergency_hotlines (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name            TEXT NOT NULL,
+  number          TEXT NOT NULL,
+  description     TEXT,
+  is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+  created_by      UUID REFERENCES public.users_profile(id) ON DELETE SET NULL,
+  created_by_name TEXT NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 
 -- ============================================================================
 --  SECTION 4 — INDEXES
@@ -644,6 +662,8 @@ CREATE INDEX idx_kyc_guarantors_indigent      ON public.kyc_guarantors(indigent_
 CREATE INDEX idx_kyc_guarantors_status        ON public.kyc_guarantors(status);
 CREATE INDEX idx_announcements_created        ON public.announcements(created_at DESC);
 CREATE INDEX idx_announcements_pinned         ON public.announcements(is_pinned);
+CREATE INDEX idx_emergency_hotlines_active    ON public.emergency_hotlines(is_active);
+CREATE INDEX idx_emergency_hotlines_name      ON public.emergency_hotlines(name);
 
 
 -- ============================================================================
@@ -694,6 +714,10 @@ CREATE TRIGGER trg_announcements_updated_at
   BEFORE UPDATE ON public.announcements
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
+CREATE TRIGGER trg_emergency_hotlines_updated_at
+  BEFORE UPDATE ON public.emergency_hotlines
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
 
 -- ============================================================================
 --  SECTION 6 — ROW LEVEL SECURITY
@@ -723,6 +747,7 @@ ALTER TABLE public.role_permissions       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.kyc_guarantors         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.announcements          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.emergency_hotlines      ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "app_access_users_profile"          ON public.users_profile          FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "app_access_barangay_config"        ON public.barangay_config        FOR ALL USING (true) WITH CHECK (true);
@@ -744,6 +769,7 @@ CREATE POLICY "app_access_role_permissions"       ON public.role_permissions    
 CREATE POLICY "app_access_audit_logs"             ON public.audit_logs             FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "app_access_kyc_guarantors"         ON public.kyc_guarantors         FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "app_access_announcements"          ON public.announcements          FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "app_access_emergency_hotlines"      ON public.emergency_hotlines      FOR ALL USING (true) WITH CHECK (true);
 
 
 -- ============================================================================
@@ -816,7 +842,7 @@ DO $$
 DECLARE
   t TEXT;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['document_requests','users_profile','notifications','announcements'] LOOP
+  FOREACH t IN ARRAY ARRAY['document_requests','users_profile','notifications','announcements','emergency_hotlines'] LOOP
     IF NOT EXISTS (
       SELECT 1 FROM pg_publication_tables
       WHERE pubname = 'supabase_realtime'

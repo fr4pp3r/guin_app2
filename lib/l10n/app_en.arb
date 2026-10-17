@@ -1754,6 +1754,38 @@
   "annTitleHint": "e.g. Barangay assembly this Saturday",
   "annTitleLabel": "Title *",
   "areqViewEReceipt": "View E-Receipt",
+  "adashHotlines": "Emergency Hotlines",
+  "hotlineActiveBody": "Inactive entries stay in the list but are dimmed.",
+  "hotlineActiveLabel": "Active",
+  "hotlineAddTitle": "Add Hotline",
+  "hotlineAdded": "Hotline added",
+  "hotlineDashboardSubtitle": "Important numbers to call in an emergency",
+  "hotlineDeleteConfirmBody": "{name} will be permanently removed from the hotline list. This cannot be undone.",
+  "@hotlineDeleteConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "hotlineDeleteTitle": "Delete hotline?",
+  "hotlineDeleted": "Hotline deleted",
+  "hotlineDescHint": "e.g. 24/7 emergency hotline",
+  "hotlineDescLabel": "Description (optional)",
+  "hotlineEditTitle": "Edit Hotline",
+  "hotlineEmptyBody": "Emergency hotline numbers posted by barangay officials will appear here.",
+  "hotlineEmptyTitle": "No hotlines yet",
+  "hotlineInactive": "Inactive",
+  "hotlineLoadError": "Couldn't load hotlines",
+  "hotlineNameHint": "e.g. Barangay Hall",
+  "hotlineNameLabel": "Name *",
+  "hotlineNameNumberRequired": "Name and number are required.",
+  "hotlineNew": "Add hotline",
+  "hotlineNumberHint": "e.g. 0917 123 4567",
+  "hotlineNumberLabel": "Phone number *",
+  "hotlineReadyToSave": "Ready to save.",
+  "hotlineTitle": "Emergency Hotlines",
+  "hotlineUpdated": "Hotline updated",
   "asecReviewRequest": "Review request",
   "asetEmailAddress": "Email Address",
   "auregApprovedOn": "Approved {date}",
