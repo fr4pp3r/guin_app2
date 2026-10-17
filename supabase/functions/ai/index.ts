@@ -20,6 +20,7 @@ import {
 } from "./_shared.ts";
 import documentProcessor from "./handlers/document_processor.ts";
 import incidentClassifier from "./handlers/incident_classifier.ts";
+import incidentReviewer from "./handlers/incident_reviewer.ts";
 import idVerifier from "./handlers/id_verifier.ts";
 import receiptParser from "./handlers/receipt_parser.ts";
 
@@ -55,6 +56,7 @@ type TaskHandler = (payload: Record<string, unknown>) => Promise<Response>;
 const routes: Record<string, TaskHandler> = {
   "document-processor": documentProcessor,
   "incident-classifier": incidentClassifier,
+  "incident-reviewer": incidentReviewer,
   "id-verifier": idVerifier,
   "receipt-parser": receiptParser,
   ping: () => Promise.resolve(jsonResponse(200, { ok: true })),

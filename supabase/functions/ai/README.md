@@ -36,7 +36,7 @@ Headers: `Authorization: Bearer <supabase-jwt>`, `Content-Type: application/json
 Error envelope: `{ "error": { "code": string, "message": string } }`.
 
 **Tasks today:** `ping` (connectivity test), `document-processor` (AI document
-validation), `incident-classifier` (AI incident categorization) and
+validation), `incident-classifier` (AI incident categorization), `incident-reviewer` (AI analysis + review) and
 `id-verifier` (advisory ID plausibility pre-check) — all live.
 
 > `id-verifier` is **advisory only**: it returns `looks_ok` or `needs_review` and

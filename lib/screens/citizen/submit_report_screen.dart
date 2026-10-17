@@ -4,6 +4,7 @@ import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/incident_report_provider.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/services/ai_incident_classifier.dart';
+import 'package:guin_app/services/ai_incident_reviewer.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
 
@@ -25,9 +26,12 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
   bool _isAnonymous = false;
   bool _isSubmitting = false;
   IncidentSuggestion? _aiSuggestion;
+  IncidentReview? _aiReview;
   bool _aiClassifying = false;
+  bool _aiReviewing = false;
   bool _aiSuggestionApplied = false;
   final _aiClassifier = AiIncidentClassifier();
+  final _aiReviewer = AiIncidentReviewer();
 
   @override
   void dispose() {
@@ -47,9 +51,24 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
       );
       return;
     }
-    setState(() => _aiClassifying = true);
+    setState(() {
+      _aiClassifying = true;
+      _aiReviewing = true;
+    });
     try {
-      final suggestion = await _aiClassifier.suggest(title, description);
+      final suggestionFuture = _aiClassifier.suggest(title, description);
+      final reviewFuture = _aiReviewer.review(
+        title: title,
+        description: description,
+        location: _locationController.text.trim(),
+        reportType: _reportType,
+        priority: _priority,
+        isSensitive: _isSensitive,
+        isAnonymous: _isAnonymous,
+      );
+      final results = await Future.wait([suggestionFuture, reviewFuture]);
+      final suggestion = results[0] as IncidentSuggestion?;
+      final review = results[1] as IncidentReview?;
       if (!mounted) return;
       setState(() {
         _aiSuggestion = suggestion;
@@ -60,15 +79,20 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
         } else {
           _aiSuggestionApplied = false;
         }
+        _aiReview = review;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _aiSuggestion = null;
+        _aiReview = null;
         _aiSuggestionApplied = false;
       });
     } finally {
-      if (mounted) setState(() => _aiClassifying = false);
+      if (mounted) setState(() {
+        _aiClassifying = false;
+        _aiReviewing = false;
+      });
     }
   }
 
@@ -491,6 +515,57 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
         onChanged: onChanged,
         activeColor: AppColors.primary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+    );
+  }
+
+  Color _riskColor(String level) {
+    switch (level.toLowerCase()) {
+      case 'critical':
+        return Colors.red;
+      case 'high':
+        return Colors.orange;
+      case 'moderate':
+        return Colors.amber;
+      case 'low':
+        return Colors.green;
+      default:
+        return AppColors.textSecondary;
+    }
+  }
+
+  Color _escalationColor(String v) {
+    switch (v.toLowerCase()) {
+      case 'yes':
+        return Colors.red;
+      case 'review':
+        return Colors.orange;
+      case 'no':
+        return Colors.green;
+      default:
+        return AppColors.textSecondary;
+    }
+  }
+
+  Widget _buildReviewChip({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        '$label: ${value.isNotEmpty ? value[0].toUpperCase() + value.substring(1) : value}',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
       ),
     );
   }
