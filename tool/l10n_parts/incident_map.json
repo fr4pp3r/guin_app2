@@ -1,0 +1,13 @@
+{
+  "reportMapSectionTitle": { "en": "Pin location on map", "fil": "Magtakda ng lokasyon sa mapa", "ceb": "Butangi og lokasyon sa mapa" },
+  "reportMapPinHint": { "en": "Tap the map to drop a pin", "fil": "I-tap ang mapa para maglagay ng pin", "ceb": "I-tap ang mapa aron butangan og pin" },
+  "reportMapUseMyLocation": { "en": "Use my current location", "fil": "Gamitin ang kasalukuyang lokasyon ko", "ceb": "Gamiton ang akong kasamtangang lokasyon" },
+  "reportMapGettingLocation": { "en": "Getting your location…", "fil": "Kinukuha ang iyong lokasyon…", "ceb": "Gikuha ang imong lokasyon…" },
+  "reportMapRemovePin": { "en": "Remove pin", "fil": "Alisin ang pin", "ceb": "Huboa ang pin" },
+  "reportMapLocationDenied": { "en": "Location permission denied. You can still type the location.", "fil": "Tinanggihan ang pahintulot sa lokasyon. Maaari mo pa ring i-type ang lokasyon.", "ceb": "Gi-deny ang permiso sa lokasyon. Kakaon nimo gihapon isulat ang lokasyon." },
+  "reportMapServicesOff": { "en": "Location services are turned off.", "fil": "Nakapatay ang mga serbisyong pang-lokasyon.", "ceb": "Napalong ang mga serbisyo sa lokasyon." },
+  "tdetMapTitle": { "en": "Location on map", "fil": "Lokasyon sa mapa", "ceb": "Lokasyon sa mapa" },
+  "tdetCoordinates": { "en": "Coordinates", "fil": "Mga coordinate", "ceb": "Mga coordinate" },
+  "tdetNoMapPin": { "en": "No pinned location for this report.", "fil": "Walang naka-pin na lokasyon sa ulat na ito.", "ceb": "Walay napin nga lokasyon niining report." },
+  "aincViewMap": { "en": "View on map", "fil": "Tingnan sa mapa", "ceb": "Tan-awa sa mapa" }
+}

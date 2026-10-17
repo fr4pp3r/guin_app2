@@ -481,6 +481,10 @@ CREATE TABLE public.incident_reports (
   title              TEXT NOT NULL,
   description        TEXT NOT NULL,
   location           TEXT NOT NULL,
+  -- Map pin dropped by the reporter on submit. NULL = no pin captured
+  -- (legacy rows, or the reporter skipped the map).
+  latitude           DOUBLE PRECISION,
+  longitude          DOUBLE PRECISION,
   incident_datetime  TIMESTAMPTZ NOT NULL,
   is_sensitive       BOOLEAN DEFAULT FALSE,
   is_anonymous       BOOLEAN DEFAULT FALSE,

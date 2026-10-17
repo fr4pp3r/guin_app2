@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/incident_report_provider.dart';
@@ -7,6 +9,7 @@ import 'package:guin_app/services/ai_incident_classifier.dart';
 import 'package:guin_app/services/ai_incident_reviewer.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
+import 'package:guin_app/widgets/incident_location_picker.dart';
 
 class SubmitReportScreen extends StatefulWidget {
   const SubmitReportScreen({super.key});
@@ -32,6 +35,9 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
   bool _aiSuggestionApplied = false;
   final _aiClassifier = AiIncidentClassifier();
   final _aiReviewer = AiIncidentReviewer();
+  LatLng? _pickedPin;
+  bool _isLocating = false;
+  final _pickerKey = GlobalKey<LocationPinPickerState>();
 
   @override
   void dispose() {
@@ -96,6 +102,51 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
     }
   }
 
+  Future<void> _useMyLocation() async {
+    final l10n = AppLocalizations.of(context);
+    setState(() => _isLocating = true);
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.reportMapServicesOff)),
+        );
+        return;
+      }
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.reportMapLocationDenied)),
+        );
+        return;
+      }
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+      if (!mounted) return;
+      // setPin updates the parent's _pickedPin via onPinChanged and
+      // recenters the map on the found position.
+      _pickerKey.currentState?.setPin(
+        LatLng(position.latitude, position.longitude),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.reportMapLocationDenied)),
+      );
+    } finally {
+      if (mounted) setState(() => _isLocating = false);
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final user = context.read<AuthProvider>().userProfile;
@@ -112,6 +163,8 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
         isSensitive: _isSensitive,
         isAnonymous: _isAnonymous,
         priority: _priority,
+        latitude: _pickedPin?.latitude,
+        longitude: _pickedPin?.longitude,
       );
       if (!mounted) return;
       final l10n = AppLocalizations.of(context);
@@ -226,6 +279,10 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                       Expanded(
                         child: DropdownButtonFormField<String>(
                           value: _reportType,
+                          // Let the selected item share the field width so a
+                          // long label ellipsizes instead of overflowing the
+                          // internal Row (prefix icon + item + arrow).
+                          isExpanded: true,
                           decoration: InputDecoration(
                             labelText: l10n.reportTypeLabel,
                             prefixIcon: const Icon(Icons.category_outlined),
@@ -233,23 +290,43 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                           items: [
                             DropdownMenuItem(
                               value: 'complaint',
-                              child: Text(l10n.reportTypeComplaint),
+                              child: Text(
+                                l10n.reportTypeComplaint,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                             DropdownMenuItem(
                               value: 'disturbance',
-                              child: Text(l10n.reportTypeDisturbance),
+                              child: Text(
+                                l10n.reportTypeDisturbance,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                             DropdownMenuItem(
                               value: 'threat',
-                              child: Text(l10n.reportTypeThreat),
+                              child: Text(
+                                l10n.reportTypeThreat,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                             DropdownMenuItem(
                               value: 'emergency',
-                              child: Text(l10n.reportTypeEmergency),
+                              child: Text(
+                                l10n.reportTypeEmergency,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                             DropdownMenuItem(
                               value: 'other',
-                              child: Text(l10n.commonOther),
+                              child: Text(
+                                l10n.commonOther,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                           onChanged: (v) {
@@ -264,6 +341,9 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                       Expanded(
                         child: DropdownButtonFormField<String>(
                           value: _priority,
+                          // Same as the type dropdown: keep the selected item
+                          // inside the field bounds on narrow screens.
+                          isExpanded: true,
                           decoration: InputDecoration(
                             labelText: l10n.reportPriorityLabel,
                             prefixIcon: Icon(
@@ -356,6 +436,101 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                         : null,
                   ),
                   const SizedBox(height: 16),
+
+                  // Optional map pin
+                  _sectionLabel(l10n.reportMapSectionTitle),
+                  const SizedBox(height: 8),
+                  Text(
+                    _pickedPin == null
+                        ? l10n.reportMapPinHint
+                        : '${_pickedPin!.latitude.toStringAsFixed(5)}, '
+                            '${_pickedPin!.longitude.toStringAsFixed(5)}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SizedBox(
+                          height: 240,
+                          child: LocationPinPicker(
+                            key: _pickerKey,
+                            initial: _pickedPin,
+                            onPinChanged: (point) =>
+                                setState(() => _pickedPin = point),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          // Wrap (not Row) so the buttons flow onto a second
+                          // line on narrow phones instead of overflowing.
+                          child: Wrap(
+                            spacing: 4,
+                            runSpacing: 4,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              OutlinedButton.icon(
+                                onPressed:
+                                    _isLocating ? null : _useMyLocation,
+                                icon: _isLocating
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.my_location, size: 18),
+                                label: Text(
+                                  _isLocating
+                                      ? l10n.reportMapGettingLocation
+                                      : l10n.reportMapUseMyLocation,
+                                  style: const TextStyle(fontSize: 12),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (_pickedPin != null)
+                                TextButton.icon(
+                                  onPressed: () =>
+                                      _pickerKey.currentState?.clearPin(),
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    size: 18,
+                                  ),
+                                  label: Text(
+                                    l10n.reportMapRemovePin,
+                                    style: const TextStyle(fontSize: 12),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: _descriptionController,
                     maxLines: 5,
@@ -443,7 +618,15 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
         children: [
           Icon(Icons.circle, size: 8, color: color),
           const SizedBox(width: 8),
-          Text(label),
+          // Flexible so the label ellipsizes when isExpanded constrains the
+          // selected item on narrow screens.
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );

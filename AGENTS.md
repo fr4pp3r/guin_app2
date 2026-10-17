@@ -108,6 +108,10 @@ with the same graceful-degradation rule.
   `supabase/migrations/20261020_announcements.sql` applied or the feed stays empty, plus
   `supabase/migrations/20261021_announcements_images.sql` for image posting (without it the
   upload fails as "Record not found" — a missing storage bucket surfaces as a 404).
+- Incident map pin: optional `latitude` / `longitude` on `incident_reports` (NULL = no pin);
+  live DBs need `supabase/migrations/20261022_incident_report_geo.sql`. Rendering uses
+  `flutter_map` + OSM tiles (no API key). The pin is optional, so reporting is never blocked
+  when GPS is unavailable.
 - Document security: policy (`expires_at`, `single_use`, `max_uses`, `use_count`) lives on
   the released row in `document_verifications` (parent). Each printable copy is a row in
   `document_print_copies` with its OWN random token + serial (cap 5, `PrintCopyRules`), but

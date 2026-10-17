@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/incident_report_provider.dart';
+import 'package:guin_app/config/routes.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
@@ -178,7 +179,9 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                         reportsProvider.cacheTimestamp,
                       ),
                     )
-                  : const SizedBox.shrink(key: ValueKey('offline-banner-absent')),
+                  : const SizedBox.shrink(
+                      key: ValueKey('offline-banner-absent'),
+                    ),
             ),
           ),
 
@@ -252,10 +255,13 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                       final report = provider.reports[index];
                       final statusColor = _statusColor(report.status);
                       final priorityColor = _priorityColor(report.priority);
+                      final hasPin =
+                          report.latitude != null && report.longitude != null;
+                      // Each card opens the dedicated read-only page for that
+                      // report — full description, incident time and map.
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
-                          color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
@@ -265,155 +271,188 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                             ),
                           ],
                         ),
-                        child: Column(
-                          children: [
-                            // Header row
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: statusColor.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Icon(
-                                      _statusIcon(report.status),
-                                      color: statusColor,
-                                      size: 22,
-                                    ),
+                        child: Material(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          clipBehavior: Clip.antiAlias,
+                          child: InkWell(
+                            onTap: () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.citizenIncidentDetail,
+                              arguments: report,
+                            ),
+                            child: Column(
+                              children: [
+                                // Header row
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    14,
+                                    16,
+                                    0,
                                   ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          report.title,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 15,
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Hero(
+                                        tag: 'incident-status-${report.id}',
+                                        child: Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: statusColor.withValues(
+                                              alpha: 0.1,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: Icon(
+                                            _statusIcon(report.status),
+                                            color: statusColor,
+                                            size: 22,
                                           ),
                                         ),
-                                        const SizedBox(height: 4),
-                                        Row(
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              report.reportType
-                                                  .replaceAll('_', ' ')
-                                                  .toUpperCase(),
+                                              report.title,
                                               style: const TextStyle(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.textSecondary,
-                                                letterSpacing: 0.5,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Container(
-                                              width: 4,
-                                              height: 4,
-                                              decoration: BoxDecoration(
-                                                color: priorityColor,
-                                                shape: BoxShape.circle,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              report.priority.toUpperCase(),
-                                              style: TextStyle(
-                                                fontSize: 10,
                                                 fontWeight: FontWeight.w700,
-                                                color: priorityColor,
-                                                letterSpacing: 0.5,
+                                                fontSize: 15,
                                               ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  report.reportType
+                                                      .replaceAll('_', ' ')
+                                                      .toUpperCase(),
+                                                  style: const TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w600,
+                                                    color:
+                                                        AppColors.textSecondary,
+                                                    letterSpacing: 0.5,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Container(
+                                                  width: 4,
+                                                  height: 4,
+                                                  decoration: BoxDecoration(
+                                                    color: priorityColor,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  report.priority.toUpperCase(),
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: priorityColor,
+                                                    letterSpacing: 0.5,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: statusColor.withValues(
-                                        alpha: 0.12,
                                       ),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      report.status.replaceAll('_', ' '),
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: statusColor,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // Details
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                16,
-                                10,
-                                16,
-                                14,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _infoRow(
-                                    Icons.location_on_outlined,
-                                    report.location,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  _infoRow(
-                                    Icons.access_time_outlined,
-                                    Helpers.formatDateTime(report.createdAt),
-                                  ),
-                                  if (report.description.isNotEmpty) ...[
-                                    const Divider(height: 16),
-                                    Text(
-                                      report.description,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                  if (report.isAnonymous ||
-                                      report.isSensitive) ...[
-                                    const SizedBox(height: 10),
-                                    Wrap(
-                                      spacing: 6,
-                                      children: [
-                                        if (report.isAnonymous)
-                                          _badge(
-                                            l10n.commonAnonymous,
-                                            Colors.purple,
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: statusColor.withValues(
+                                            alpha: 0.12,
                                           ),
-                                        if (report.isSensitive)
-                                          _badge(
-                                            l10n.commonSensitive,
-                                            Colors.orange,
+                                          borderRadius: BorderRadius.circular(
+                                            20,
                                           ),
+                                        ),
+                                        child: Text(
+                                          report.status.replaceAll('_', ' '),
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: statusColor,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Details
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    10,
+                                    16,
+                                    14,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _infoRow(
+                                        Icons.location_on_outlined,
+                                        report.location,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      _infoRow(
+                                        Icons.access_time_outlined,
+                                        Helpers.formatDateTime(
+                                          report.createdAt,
+                                        ),
+                                      ),
+                                      if (report.description.isNotEmpty) ...[
+                                        const Divider(height: 16),
+                                        Text(
+                                          report.description,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                          maxLines: 3,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ],
-                                    ),
-                                  ],
-                                ],
-                              ),
+                                      if (report.isAnonymous ||
+                                          report.isSensitive) ...[
+                                        const SizedBox(height: 10),
+                                        Wrap(
+                                          spacing: 6,
+                                          children: [
+                                            if (report.isAnonymous)
+                                              _badge(
+                                                l10n.commonAnonymous,
+                                                Colors.purple,
+                                              ),
+                                            if (report.isSensitive)
+                                              _badge(
+                                                l10n.commonSensitive,
+                                                Colors.orange,
+                                              ),
+                                          ],
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                // Footer: map-pin hint + "tap to view" affordance.
+                                _cardFooter(hasPin),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       );
                     },
@@ -441,9 +480,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFFFFF8E1), // amber 50 — warm, never alarming
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.warning.withValues(alpha: 0.45),
-        ),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.45)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -588,6 +625,74 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Quiet footer strip on each report card: a "location on map" hint when the
+  /// report carries a GPS pin, plus the "Tap to view" affordance pointing at
+  /// the full-page detail view.
+  Widget _cardFooter(bool hasPin) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 9, 10, 7),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAFBFC),
+        border: Border.all(
+          color: Colors.black.withValues(alpha: 0.05),
+          width: 0.5,
+        ),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+      ),
+      child: Row(
+        children: [
+          if (hasPin)
+            Expanded(
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.map_outlined,
+                    size: 14,
+                    color: AppColors.primary,
+                  ),
+                  const SizedBox(width: 5),
+                  Flexible(
+                    child: Text(
+                      l10n.tdetMapTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            const Spacer(),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                l10n.commonTapToView,
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right,
+                size: 16,
+                color: AppColors.primary,
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

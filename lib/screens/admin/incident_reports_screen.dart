@@ -6,6 +6,7 @@ import 'package:guin_app/providers/incident_report_provider.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
+import 'package:guin_app/widgets/incident_location_map.dart';
 
 class IncidentReportsScreen extends StatefulWidget {
   const IncidentReportsScreen({super.key});
@@ -31,6 +32,97 @@ class _IncidentReportsScreenState extends State<IncidentReportsScreen> {
       updatedBy: user.id,
       newStatus: status,
       remarks: 'Updated from mobile dashboard',
+    );
+  }
+
+  /// Bottom sheet with the report's exact GPS pin (only offered when the
+  /// report carries a pin — see the location row in the card builder).
+  void _openMapSheet(IncidentReport report, AppLocalizations l10n) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.aincViewMap,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    report.location,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  IncidentLocationMap(
+                    latitude: report.latitude,
+                    longitude: report.longitude,
+                    height: MediaQuery.of(sheetContext).size.height * 0.45,
+                    emptyText: l10n.tdetNoMapPin,
+                  ),
+                  if (report.latitude != null &&
+                      report.longitude != null) ...[
+                    const SizedBox(height: 12),
+                    IncidentCoordinatesRow(
+                      label: l10n.tdetCoordinates,
+                      latitude: report.latitude!,
+                      longitude: report.longitude!,
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(sheetContext),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1976D2),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        l10n.commonClose,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -378,10 +470,55 @@ class _IncidentReportsScreenState extends State<IncidentReportsScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  _infoRow(
-                                    Icons.location_on_outlined,
-                                    report.location,
-                                  ),
+                                  // When the report carries a GPS pin the
+                                  // whole line opens a map sheet.
+                                  if (report.latitude != null &&
+                                      report.longitude != null)
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () =>
+                                            _openMapSheet(report, l10n),
+                                        borderRadius:
+                                            BorderRadius.circular(8),
+                                        child: Padding(
+                                          padding: const EdgeInsets
+                                              .symmetric(vertical: 2),
+                                          child: Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.location_on_outlined,
+                                                size: 13,
+                                                color:
+                                                    AppColors.textSecondary,
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Expanded(
+                                                child: Text(
+                                                  report.location,
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: AppColors
+                                                        .textSecondary,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              const Icon(
+                                                Icons.map_outlined,
+                                                size: 15,
+                                                color: AppColors.primary,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    _infoRow(
+                                      Icons.location_on_outlined,
+                                      report.location,
+                                    ),
                                   const SizedBox(height: 4),
                                   _infoRow(
                                     Icons.access_time_outlined,

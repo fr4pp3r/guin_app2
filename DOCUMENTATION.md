@@ -372,6 +372,11 @@ original triage screen at `/admin/incident-reports`.
 Supporting tables: `incident_reports`, `incident_updates`, `incident_attachments`.
 The provider is `IncidentReportProvider` (registered in `main.dart`).
 
+`incident_reports` carries optional `latitude` / `longitude` map-pin columns: a reporter may
+drop a pin on submit, but it is optional (NULL for legacy rows and for reporters who skip the
+map), so reporting is never blocked when GPS is unavailable. Live databases need
+`supabase/migrations/20261022_incident_report_geo.sql` applied for the columns to exist.
+
 ---
 
 ## 7. Document Verification
@@ -497,6 +502,7 @@ Editor. The ones that matter to current features:
 | `20261019_gcash_receipt_parse.sql`           | Receipt-parse columns                                        |
 | `20261020_announcements.sql`                 | `announcements` board + realtime publication                 |
 | `20261021_announcements_images.sql`          | `announcements.image_url` + `announcement-images` bucket     |
+| `20261022_incident_report_geo.sql`           | `incident_reports.latitude` / `longitude` (optional map pin) |
 
 Each file is idempotent and non-destructive. Skipping `20261020_announcements.sql` leaves
 the announcement feed empty and its realtime channel silent — with no error shown in the

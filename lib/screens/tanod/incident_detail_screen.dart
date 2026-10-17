@@ -8,6 +8,7 @@ import 'package:guin_app/screens/tanod/incident_visuals.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/utils/role_access.dart';
+import 'package:guin_app/widgets/incident_location_map.dart';
 
 /// Full view of one incident report for field officers.
 ///
@@ -269,6 +270,37 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
                 l10n.tdetReportedAt,
                 '${Helpers.timeAgo(report.createdAt)} · ${Helpers.formatDateTime(report.createdAt)}',
               ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // ── Location on map ──
+          _sectionCard(
+            children: [
+              Text(
+                l10n.tdetMapTitle,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.4,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              IncidentLocationMap(
+                latitude: report.latitude,
+                longitude: report.longitude,
+                height: 220,
+                emptyText: l10n.tdetNoMapPin,
+              ),
+              if (report.latitude != null && report.longitude != null) ...[
+                const SizedBox(height: 10),
+                IncidentCoordinatesRow(
+                  label: l10n.tdetCoordinates,
+                  latitude: report.latitude!,
+                  longitude: report.longitude!,
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 16),

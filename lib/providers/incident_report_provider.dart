@@ -87,6 +87,8 @@ class IncidentReportProvider with ChangeNotifier {
     required bool isSensitive,
     required bool isAnonymous,
     String priority = 'normal',
+    double? latitude,
+    double? longitude,
   }) async {
     await _service.submitReport(
       submittedBy: submittedBy,
@@ -98,6 +100,8 @@ class IncidentReportProvider with ChangeNotifier {
       isSensitive: isSensitive,
       isAnonymous: isAnonymous,
       priority: priority,
+      latitude: latitude,
+      longitude: longitude,
     );
 
     // Official-side fan-out: tanod/captain/admin get a new-report notice.

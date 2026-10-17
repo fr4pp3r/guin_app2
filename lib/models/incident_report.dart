@@ -17,6 +17,8 @@ class IncidentReport {
   final String? escalatedTo;
   final String? resolvedBy;
   final String? resolutionSummary;
+  final double? latitude;
+  final double? longitude;
   final DateTime createdAt;
 
   IncidentReport({
@@ -38,6 +40,8 @@ class IncidentReport {
     this.escalatedTo,
     this.resolvedBy,
     this.resolutionSummary,
+    this.latitude,
+    this.longitude,
     required this.createdAt,
   });
 
@@ -61,6 +65,8 @@ class IncidentReport {
       'escalated_to': escalatedTo,
       'resolved_by': resolvedBy,
       'resolution_summary': resolutionSummary,
+      'latitude': latitude,
+      'longitude': longitude,
       'created_at': createdAt.toIso8601String(),
     };
   }
@@ -85,6 +91,8 @@ class IncidentReport {
       escalatedTo: json['escalated_to'] as String?,
       resolvedBy: json['resolved_by'] as String?,
       resolutionSummary: json['resolution_summary'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }

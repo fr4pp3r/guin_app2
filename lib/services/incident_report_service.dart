@@ -14,6 +14,8 @@ class IncidentReportService {
     required bool isSensitive,
     required bool isAnonymous,
     String priority = 'normal',
+    double? latitude,
+    double? longitude,
   }) async {
     final visibility = isAnonymous
         ? (isSensitive ? 'hidden_until_authorized' : 'restricted')
@@ -31,6 +33,8 @@ class IncidentReportService {
       'identity_visibility': visibility,
       'priority': priority,
       'status': 'submitted',
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
     }).select().single();
     return IncidentReport.fromJson(response);
   }

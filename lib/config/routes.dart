@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/models/document_request.dart';
+import 'package:guin_app/models/incident_report.dart';
 import 'package:guin_app/screens/splash_screen.dart';
 import 'package:guin_app/screens/auth/login_screen.dart';
 import 'package:guin_app/screens/auth/register_screen.dart';
@@ -8,6 +10,7 @@ import 'package:guin_app/screens/citizen/dashboard_screen.dart';
 import 'package:guin_app/screens/citizen/request_document_screen.dart';
 import 'package:guin_app/screens/citizen/my_requests_screen.dart';
 import 'package:guin_app/screens/citizen/my_reports_screen.dart';
+import 'package:guin_app/screens/citizen/incident_report_detail_screen.dart';
 import 'package:guin_app/screens/citizen/notifications_screen.dart';
 import 'package:guin_app/screens/citizen/e_receipt_viewer_screen.dart';
 import 'package:guin_app/screens/admin/dashboard_screen.dart' as admin;
@@ -40,6 +43,10 @@ class AppRoutes {
   static const String requestDocument = '/citizen/request-document';
   static const String myRequests = '/citizen/my-requests';
   static const String myReports = '/citizen/my-reports';
+
+  /// Read-only detail page for one of the citizen's own incident reports.
+  /// Takes an [IncidentReport] via `Navigator.pushNamed` arguments.
+  static const String citizenIncidentDetail = '/citizen/incident-detail';
   static const String notifications = '/citizen/notifications';
   static const String submitReport = '/citizen/submit-report';
   static const String profile = '/citizen/profile';
@@ -118,6 +125,30 @@ class AppRoutes {
         );
       case myReports:
         return MaterialPageRoute(builder: (context) => const MyReportsScreen());
+      case citizenIncidentDetail:
+        // Opened with `arguments: IncidentReport`. Anything else (a stray
+        // deep link, say) degrades to a plain error page instead of crashing.
+        final detailReport = settings.arguments;
+        return MaterialPageRoute(
+          builder: (context) {
+            if (detailReport is IncidentReport) {
+              return CitizenIncidentReportDetailScreen(report: detailReport);
+            }
+            final l10n = AppLocalizations.of(context);
+            return Scaffold(
+              appBar: AppBar(title: Text(l10n.tdetTitle)),
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    l10n.citizenLoadReportsError,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            );
+          },
+        );
       case notifications:
         return MaterialPageRoute(
           builder: (context) => const NotificationsScreen(),
@@ -127,9 +158,7 @@ class AppRoutes {
           builder: (context) => const SubmitReportScreen(),
         );
       case profile:
-        return MaterialPageRoute(
-          builder: (context) => const ProfileScreen(),
-        );
+        return MaterialPageRoute(builder: (context) => const ProfileScreen());
       case eReceipt:
         final args = settings.arguments as DocumentRequest?;
         return MaterialPageRoute(
