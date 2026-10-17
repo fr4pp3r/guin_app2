@@ -27,6 +27,7 @@ import 'package:guin_app/screens/verify_document_screen.dart';
 import 'package:guin_app/screens/admin/incident_reports_screen.dart';
 import 'package:guin_app/screens/citizen/submit_report_screen.dart';
 import 'package:guin_app/screens/citizen/profile_screen.dart';
+import 'package:guin_app/screens/citizen/chatbot_screen.dart';
 import 'package:guin_app/screens/admin/profile_screen.dart';
 
 class AppRoutes {
@@ -51,6 +52,7 @@ class AppRoutes {
   static const String submitReport = '/citizen/submit-report';
   static const String profile = '/citizen/profile';
   static const String eReceipt = '/citizen/e-receipt';
+  static const String chatbot = '/citizen/assistant';
   static const String incidentReports = '/admin/incident-reports';
   static const String verifyDocument = '/verify';
 
@@ -83,6 +85,7 @@ class AppRoutes {
       notifications: (context) => const NotificationsScreen(),
       submitReport: (context) => const SubmitReportScreen(),
       profile: (context) => const ProfileScreen(),
+      chatbot: (context) => const ChatbotScreen(),
       incidentReports: (context) => const IncidentReportsScreen(),
       verifyDocument: (context) => const VerifyDocumentScreen(),
       adminDashboard: (context) => const admin.AdminDashboardScreen(),
@@ -159,6 +162,8 @@ class AppRoutes {
         );
       case profile:
         return MaterialPageRoute(builder: (context) => const ProfileScreen());
+      case chatbot:
+        return MaterialPageRoute(builder: (context) => const ChatbotScreen());
       case eReceipt:
         final args = settings.arguments as DocumentRequest?;
         return MaterialPageRoute(

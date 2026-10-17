@@ -995,5 +995,16 @@
   "reportMapUseMyLocation": "Gamitin ang kasalukuyang lokasyon ko",
   "tdetCoordinates": "Mga coordinate",
   "tdetMapTitle": "Lokasyon sa mapa",
-  "tdetNoMapPin": "Walang naka-pin na lokasyon sa ulat na ito."
+  "tdetNoMapPin": "Walang naka-pin na lokasyon sa ulat na ito.",
+  "chatbotTitle": "Katulong ng Barangay",
+  "chatbotSubtitle": "Impormasyon at tulong sa FAQ",
+  "chatbotBrowseFaqs": "Tingnan ang mga FAQ",
+  "chatbotInputHint": "Magtanong tungkol sa serbisyo ng barangay…",
+  "chatbotSendTooltip": "Ipadala",
+  "chatbotFaqSheetTitle": "Mga madalas itanong",
+  "chatbotAskAssistant": "Tanungin ang katulong",
+  "chatbotWelcome": "Kumusta! Ako ang Katulong ng Barangay. Magtanong tungkol sa paghiling ng dokumento, bayarin at pagbabayad, status ng iyong hiling, pag-uulat ng insidente, o pag-verify ng dokumento.",
+  "chatbotFaqFallbackNotice": "Hindi available ang AI assistant sa ngayon — ang sagot na ito ay mula sa aming listahan ng FAQ.",
+  "chatbotUnavailable": "Paumanhin, hindi available ang AI assistant sa ngayon. Suriin ang iyong koneksyon at subukan muli, o tingnan ang mga FAQ para sa mga sagot sa karaniwang tanong.",
+  "citizenAssistantCard": "AI Katulong"
 }

@@ -403,7 +403,20 @@ class _CitizenDashboardScreenState extends State<CitizenDashboardScreen> {
                           ),
                         ),
                         const SizedBox(width: AppSizes.paddingM),
-                        const Expanded(child: SizedBox()),
+                        Expanded(
+                          child: _buildActionCard(
+                            context,
+                            icon: Icons.support_agent,
+                            title: l10n.citizenAssistantCard.replaceAll(
+                              ' ',
+                              '\n',
+                            ),
+                            color: Colors.deepPurple,
+                            onTap: () {
+                              Navigator.pushNamed(context, AppRoutes.chatbot);
+                            },
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 32),

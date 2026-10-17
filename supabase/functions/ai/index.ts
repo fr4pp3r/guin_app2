@@ -23,6 +23,7 @@ import incidentClassifier from "./handlers/incident_classifier.ts";
 import incidentReviewer from "./handlers/incident_reviewer.ts";
 import idVerifier from "./handlers/id_verifier.ts";
 import receiptParser from "./handlers/receipt_parser.ts";
+import chatbot from "./handlers/chatbot.ts";
 
 const JWT_SECRET = Deno.env.get("SUPABASE_JWT_SECRET") ?? "";
 
@@ -59,6 +60,7 @@ const routes: Record<string, TaskHandler> = {
   "incident-reviewer": incidentReviewer,
   "id-verifier": idVerifier,
   "receipt-parser": receiptParser,
+  chatbot,
   ping: () => Promise.resolve(jsonResponse(200, { ok: true })),
 };
 

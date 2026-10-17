@@ -276,6 +276,7 @@ callers degrade gracefully.
 | `ai_document_processor.dart` | `document-processor` | Validates/normalizes document request data on the citizen request screen ("AI check details"). |
 | `ai_receipt_parser.dart` | `receipt-parser` | Parses GCash receipt screenshots (reference number, amount, date, confidence). |
 | `ai_incident_classifier.dart` | `incident-classifier` | Suggests `report_type` + `priority` for citizen incident reports. |
+| `ai_chatbot.dart` | `chatbot` | Barangay Assistant chatbot for citizen information queries (documents, fees, statuses, incidents, announcements, verification). Localized FAQ content (`lib/utils/faqs.dart`) follows the app locale; falls back to an offline keyword match when the AI is unavailable. |
 
 All AI features are **advisory only** — final decisions always rest with human reviewers.
 

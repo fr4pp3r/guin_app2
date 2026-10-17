@@ -995,5 +995,16 @@
   "reportMapUseMyLocation": "Gamiton ang akong kasamtangang lokasyon",
   "tdetCoordinates": "Mga coordinate",
   "tdetMapTitle": "Lokasyon sa mapa",
-  "tdetNoMapPin": "Walay napin nga lokasyon niining report."
+  "tdetNoMapPin": "Walay napin nga lokasyon niining report.",
+  "chatbotTitle": "Katabang sa Barangay",
+  "chatbotSubtitle": "Impormasyon ug tabang sa FAQ",
+  "chatbotBrowseFaqs": "Tan-awa ang mga FAQ",
+  "chatbotInputHint": "Pangutana bahin sa serbisyo sa barangay…",
+  "chatbotSendTooltip": "Ipadala",
+  "chatbotFaqSheetTitle": "Kasagaran gipangutana",
+  "chatbotAskAssistant": "Pangutan-a ang katabang",
+  "chatbotWelcome": "Kumusta! Ako ang Katabang sa Barangay. Pangutana bahin sa paghangyo og dokumento, bayad ug pagbayad, status sa imong hangyo, pagreport og insidente, o pag-verify sa dokumento.",
+  "chatbotFaqFallbackNotice": "Dili magamit ang AI assistant karon — kining tubaga gikan sa among listahan sa FAQ.",
+  "chatbotUnavailable": "Pasayloa, dili magamit ang AI assistant karon. Susiha ang imong koneksyon ug sulayi pag-usab, o tan-awa ang mga FAQ alang sa mga tubag sa kasagarang pangutana.",
+  "citizenAssistantCard": "AI Katabang"
 }

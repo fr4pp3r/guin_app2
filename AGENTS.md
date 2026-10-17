@@ -41,7 +41,8 @@ with the same graceful-degradation rule.
   must never block the core workflow; callers treat null as "AI unavailable".
 - Feature status: incident classifier + document processor wired into citizen screens
   (`submit_report_screen.dart` "AI suggest category", `request_document_screen.dart`
-  "AI check details"). Chatbot, identity verification, resident profiling: not built.
+  "AI check details"). Chatbot (Barangay Assistant, `chatbot` task + `lib/screens/citizen/chatbot_screen.dart`),
+  incident reviewer and receipt parser are also wired. Resident profiling: not built.
 
 ## Read first
 

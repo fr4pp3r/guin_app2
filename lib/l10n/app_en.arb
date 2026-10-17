@@ -1868,5 +1868,49 @@
   "reportMapUseMyLocation": "Use my current location",
   "tdetCoordinates": "Coordinates",
   "tdetMapTitle": "Location on map",
-  "tdetNoMapPin": "No pinned location for this report."
+  "tdetNoMapPin": "No pinned location for this report.",
+  "chatbotTitle": "Barangay Assistant",
+  "@chatbotTitle": {
+    "description": "Title shown on the AI chatbot screen"
+  },
+  "chatbotSubtitle": "Information & FAQ help",
+  "@chatbotSubtitle": {
+    "description": "Subtitle under the chatbot title"
+  },
+  "chatbotBrowseFaqs": "Browse FAQs",
+  "@chatbotBrowseFaqs": {
+    "description": "Tooltip for the FAQ button in the chatbot header"
+  },
+  "chatbotInputHint": "Ask about barangay services…",
+  "@chatbotInputHint": {
+    "description": "Placeholder text in the chatbot message input"
+  },
+  "chatbotSendTooltip": "Send",
+  "@chatbotSendTooltip": {
+    "description": "Tooltip for the chatbot send button"
+  },
+  "chatbotFaqSheetTitle": "Frequently asked questions",
+  "@chatbotFaqSheetTitle": {
+    "description": "Title of the FAQ bottom sheet"
+  },
+  "chatbotAskAssistant": "Ask the assistant",
+  "@chatbotAskAssistant": {
+    "description": "Button that sends an FAQ question to the AI assistant"
+  },
+  "chatbotWelcome": "Hi! I'm the Barangay Assistant. Ask me about requesting documents, fees and payment, your request status, reporting an incident, or verifying a document.",
+  "@chatbotWelcome": {
+    "description": "Assistant greeting shown when the chat opens"
+  },
+  "chatbotFaqFallbackNotice": "The AI assistant is unavailable right now — this answer comes from our FAQ list.",
+  "@chatbotFaqFallbackNotice": {
+    "description": "Notice appended when an offline FAQ answer is used because the AI is unavailable"
+  },
+  "chatbotUnavailable": "Sorry, the AI assistant is unavailable right now. Please check your connection and try again, or browse the FAQs for answers to common questions.",
+  "@chatbotUnavailable": {
+    "description": "Shown when the AI is unavailable and no FAQ matches the question"
+  },
+  "citizenAssistantCard": "AI Assistant",
+  "@citizenAssistantCard": {
+    "description": "Label of the AI assistant quick-action card on the citizen dashboard"
+  }
 }

@@ -36,8 +36,18 @@ Headers: `Authorization: Bearer <supabase-jwt>`, `Content-Type: application/json
 Error envelope: `{ "error": { "code": string, "message": string } }`.
 
 **Tasks today:** `ping` (connectivity test), `document-processor` (AI document
-validation), `incident-classifier` (AI incident categorization), `incident-reviewer` (AI analysis + review) and
-`id-verifier` (advisory ID plausibility pre-check) — all live.
+validation), `incident-classifier` (AI incident categorization), `incident-reviewer` (AI analysis + review),
+`id-verifier` (advisory ID plausibility pre-check), `receipt-parser` (GCash
+receipt parsing) and `chatbot` (Barangay Assistant — answers citizen
+information queries and FAQ questions) — all live.
+
+> `chatbot` is **informational only**: it answers questions about documents,
+> fees/payment, request statuses, incident reporting, announcements and document
+> verification, grounded in a fixed fact list plus the app's own FAQ table. It
+> performs no action and, when the AI is unreachable, the Flutter screen falls
+> back to a local keyword match over `lib/utils/faqs.dart`. The FAQ table is
+> sent per-locale (English / Filipino / Cebuano) and the caller passes a
+> `language` hint, so answers follow the app's active locale.
 
 > `id-verifier` is **advisory only**: it returns `looks_ok` or `needs_review` and
 > never approves or rejects a registration — a captain always reviews. It does
