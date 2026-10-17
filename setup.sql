@@ -606,6 +606,7 @@ CREATE TABLE public.announcements (
   created_by      UUID REFERENCES public.users_profile(id) ON DELETE SET NULL,
   created_by_name TEXT NOT NULL,
   is_pinned       BOOLEAN NOT NULL DEFAULT FALSE,
+  image_url       TEXT,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -751,10 +752,11 @@ CREATE POLICY "app_access_announcements"          ON public.announcements       
 
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES
-  ('profile-photos',   'profile-photos',   true, 5242880,  ARRAY['image/jpeg','image/jpg','image/png','image/webp']),
-  ('valid-ids',        'valid-ids',        true, 5242880,  ARRAY['image/jpeg','image/jpg','image/png','image/webp']),
-  ('payment-receipts', 'payment-receipts', true, 5242880,  ARRAY['image/jpeg','image/jpg','image/png','image/webp']),
-  ('documents',        'documents',        true, 10485760, ARRAY['application/pdf'])
+  ('profile-photos',      'profile-photos',      true, 5242880,  ARRAY['image/jpeg','image/jpg','image/png','image/webp']),
+  ('valid-ids',           'valid-ids',           true, 5242880,  ARRAY['image/jpeg','image/jpg','image/png','image/webp']),
+  ('payment-receipts',    'payment-receipts',    true, 5242880,  ARRAY['image/jpeg','image/jpg','image/png','image/webp']),
+  ('announcement-images', 'announcement-images', true, 5242880,  ARRAY['image/jpeg','image/jpg','image/png','image/webp','image/gif']),
+  ('documents',           'documents',           true, 10485760, ARRAY['application/pdf'])
 ON CONFLICT (id) DO UPDATE
   SET public             = EXCLUDED.public,
       file_size_limit    = EXCLUDED.file_size_limit,
@@ -786,6 +788,12 @@ BEGIN
                  WHERE tablename = 'objects' AND policyname = 'app_access_documents') THEN
     CREATE POLICY "app_access_documents" ON storage.objects FOR ALL
       USING (bucket_id = 'documents') WITH CHECK (bucket_id = 'documents');
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_policies
+                 WHERE tablename = 'objects' AND policyname = 'app_access_announcement_images') THEN
+    CREATE POLICY "app_access_announcement_images" ON storage.objects FOR ALL
+      USING (bucket_id = 'announcement-images') WITH CHECK (bucket_id = 'announcement-images');
   END IF;
 END $$;
 
@@ -898,7 +906,7 @@ ON CONFLICT (username) DO NOTHING;
 
 SELECT id, name, public, file_size_limit, allowed_mime_types
 FROM storage.buckets
-WHERE id IN ('profile-photos','valid-ids','payment-receipts','documents')
+WHERE id IN ('profile-photos','valid-ids','payment-receipts','announcement-images','documents')
 ORDER BY id;
 
 SELECT username, role, registration_status, is_approved
@@ -911,10 +919,10 @@ FROM information_schema.tables
 WHERE table_schema = 'public'
   AND table_type = 'BASE TABLE';
 
--- Expected: 4 buckets
+-- Expected: 5 buckets
 SELECT COUNT(*) AS bucket_count
 FROM storage.buckets
-WHERE id IN ('profile-photos','valid-ids','payment-receipts','documents');
+WHERE id IN ('profile-photos','valid-ids','payment-receipts','announcement-images','documents');
 
 
 -- ============================================================================

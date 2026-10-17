@@ -31,7 +31,8 @@ class Announcement {
       title: json['title'] as String,
       body: json['body'] as String,
       createdBy: json['created_by'] as String?,
-      createdByName: (json['created_by_name'] as String?) ?? 'Barangay Official',
+      createdByName:
+          (json['created_by_name'] as String?) ?? 'Barangay Official',
       isPinned: (json['is_pinned'] as bool?) ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
       imageUrl: json['image_url'] as String?,

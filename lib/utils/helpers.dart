@@ -168,6 +168,16 @@ class Helpers {
       return AppL10n.current.utilErrorUnauthorized;
     }
 
+    // Missing Supabase Storage bucket surfaces as a 404 "Record not found",
+    // which is indistinguishable from a missing DB row by keyword alone. Pass
+    // the actionable setup hint through instead of collapsing it to the
+    // generic "Record not found" string.
+    if (errorString.contains('storage bucket')) {
+      final raw = error.toString();
+      final index = raw.indexOf('Storage bucket');
+      return index >= 0 ? raw.substring(index) : raw;
+    }
+
     if (errorString.contains('not found')) {
       return AppL10n.current.utilErrorNotFound;
     }

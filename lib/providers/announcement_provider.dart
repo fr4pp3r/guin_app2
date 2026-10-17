@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:guin_app/models/announcement.dart';
@@ -82,7 +83,7 @@ class AnnouncementProvider extends ChangeNotifier {
     required String title,
     required String body,
     required bool isPinned,
-    dynamic imageFile,
+    File? imageFile,
   }) async {
     _isLoading = true;
     _error = null;
@@ -91,7 +92,7 @@ class AnnouncementProvider extends ChangeNotifier {
     try {
       String? imageUrl;
       if (imageFile != null) {
-        imageUrl = await _announcementService.uploadImage(imageFile as dynamic);
+        imageUrl = await _announcementService.uploadImage(imageFile);
       }
 
       final authorId = await SessionManager.getUserId();

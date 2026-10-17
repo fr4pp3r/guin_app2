@@ -201,11 +201,9 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                         imageUrl: announcement.imageUrl!,
                         width: double.infinity,
                         fit: BoxFit.contain,
-                        placeholder: (context, _) => Container(
-                          height: 200,
-                          color: Colors.grey.shade200,
-                        ),
-                        errorWidget: (context, _, __) => Container(
+                        placeholder: (context, _) =>
+                            Container(height: 200, color: Colors.grey.shade200),
+                        errorWidget: (context, _, _) => Container(
                           height: 200,
                           color: Colors.grey.shade200,
                           child: const Icon(Icons.broken_image_outlined),

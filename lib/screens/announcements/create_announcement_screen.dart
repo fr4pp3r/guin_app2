@@ -275,9 +275,7 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
           ),
           const SizedBox(height: 14),
           Text(
-            _canSubmit
-                ? l10n.annReadyToPost
-                : l10n.annTitleBodyRequired,
+            _canSubmit ? l10n.annReadyToPost : l10n.annTitleBodyRequired,
             style: TextStyle(
               fontSize: 12,
               fontStyle: FontStyle.italic,

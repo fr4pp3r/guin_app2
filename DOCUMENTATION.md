@@ -465,7 +465,7 @@ see the follow-up in [Known Gaps #1](#13-known-gaps-and-discrepancies).
 
 Paste the whole of **`setup.sql`** into the Supabase Dashboard **SQL Editor** and
 run it. That single file does everything: drops and rebuilds the schema, creates
-the 4 storage buckets, and seeds fees, barangay config, role permissions, and the
+the 5 storage buckets, and seeds fees, barangay config, role permissions, and the
 first admin.
 
 > ⚠️ `setup.sql` is **destructive** — it issues `DROP TABLE ... CASCADE` before
@@ -479,7 +479,7 @@ archived and must not be run — see that folder's README for what each one got 
 
 After running, the verification queries at the end of `setup.sql` should report
 **20 tables** (`document_print_copies` is the per-print copy table,
-`announcements` is the barangay bulletin board) and **4 buckets**.
+`announcements` is the barangay bulletin board) and **5 buckets**.
 
 #### Upgrading a database that already holds data
 
@@ -496,10 +496,13 @@ Editor. The ones that matter to current features:
 | `20261017_name_fields.sql`, `20261018_id_back_url.sql` | Split name fields, ID-back image                    |
 | `20261019_gcash_receipt_parse.sql`           | Receipt-parse columns                                        |
 | `20261020_announcements.sql`                 | `announcements` board + realtime publication                 |
+| `20261021_announcements_images.sql`          | `announcements.image_url` + `announcement-images` bucket     |
 
 Each file is idempotent and non-destructive. Skipping `20261020_announcements.sql` leaves
 the announcement feed empty and its realtime channel silent — with no error shown in the
-app.
+app. Skipping `20261021_announcements_images.sql` leaves posting an announcement *with an
+image* failing: the upload hits a missing bucket and surfaces as **"Record not found"**
+(Supabase Storage reports a missing bucket as a 404).
 
 The **only** case that still needs the commented-out **Incremental repair** block at the
 bottom of `setup.sql` is a database created by the pre-`setup.sql` legacy scripts, where
@@ -508,16 +511,17 @@ the column in place and must be run on its own, never together with Sections 0�
 
 ### Step 5 — Verify storage buckets
 
-`setup.sql` creates all four, so this is only a check:
+`setup.sql` creates all five, so this is only a check:
 
-| Bucket             | Public | Size limit | Allowed MIME types                              |
-| ------------------ | ------ | ---------- | ---------------------------------------------- |
-| `profile-photos`   | yes    | 5 MB       | `image/jpeg, image/jpg, image/png, image/webp`  |
-| `valid-ids`        | yes    | 5 MB       | `image/jpeg, image/jpg, image/png, image/webp`  |
-| `payment-receipts` | yes    | 5 MB       | `image/jpeg, image/jpg, image/png, image/webp`  |
-| `documents`        | yes    | 10 MB      | `application/pdf`                               |
+| Bucket                | Public | Size limit | Allowed MIME types                                                  |
+| --------------------- | ------ | ---------- | ------------------------------------------------------------------ |
+| `profile-photos`      | yes    | 5 MB       | `image/jpeg, image/jpg, image/png, image/webp`                     |
+| `valid-ids`           | yes    | 5 MB       | `image/jpeg, image/jpg, image/png, image/webp`                     |
+| `payment-receipts`    | yes    | 5 MB       | `image/jpeg, image/jpg, image/png, image/webp`                     |
+| `announcement-images` | yes    | 5 MB       | `image/jpeg, image/jpg, image/png, image/webp, image/gif`          |
+| `documents`           | yes    | 10 MB      | `application/pdf`                                                  |
 
-These are the only four buckets the app writes to (verified across `lib/`).
+These are the only five buckets the app writes to (verified across `lib/`).
 
 ### Step 6 — Seed configuration data
 
@@ -606,18 +610,22 @@ the app the single source of truth, which is what
 
 ## 10. Storage Buckets
 
-Four buckets, all created by `setup.sql` §7. Upload path convention is user- or
+Five buckets, all created by `setup.sql` §7. Upload path convention is user- or
 request-scoped, e.g. `profile-photos/<user_id>/<timestamp>.jpg`.
 
-| Bucket             | Written by                          | Read by                                |
-| ------------------ | ----------------------------------- | -------------------------------------- |
-| `profile-photos`   | Registration, admin user creation   | Dashboards, PDF generation             |
-| `valid-ids`        | Registration, admin user creation   | Pending-user review                    |
-| `payment-receipts` | Citizen, via `DocumentProvider.submitPaymentReceipt()` | Treasurer (`pending_payments_screen`)  |
-| `documents`        | PDF generation and release          | Citizen download, verification         |
+| Bucket                | Written by                          | Read by                                |
+| --------------------- | ----------------------------------- | -------------------------------------- |
+| `profile-photos`      | Registration, admin user creation   | Dashboards, PDF generation             |
+| `valid-ids`           | Registration, admin user creation   | Pending-user review                    |
+| `payment-receipts`    | Citizen, via `DocumentProvider.submitPaymentReceipt()` | Treasurer (`pending_payments_screen`)  |
+| `announcement-images` | Officials posting an announcement (`AnnouncementProvider.createAnnouncement`) | Announcement feed / detail (everyone) |
+| `documents`           | PDF generation and release          | Citizen download, verification         |
 
 **Common error:** `StorageException: Bucket not found (404)`. This means `setup.sql`
-has not been run against the current Supabase project.
+has not been run against the current Supabase project — or, on a database upgraded in
+place, that `20261021_announcements_images.sql` has not been applied (the
+`announcement-images` bucket is created there). The app renders this as **"Record not
+found"**, because Supabase Storage reports a missing bucket as a 404.
 
 ---
 
@@ -747,7 +755,7 @@ storage, and realtime), but credentials are handled entirely by the app:
 | SHA-256 password hashing                          | **High** | Unsalted-by-design fast hash; no bcrypt/Argon2. Trivially GPU-crackable. |
 | Timestamp-derived salt                            | Medium   | Millisecond-resolution salt is low-entropy and predictable.             |
 | RLS permissive, not role-based                    | **High** | `setup.sql` **enables** RLS, but every policy is `USING (true)`. This app authenticates in Dart, so `auth.uid()` is always `NULL` and any `auth.uid()`-based policy would silently deny everything. Net effect: the anon key can still read/write every table. Old docs claiming "RLS enabled with role-based policies" are false — enabling RLS is *not* the same as securing it. |
-| Anonymous public storage buckets                 | Medium   | All four buckets are `public = true`; document paths are guessable from the verification ID scheme. |
+| Anonymous public storage buckets                 | Medium   | All five buckets are `public = true`; document paths are guessable from the verification ID scheme. |
 | Security enforced client-side only               | **High** | All `can*` permission checks are Dart-side. A modified client bypasses every one. |
 | `.env` tracked in git                             | Medium   | Now the single source of the URL + anon key, and it is committed. Harmless for a *public* anon key, but it will leak any secret added later. |
 | Committed admin credentials                      | **High** | `admin` / `Admin@123456` seeded by `setup.sql` §9d and present in git history. |
@@ -1058,7 +1066,7 @@ Officials post barangay-wide notices; **every signed-in user reads the same boar
 | Aspect            | Behaviour                                                                 |
 | ----------------- | ------------------------------------------------------------------------- |
 | Scope             | Global. No audience/targeting column, no per-user read state, no "unread announcements" count |
-| Columns           | `title`, `body`, `created_by` (nullable FK, `ON DELETE SET NULL`), `created_by_name`, `is_pinned`, `created_at`, `updated_at` |
+| Columns           | `title`, `body`, `created_by` (nullable FK, `ON DELETE SET NULL`), `created_by_name`, `is_pinned`, `image_url` (nullable), `created_at`, `updated_at` |
 | Ordering          | Pinned first, then newest first                                            |
 | `created_by_name` | Denormalized so the feed renders without joining `users_profile`, and so the name survives the poster's deletion |
 | Who can post      | `AppRoles.canPostAnnouncements` → captain, secretary, admin                |
@@ -1072,7 +1080,10 @@ Officials post barangay-wide notices; **every signed-in user reads the same boar
   roles.
 - `announcement_detail_screen.dart` — full read view; the delete action appears only for
   posting roles and confirms before deleting.
-- `create_announcement_screen.dart` — title + body (both required) and a "Pin to top" switch.
+- `create_announcement_screen.dart` — title + body (both required), a "Pin to top" switch,
+  and an optional image: pick from the gallery, preview it, and remove it before posting.
+  The image uploads to the `announcement-images` bucket and its public URL is stored in
+  `image_url`, so the feed card and detail view can render it.
 - **Citizen dashboard** — an Announcements section with the latest 1–2 notices and a
   "See all ›" link, hidden entirely while the board is empty.
 - **Officials' dashboard** — an "Announcements" action button, ungated (reading is for
@@ -1083,7 +1094,10 @@ Posting also fans a bell notification out to every approved user via
 
 > ⚠️ Live databases need `supabase/migrations/20261020_announcements.sql` applied
 > (see [§8 Step 4](#step-4--create-the-database-schema)). Without it the feed stays empty and
-> its realtime channel stays silent, with no error surfaced in the app.
+> its realtime channel stays silent, with no error surfaced in the app. Posting with an
+> image additionally needs `supabase/migrations/20261021_announcements_images.sql` (the
+> `announcement-images` bucket and the `image_url` column); without it the upload fails as
+> **"Record not found"**.
 
 **Implementation note — reference-counted subscription.** The feed screen is pushed *on top
 of* dashboards that already hold this subscription. If the screen tore the channel down on

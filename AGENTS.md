@@ -102,8 +102,12 @@ with the same graceful-degradation rule.
   the same rows, no audience or read state. `AnnouncementProvider`/`AnnouncementService`,
   feed screens under `lib/screens/announcements/`, entry points on both dashboards. Posting
   and deleting are gated by `AppRoles.canPostAnnouncements` (captain / secretary / admin);
-  posting also fans out a bell notification to all approved users. Live DBs need
-  `supabase/migrations/20261020_announcements.sql` applied or the feed stays empty.
+  posting also fans out a bell notification to all approved users. Posts may carry one
+  optional image (`announcements.image_url` → public URL in the `announcement-images`
+  bucket, uploaded from `create_announcement_screen.dart`). Live DBs need
+  `supabase/migrations/20261020_announcements.sql` applied or the feed stays empty, plus
+  `supabase/migrations/20261021_announcements_images.sql` for image posting (without it the
+  upload fails as "Record not found" — a missing storage bucket surfaces as a 404).
 - Document security: policy (`expires_at`, `single_use`, `max_uses`, `use_count`) lives on
   the released row in `document_verifications` (parent). Each printable copy is a row in
   `document_print_copies` with its OWN random token + serial (cap 5, `PrintCopyRules`), but

@@ -312,11 +312,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                       width: double.infinity,
                       height: 140,
                       fit: BoxFit.cover,
-                      placeholder: (context, _) => Container(
-                        height: 140,
-                        color: Colors.grey.shade200,
-                      ),
-                      errorWidget: (context, _, __) => Container(
+                      placeholder: (context, _) =>
+                          Container(height: 140, color: Colors.grey.shade200),
+                      errorWidget: (context, _, _) => Container(
                         height: 140,
                         color: Colors.grey.shade200,
                         child: const Icon(Icons.broken_image_outlined),

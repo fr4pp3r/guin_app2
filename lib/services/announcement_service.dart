@@ -25,9 +25,32 @@ class AnnouncementService {
 
   Future<String> uploadImage(File file) async {
     final bucket = _supabase.storage.from('announcement-images');
-    final path =
-        '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
-    await bucket.upload(path, file, fileOptions: const FileOptions(upsert: true));
+    // Use the URI's last path segment so the name is correct on Windows too
+    // (backslash separators break String.split('/')).
+    final baseName = file.uri.pathSegments.last.replaceAll(
+      RegExp(r'[^A-Za-z0-9._-]'),
+      '_',
+    );
+    final path = '${DateTime.now().millisecondsSinceEpoch}_$baseName';
+    try {
+      await bucket.upload(
+        path,
+        file,
+        fileOptions: const FileOptions(upsert: true),
+      );
+    } on StorageException catch (e) {
+      // Surface the missing-bucket case distinctly: Supabase reports a missing
+      // bucket as 404 "Record not found", which reads like a DB row error.
+      if (e.statusCode == '404' ||
+          e.message.toLowerCase().contains('not found')) {
+        throw Exception(
+          'Storage bucket "announcement-images" is not set up. '
+          'Apply supabase/migrations/20261021_announcements_images.sql in the '
+          'SQL Editor (or create the bucket in the Supabase dashboard).',
+        );
+      }
+      rethrow;
+    }
     return bucket.getPublicUrl(path);
   }
 
@@ -47,7 +70,7 @@ class AnnouncementService {
           'is_pinned': isPinned,
           'created_by': createdBy,
           'created_by_name': createdByName,
-          if (imageUrl != null) 'image_url': imageUrl,
+          'image_url': ?imageUrl,
         })
         .select()
         .single();
