@@ -1,0 +1,7 @@
+flowchart TD
+    V1([Scan QR / Enter Document ID]) --> V2[Verification Service]
+    V2 --> V3{Valid? Expiry / Use-limit}
+    V3 -- No --> V4[Verification Failed]
+    V3 -- Yes --> V5[Consume Use Count]
+    V5 --> V6[Verification Success]
+    V6 --> V7[Optional: Request Printable Copy]

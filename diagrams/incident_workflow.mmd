@@ -1,0 +1,7 @@
+flowchart TD
+    I1([Citizen Files Incident Report]) --> I2[incident_submitted]
+    I2 --> I3[Officials Triage]
+    I3 --> I4{Assign Priority / Status}
+    I4 --> I5[in_progress / resolved / closed]
+    I5 --> I6[Incident Updates Logged]
+    I6 --> I7[Reporter Notified]

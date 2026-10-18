@@ -1,0 +1,36 @@
+flowchart TD
+    A([Start: User Opens App]) --> B{Authenticated?}
+    B -- No --> C[Login / Register]
+    C --> D{Registration Approved?}
+    D -- No --> E[Pending Approval Screen]
+    D -- Yes --> F[Role-based Dashboard]
+    B -- Yes --> F
+
+    F --> G{Role}
+    G -- Citizen --> H[Citizen Dashboard]
+    G -- Secretary --> I[Secretary Dashboard]
+    G -- Treasurer --> J[Treasurer Dashboard]
+    G -- Captain / Kagawad --> K[Approver Dashboard]
+    G -- Tanod --> L[Tanod Dashboard]
+    G -- Admin --> M[Admin Dashboard]
+
+    H --> N[Request Document]
+    H --> O[My Requests]
+    H --> P[Submit Incident Report]
+    H --> Q[Announcements Feed]
+    H --> R[Verify Document]
+    H --> S[Chatbot / Profile]
+
+    I --> T[Pending Requests Queue]
+    I --> U[Generate Draft / Invoice]
+    I --> V[Release Document]
+
+    J --> W[Pending Payments Queue]
+    J --> X[Confirm / Reject Payment]
+
+    K --> Y[Captain Approval Queue]
+    K --> Z[Approve / Reject]
+    K --> AA[Manage Users]
+
+    L --> AB[Incident Triage]
+    M --> AC[Settings / Fees / Formats]

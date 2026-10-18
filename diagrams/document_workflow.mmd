@@ -1,0 +1,26 @@
+flowchart TD
+    S1([Citizen Submits Request]) --> S2[submitted]
+    S2 --> S3[Secretary Reviews]
+    S3 --> S4{Needs Revision?}
+    S4 -- Yes --> S5[needs_revision]
+    S5 --> S1
+    S4 -- No --> S6[draft_generated]
+    S6 --> S7[Secretary Verifies for Payment]
+    S7 --> S8{Fee == 0?}
+    S8 -- Yes --> S12[for_approval]
+    S8 -- No --> S9[invoiced]
+    S9 --> S10[Citizen Uploads GCash Receipt]
+    S10 --> S11[payment_submitted]
+    S11 --> S13{Treasurer Decision}
+    S13 -- Reject --> S14[payment_rejected]
+    S14 --> S10
+    S13 -- Confirm --> S15[payment_confirmed]
+    S15 --> S12
+    S12 --> S16{Captain / Kagawad Decision}
+    S16 -- Reject --> S17[rejected]
+    S16 -- Approve --> S18[releaseDocument]
+    S18 --> S19[released]
+    S19 --> S20[PDF + Verification Token + QR]
+    S20 --> S21[Citizen Views / Verifies Document]
+    S1 --> S22[deleteRequest]
+    S22 --> S23[cancelled]
