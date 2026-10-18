@@ -6,6 +6,7 @@ class AppRoles {
   static const String barangayTanod = 'barangay_tanod';
   static const String citizen = 'citizen';
   static const String legacyAdmin = 'admin';
+  static const String admin = legacyAdmin;
 
   static const Set<String> officialRoles = {
     captain,
@@ -19,6 +20,8 @@ class AppRoles {
   static bool isOfficial(String role) => officialRoles.contains(role);
   static bool canManageUsers(String role) =>
       role == captain || role == legacyAdmin;
+  static bool canManageFees(String role) =>
+      role == captain || role == admin;
 
   // Announcements: barangay-wide notices every signed-in user can read.
   // Posting is limited to the communications set (captain / secretary / admin).

@@ -94,11 +94,16 @@ class BarangayService {
     required String id,
     required double feeAmount,
     String? description,
+    required bool isFree,
   }) async {
     try {
       final response = await _supabase
           .from('document_fees')
-          .update({'fee_amount': feeAmount, 'description': description})
+          .update({
+            'fee_amount': isFree ? 0.0 : feeAmount,
+            'description': description,
+            'is_free': isFree,
+          })
           .eq('id', id)
           .select()
           .single();

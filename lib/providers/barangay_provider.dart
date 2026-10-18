@@ -99,12 +99,14 @@ class BarangayProvider with ChangeNotifier {
     required String id,
     required double feeAmount,
     String? description,
+    required bool isFree,
   }) async {
     try {
       final updatedFee = await _barangayService.updateDocumentFee(
         id: id,
         feeAmount: feeAmount,
         description: description,
+        isFree: isFree,
       );
 
       final index = _fees.indexWhere((f) => f.id == id);

@@ -504,6 +504,7 @@ Editor. The ones that matter to current features:
 | `20261020_announcements.sql`                 | `announcements` board + realtime publication                 |
 | `20261021_announcements_images.sql`          | `announcements.image_url` + `announcement-images` bucket     |
 | `20261022_incident_report_geo.sql`           | `incident_reports.latitude` / `longitude` (optional map pin) |
+| `20261023_document_fees_is_free.sql`         | `document_fees.is_free` (explicit free-document tag; backfills zero-fee rows) |
 
 Each file is idempotent and non-destructive. Skipping `20261020_announcements.sql` leaves
 the announcement feed empty and its realtime channel silent — with no error shown in the
@@ -576,7 +577,7 @@ and services — not a copy of any single legacy script.
 | `document_requests`    | Requests, payment tracking, release + verification metadata    |
 | `barangay_config`      | Barangay identity + GCash payment details + sample Barangay ID (front/back, single-row config)  |
 | `kyc_guarantors`       | Guarantor registrations linking indigent citizens to approved guarantors                     |
-| `document_fees`        | Per-`document_type` pricing                                    |
+| `document_fees`        | Per-`document_type` pricing; `is_free` tag (captain/admin) forces `fee_amount` to 0 — free docs are excluded from price editing |
 | `barangay_id_details`  | Type-specific fields for Barangay ID                           |
 | `indigency_details`    | Type-specific fields for Certificate of Indigency              |
 | `cedula_details`       | Type-specific fields for Cedula                                |

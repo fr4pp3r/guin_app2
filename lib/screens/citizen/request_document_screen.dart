@@ -502,7 +502,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         documentType: _selectedDocumentType!,
         purpose: _effectivePurpose,
         documentData: _getDocumentData(),
-        paymentAmount: fee?.feeAmount ?? 0.00,
+        paymentAmount: fee == null || fee.isFree ? 0.0 : fee.feeAmount,
       );
 
       if (!mounted) return;
@@ -709,7 +709,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
   String _feeLabelFor(BarangayProvider provider, String type) {
     final l10n = AppLocalizations.of(context);
     final fee = provider.getFeeByType(type);
-    if (fee == null || fee.feeAmount == 0) return l10n.reqDocFeeFree;
+    if (fee == null || fee.isFree) return l10n.reqDocFeeFree;
     return l10n.reqDocFeeLabel(fee.feeAmount.toStringAsFixed(2));
   }
 
@@ -1251,7 +1251,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                   ),
                 ],
                 const SizedBox(height: 8),
-                if (fee != null)
+                if (fee != null && !fee.isFree)
                   Text(
                     l10n.reqDocPaymentAmount(fee.feeAmount.toStringAsFixed(2)),
                     style: const TextStyle(

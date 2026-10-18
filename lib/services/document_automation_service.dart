@@ -7,6 +7,7 @@ import 'package:guin_app/automation/fee_assessor.dart';
 import 'package:guin_app/automation/pipeline_rules.dart';
 import 'package:guin_app/automation/release_payload.dart';
 import 'package:guin_app/models/barangay_config.dart';
+import 'package:guin_app/models/document_fee.dart';
 import 'package:guin_app/models/document_request.dart';
 import 'package:guin_app/models/user_profile.dart';
 import 'package:guin_app/services/barangay_service.dart';
@@ -82,12 +83,38 @@ class DocumentAutomationService {
   }
 
   /// Convert a fee list into the map shape FeeAssessor expects.
+  ///
+  /// Free fees (whether flagged via [DocumentFee.isFree] or a recorded
+  /// `is_free` flag) always contribute `0.0` so automation never invoices a
+  /// free document type, even if a stale nonzero amount is carried.
   static Map<String, double> feeMapFromList(
-    List<({String documentType, double feeAmount})> fees,
+    Iterable<Object?> fees,
   ) {
-    return {
-      for (final f in fees) f.documentType: f.feeAmount,
-    };
+    final result = <String, double>{};
+    for (final fee in fees) {
+      if (fee is DocumentFee) {
+        result[fee.documentType] = fee.isFree ? 0.0 : fee.feeAmount;
+        continue;
+      }
+      // Record-shaped input (e.g. ({String documentType, double feeAmount,
+      // bool isFree})). Access dynamically so a missing `is_free` flag
+      // degrades to the amount == 0 fallback.
+      // ignore: avoid_dynamic_calls
+      final obj = fee as dynamic;
+      // ignore: avoid_dynamic_calls
+      final documentType = obj.documentType as String;
+      // ignore: avoid_dynamic_calls
+      final amount = (obj.feeAmount as num).toDouble();
+      bool isFree = amount == 0;
+      try {
+        // ignore: avoid_dynamic_calls
+        isFree = obj.isFree as bool;
+      } catch (_) {
+        isFree = amount == 0;
+      }
+      result[documentType] = isFree ? 0.0 : amount;
+    }
+    return result;
   }
 
   /// After a request is created: auto-draft when possible, then route free

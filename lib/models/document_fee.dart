@@ -3,6 +3,7 @@ class DocumentFee {
   final String documentType;
   final double feeAmount;
   final String? description;
+  final bool isFree;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -11,9 +12,10 @@ class DocumentFee {
     required this.documentType,
     required this.feeAmount,
     this.description,
+    bool? isFree,
     required this.createdAt,
     required this.updatedAt,
-  });
+  }) : isFree = isFree ?? feeAmount == 0;
 
   factory DocumentFee.fromJson(Map<String, dynamic> json) {
     return DocumentFee(
@@ -21,6 +23,7 @@ class DocumentFee {
       documentType: json['document_type'] as String,
       feeAmount: (json['fee_amount'] as num).toDouble(),
       description: json['description'] as String?,
+      isFree: json['is_free'] as bool?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -32,6 +35,7 @@ class DocumentFee {
       'document_type': documentType,
       'fee_amount': feeAmount,
       'description': description,
+      'is_free': isFree,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -42,6 +46,7 @@ class DocumentFee {
     String? documentType,
     double? feeAmount,
     String? description,
+    bool? isFree,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -50,6 +55,7 @@ class DocumentFee {
       documentType: documentType ?? this.documentType,
       feeAmount: feeAmount ?? this.feeAmount,
       description: description ?? this.description,
+      isFree: isFree ?? this.isFree,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -79,6 +85,4 @@ class DocumentFee {
         return documentType;
     }
   }
-
-  bool get isFree => feeAmount == 0;
 }
