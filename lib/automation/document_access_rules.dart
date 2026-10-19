@@ -1,6 +1,8 @@
 /// Pure eligibility rules for released documents: expiry + single-use/use limits.
 library;
 
+import 'package:guin_app/utils/helpers.dart';
+
 enum DocumentAccessDecision {
   allowed,
   notFound,
@@ -35,7 +37,7 @@ class DocumentAccessRules {
     DocumentAccessState state, {
     DateTime? now,
   }) {
-    final clock = now ?? DateTime.now();
+    final clock = now ?? Helpers.now();
     if (state.status == 'revoked') return DocumentAccessDecision.revoked;
     if (state.status == 'used') return DocumentAccessDecision.used;
     if (state.status == 'expired') return DocumentAccessDecision.expired;
@@ -62,7 +64,7 @@ class DocumentAccessRules {
 
   /// Compute an expiry timestamp from a base time + validity window.
   static DateTime computeExpiry({DateTime? from, Duration? validity}) =>
-      (from ?? DateTime.now()).add(validity ?? defaultValidity);
+      (from ?? Helpers.now()).add(validity ?? defaultValidity);
 
   /// Human-readable label for a decision (used by UI).
   static String describe(DocumentAccessDecision d) {

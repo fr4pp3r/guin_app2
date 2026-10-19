@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:guin_app/config/supabase_config.dart';
 import 'package:guin_app/models/user_profile.dart';
+import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/services/notification_service.dart';
 import 'package:guin_app/utils/password_hash.dart';
 import 'package:guin_app/utils/session_manager.dart';
@@ -234,7 +235,7 @@ class UserService {
       final updateData = <String, dynamic>{
         'registration_status': 'approved',
         'is_approved': true,
-        'kyc_verified_at': DateTime.now().toIso8601String(),
+        'kyc_verified_at': Helpers.now().toIso8601String(),
       };
       if (reviewerId != null) {
         updateData['kyc_reviewed_by'] = reviewerId;
@@ -341,7 +342,7 @@ class UserService {
     try {
       final fileExt = imageFile.path.split('.').last;
       final fileName =
-          '$userId/${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+          '$userId/${Helpers.now().millisecondsSinceEpoch}.$fileExt';
 
       await _supabase.storage
           .from('profile-photos')
@@ -362,7 +363,7 @@ class UserService {
     try {
       final fileExt = imageFile.path.split('.').last;
       final fileName =
-          '$userId/valid_id_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+          '$userId/valid_id_${Helpers.now().millisecondsSinceEpoch}.$fileExt';
 
       await _supabase.storage.from('valid-ids').upload(fileName, imageFile);
 
@@ -474,7 +475,7 @@ class UserService {
     if (existingUsername != null) throw Exception('Username already exists');
 
     final hashedPassword = PasswordHash.generate(password);
-    final tempId = 'admin_created_${DateTime.now().millisecondsSinceEpoch}';
+    final tempId = 'admin_created_${Helpers.now().millisecondsSinceEpoch}';
     final fullName = [givenName, if (middleName.isNotEmpty) middleName, lastName].join(' ');
 
     String? profilePhotoUrl;

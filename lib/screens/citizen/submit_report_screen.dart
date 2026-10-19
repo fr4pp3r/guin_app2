@@ -159,7 +159,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         location: _locationController.text.trim(),
-        incidentDateTime: DateTime.now(),
+        incidentDateTime: Helpers.now(),
         isSensitive: _isSensitive,
         isAnonymous: _isAnonymous,
         priority: _priority,

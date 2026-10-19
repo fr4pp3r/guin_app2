@@ -71,7 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   int _calculateAge(DateTime birthDate) {
-    final now = DateTime.now();
+    final now = Helpers.now();
     return now.year -
         birthDate.year -
         (now.month < birthDate.month ||

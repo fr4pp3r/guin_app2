@@ -319,16 +319,16 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
   /// "2:14 PM" (today), "yesterday at 2:14 PM", "Oct 10 at 2:14 PM".
   String _formatCacheTime(DateTime savedAt) {
     final l10n = AppLocalizations.of(context);
-    final local = savedAt.toLocal();
-    final now = DateTime.now();
+    final phTime = Helpers.toPh(savedAt);
+    final now = Helpers.now();
     final today = DateTime(now.year, now.month, now.day);
-    final thatDay = DateTime(local.year, local.month, local.day);
-    final time = DateFormat.jm().format(local);
+    final thatDay = DateTime(phTime.year, phTime.month, phTime.day);
+    final time = DateFormat.jm().format(phTime);
     final dayDiff = today.difference(thatDay).inDays;
 
     if (dayDiff <= 0) return time;
     if (dayDiff == 1) return l10n.citizenYesterdayAt(time);
-    return l10n.citizenDateAtTime(DateFormat.MMMd().format(local), time);
+    return l10n.citizenDateAtTime(DateFormat.MMMd().format(phTime), time);
   }
 
   /// Localized label for the active filter chip, used in the empty-state

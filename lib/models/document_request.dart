@@ -1,3 +1,5 @@
+import 'package:guin_app/utils/helpers.dart';
+
 class DocStatus {
   static const submitted = 'submitted';
   static const draftGenerated = 'draft_generated';
@@ -384,7 +386,7 @@ class DocumentRequest {
   bool get isPaymentRejected => paymentStatus == 'rejected';
 
   bool get hasExpiry => expiresAt != null;
-  bool get isExpired => expiresAt != null && DateTime.now().isAfter(expiresAt!);
+  bool get isExpired => expiresAt != null && Helpers.now().isAfter(expiresAt!);
   int? get remainingUses {
     if (maxUses == null) return null;
     final left = maxUses! - useCount;

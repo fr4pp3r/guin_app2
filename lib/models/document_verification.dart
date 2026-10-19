@@ -1,3 +1,5 @@
+import 'package:guin_app/utils/helpers.dart';
+
 class DocumentVerification {
   final String id;
   final String requestId;
@@ -77,7 +79,7 @@ class DocumentVerification {
     };
   }
 
-  bool get isExpired => expiresAt != null && DateTime.now().isAfter(expiresAt!);
+  bool get isExpired => expiresAt != null && Helpers.now().isAfter(expiresAt!);
   int? get remainingUses {
     if (maxUses == null) return null;
     final left = maxUses! - useCount;

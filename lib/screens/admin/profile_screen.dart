@@ -70,7 +70,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
   }
 
   int _calculateAge(DateTime birthDate) {
-    final now = DateTime.now();
+    final now = Helpers.now();
     return now.year -
         birthDate.year -
         (now.month < birthDate.month ||

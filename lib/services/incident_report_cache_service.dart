@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:guin_app/models/incident_report.dart';
+import 'package:guin_app/utils/helpers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// A cached snapshot of a user's incident reports plus when it was stored.
@@ -29,7 +30,7 @@ class IncidentReportCacheService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final payload = jsonEncode({
-        'cachedAt': DateTime.now().toIso8601String(),
+        'cachedAt': Helpers.now().toIso8601String(),
         'reports': reports.map((r) => r.toJson()).toList(),
       });
       await prefs.setString(_key(userId), payload);

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:guin_app/models/document_request.dart';
 import 'package:guin_app/models/barangay_config.dart';
+import 'package:guin_app/utils/helpers.dart';
 
 class PdfService {
   static pw.ThemeData? _unicodeTheme;
@@ -224,7 +225,7 @@ class PdfService {
     String? copyNotice,
   }) async {
     final pdf = pw.Document(theme: await _loadUnicodeTheme());
-    final now = DateTime.now();
+    final now = Helpers.now();
     final month = DateFormat('MMMM').format(now);
     final year2 = now.year.toString().substring(2);
 
@@ -742,7 +743,7 @@ class PdfService {
                       ),
                     ),
                     pw.Text(
-                      'YEAR ${DateTime.now().year}',
+                      'YEAR ${Helpers.now().year}',
                       style: pw.TextStyle(
                         fontSize: 20,
                         fontWeight: pw.FontWeight.bold,
@@ -2620,7 +2621,7 @@ class PdfService {
   }
 
   static String _formatDate(DateTime date) {
-    return DateFormat('MMMM dd, yyyy').format(date);
+    return DateFormat('MMMM dd, yyyy').format(Helpers.toPh(date));
   }
 
   static Future<File> _savePdf(pw.Document pdf, String filename) async {
@@ -2659,7 +2660,7 @@ class PdfService {
     DateTime? signedAt,
   }) {
     final dateStr = signedAt != null
-        ? DateFormat('MMMM dd, yyyy – hh:mm a').format(signedAt)
+        ? DateFormat('MMMM dd, yyyy – hh:mm a').format(Helpers.toPh(signedAt))
         : _formatDate(DateTime.now());
     return pw.Container(
       margin: const pw.EdgeInsets.only(top: 30),

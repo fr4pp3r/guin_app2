@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:guin_app/automation/release_payload.dart';
 import 'package:guin_app/config/supabase_config.dart';
 import 'package:guin_app/models/document_request.dart';
+import 'package:guin_app/utils/helpers.dart';
 
 class DocumentService {
   final SupabaseClient _supabase = SupabaseConfig.client;
@@ -50,7 +51,7 @@ class DocumentService {
         .update({
           'request_status': DocStatus.draftGenerated,
           'draft_url': draftUrl,
-          'reviewed_at': DateTime.now().toIso8601String(),
+          'reviewed_at': Helpers.now().toIso8601String(),
           'reviewed_by_secretary': secretaryId,
         })
         .eq('id', requestId)
@@ -99,7 +100,7 @@ class DocumentService {
     required String? secretaryId,
     required bool paymentRequired,
   }) async {
-    final now = DateTime.now();
+    final now = Helpers.now();
     final nextStatus = paymentRequired
         ? DocStatus.invoiced
         : DocStatus.forApproval;
@@ -145,7 +146,7 @@ class DocumentService {
           'payment_status': 'verified',
           'payment_method': method,
           'payment_reference_number': referenceNumber,
-          'payment_verified_at': DateTime.now().toIso8601String(),
+          'payment_verified_at': Helpers.now().toIso8601String(),
           'payment_verified_by': treasurerId,
         })
         .eq('id', requestId)
@@ -205,7 +206,7 @@ class DocumentService {
           'rejection_reason': reason,
           'approver_id': approverId,
           'approver_role': approverRole,
-          'captain_approved_at': DateTime.now().toIso8601String(),
+          'captain_approved_at': Helpers.now().toIso8601String(),
         })
         .eq('id', requestId)
         .select()
@@ -226,7 +227,7 @@ class DocumentService {
     try {
       final fileExt = imageFile.path.split('.').last;
       final fileName =
-          '$userId/receipt_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+          '$userId/receipt_${Helpers.now().millisecondsSinceEpoch}.$fileExt';
 
       await _supabase.storage
           .from('payment-receipts')
@@ -274,7 +275,7 @@ class DocumentService {
   }) async {
     try {
       final Map<String, dynamic> update = {
-        'payment_parsed_at': DateTime.now().toIso8601String(),
+        'payment_parsed_at': Helpers.now().toIso8601String(),
       };
       if (confidence != null) update['payment_parsed_confidence'] = confidence;
       if (parseError != null && parseError.isNotEmpty) {
@@ -304,7 +305,7 @@ class DocumentService {
       if (amount != null) receiptParse['amount'] = amount;
       if (date != null) receiptParse['paidAt'] = date;
       if (confidence != null) receiptParse['confidence'] = confidence;
-      receiptParse['parsedAt'] = DateTime.now().toIso8601String();
+      receiptParse['parsedAt'] = Helpers.now().toIso8601String();
       update['receipt_parse'] = receiptParse;
       final response = await _supabase
           .from('document_requests')
@@ -345,7 +346,7 @@ class DocumentService {
           .from('document_requests')
           .update({
             'payment_status': 'verified',
-            'payment_verified_at': DateTime.now().toIso8601String(),
+            'payment_verified_at': Helpers.now().toIso8601String(),
             'payment_verified_by': adminId,
             'request_status': DocStatus.forApproval,
           })
@@ -393,12 +394,12 @@ class DocumentService {
           .from('document_requests')
           .update({
             'request_status': 'approved_for_release',
-            'reviewed_at': DateTime.now().toIso8601String(),
+            'reviewed_at': Helpers.now().toIso8601String(),
             'reviewed_by': adminId,
             'document_url': documentUrl,
             'generated_document_url': documentUrl,
             'approved_by': adminId,
-            'approved_at': DateTime.now().toIso8601String(),
+            'approved_at': Helpers.now().toIso8601String(),
           })
           .eq('id', requestId)
           .select()
@@ -420,7 +421,7 @@ class DocumentService {
           .from('document_requests')
           .update({
             'request_status': 'rejected',
-            'reviewed_at': DateTime.now().toIso8601String(),
+            'reviewed_at': Helpers.now().toIso8601String(),
             'reviewed_by': adminId,
             'rejection_reason': reason,
           })
@@ -630,7 +631,7 @@ class DocumentService {
     try {
       final fileExt = documentFile.path.split('.').last;
       final fileName =
-          '$requestId/document_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+          '$requestId/document_${Helpers.now().millisecondsSinceEpoch}.$fileExt';
 
       await _supabase.storage.from('documents').upload(fileName, documentFile);
       return _supabase.storage.from('documents').getPublicUrl(fileName);
@@ -646,7 +647,7 @@ class DocumentService {
     try {
       final fileExt = receiptFile.path.split('.').last;
       final fileName =
-          '$requestId/e-receipt_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+          '$requestId/e-receipt_${Helpers.now().millisecondsSinceEpoch}.$fileExt';
 
       await _supabase.storage.from('documents').upload(fileName, receiptFile);
       return _supabase.storage.from('documents').getPublicUrl(fileName);
@@ -738,7 +739,7 @@ class DocumentService {
           'payment_status': 'verified',
           'payment_method': method,
           'payment_reference_number': referenceNumber,
-          'payment_verified_at': DateTime.now().toIso8601String(),
+          'payment_verified_at': Helpers.now().toIso8601String(),
           'payment_verified_by': treasurerId,
           'request_status': DocStatus.forApproval,
         })
@@ -770,7 +771,7 @@ class DocumentService {
           'max_uses': payload.maxUses,
           'use_count': 0,
           'released_by': releasedBy,
-          'released_at': DateTime.now().toIso8601String(),
+          'released_at': Helpers.now().toIso8601String(),
           'release_method': payload.releaseMethod,
         })
         .eq('id', requestId)

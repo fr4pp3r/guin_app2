@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:guin_app/services/ai_service.dart';
 import 'package:guin_app/utils/image_compressor.dart';
+import 'package:guin_app/utils/helpers.dart';
 import 'dart:io';
 
 class GcashReceiptParse {
@@ -35,7 +36,7 @@ class GcashReceiptParse {
       amount: json['amount'] is num ? (json['amount'] as num).toDouble() : null,
       paidAt: paidAtStr != null ? DateTime.tryParse(paidAtStr) : null,
       confidence: json['confidence'] is num ? (json['confidence'] as num).toDouble() : 0,
-      parsedAt: parsedAtStr != null ? DateTime.tryParse(parsedAtStr)! : DateTime.now(),
+      parsedAt: parsedAtStr != null ? DateTime.tryParse(parsedAtStr)! : Helpers.now(),
     );
   }
 }
@@ -63,7 +64,7 @@ class AiReceiptParser {
       final confidence = res['confidence'] is num ? (res['confidence'] as num).toDouble() : 0.0;
       final ambiguous = res['ambiguous'] == true;
       if (ambiguous) return null;
-      final parsedAt = DateTime.now();
+      final parsedAt = Helpers.now();
       return GcashReceiptParse(
         referenceNumber: _normalizeRef(ref),
         amount: amount,

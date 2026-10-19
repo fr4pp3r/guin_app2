@@ -15,10 +15,13 @@ import 'package:guin_app/providers/locale_provider.dart';
 import 'package:guin_app/providers/hotline_provider.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/l10n/app_l10n.dart';
+import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/widgets/connectivity_banner.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  Helpers.initialize();
 
   try {
     await SupabaseConfig.initialize();

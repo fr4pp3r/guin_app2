@@ -1,13 +1,14 @@
 import 'dart:io';
 import 'package:guin_app/config/supabase_config.dart';
 import 'package:guin_app/models/payment_record.dart';
+import 'package:guin_app/utils/helpers.dart';
 
 class PaymentService {
   final _supabase = SupabaseConfig.client;
 
   Future<String> uploadReceipt(String userId, File imageFile) async {
     final fileExt = imageFile.path.split('.').last;
-    final fileName = '$userId/receipt_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+    final fileName = '$userId/receipt_${Helpers.now().millisecondsSinceEpoch}.$fileExt';
     await _supabase.storage.from('payment-receipts').upload(fileName, imageFile);
     return _supabase.storage.from('payment-receipts').getPublicUrl(fileName);
   }
@@ -58,7 +59,7 @@ class PaymentService {
       'status': 'verified',
       'encoded_by': cashierId,
       'verified_by': cashierId,
-      'verified_at': DateTime.now().toIso8601String(),
+      'verified_at': Helpers.now().toIso8601String(),
       'remarks': remarks,
     }).select().single();
 
@@ -67,7 +68,7 @@ class PaymentService {
       'payment_reference_number': referenceNumber,
       'payment_status': 'verified',
       'payment_verified_by': cashierId,
-      'payment_verified_at': DateTime.now().toIso8601String(),
+      'payment_verified_at': Helpers.now().toIso8601String(),
       'request_status': 'pending_review',
     }).eq('id', requestId);
 

@@ -108,7 +108,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
             civilStatus: userProfile.civilStatus,
             dateOfBirth: DateFormat(
               'MMMM dd, yyyy',
-            ).format(userProfile.dateOfBirth),
+            ).format(Helpers.toPh(userProfile.dateOfBirth)),
             placeOfBirth: userProfile.placeOfBirth,
             gender: userProfile.gender,
             profilePhotoUrl: userProfile.profilePhotoUrl,
@@ -121,7 +121,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
             address: userProfile.address,
             dateOfBirth: DateFormat(
               'MMMM dd, yyyy',
-            ).format(userProfile.dateOfBirth),
+            ).format(Helpers.toPh(userProfile.dateOfBirth)),
             contactNumber: userProfile.phoneNumber,
             emergencyContactName:
                 request.documentData['emergency_contact_name']?.toString() ??

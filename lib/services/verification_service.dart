@@ -6,6 +6,7 @@ import 'package:guin_app/automation/print_copy_rules.dart';
 import 'package:guin_app/config/supabase_config.dart';
 import 'package:guin_app/models/document_print_copy.dart';
 import 'package:guin_app/models/document_verification.dart';
+import 'package:guin_app/utils/helpers.dart';
 
 class DocumentAccessResult {
   final DocumentAccessDecision decision;
@@ -25,12 +26,12 @@ class VerificationService {
   final _supabase = SupabaseConfig.client;
 
   String generateDocumentId({required String barangayCode, required int sequence}) {
-    final year = DateTime.now().year;
+    final year = Helpers.now().year;
     return '$barangayCode-$year-${sequence.toString().padLeft(6, '0')}';
   }
 
   String generateToken(String documentId, String requestId) {
-    final raw = '$documentId:$requestId:${DateTime.now().millisecondsSinceEpoch}';
+    final raw = '$documentId:$requestId:${Helpers.now().millisecondsSinceEpoch}';
     return sha256.convert(utf8.encode(raw)).toString();
   }
 
@@ -43,7 +44,7 @@ class VerificationService {
   String buildCopyToken(String documentId, int copyNumber) {
     final bytes = List<int>.generate(16, (_) => Random.secure().nextInt(256));
     final raw =
-        '$documentId:$copyNumber:${DateTime.now().millisecondsSinceEpoch}:${bytes.join(',')}';
+        '$documentId:$copyNumber:${Helpers.now().millisecondsSinceEpoch}:${bytes.join(',')}';
     return sha256.convert(utf8.encode(raw)).toString();
   }
 
@@ -76,7 +77,7 @@ class VerificationService {
           'serial': serial,
           'copy_number': copyNumber,
           'issued_by': issuedBy,
-          'issued_at': DateTime.now().toIso8601String(),
+          'issued_at': Helpers.now().toIso8601String(),
         })
         .select()
         .single();
@@ -167,7 +168,7 @@ class VerificationService {
       return const DocumentAccessResult(decision: DocumentAccessDecision.notFound);
     }
     final row = resolved.document;
-    final clock = now ?? DateTime.now();
+    final clock = now ?? Helpers.now();
     final decision = evaluate(row, now: clock);
     if (decision != DocumentAccessDecision.allowed) {
       return DocumentAccessResult(decision: decision, verification: row);

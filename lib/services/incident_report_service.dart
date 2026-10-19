@@ -1,5 +1,6 @@
 import 'package:guin_app/config/supabase_config.dart';
 import 'package:guin_app/models/incident_report.dart';
+import 'package:guin_app/utils/helpers.dart';
 
 class IncidentReportService {
   final _supabase = SupabaseConfig.client;
@@ -22,7 +23,7 @@ class IncidentReportService {
         : 'visible';
     final response = await _supabase.from('incident_reports').insert({
       'submitted_by': submittedBy,
-      'report_number': 'IR-${DateTime.now().year}-${DateTime.now().millisecondsSinceEpoch}',
+      'report_number': 'IR-${Helpers.now().year}-${Helpers.now().millisecondsSinceEpoch}',
       'report_type': reportType,
       'title': title,
       'description': description,
@@ -66,9 +67,9 @@ class IncidentReportService {
     final response = await _supabase.from('incident_reports').update({
       'status': newStatus,
       if (newStatus == 'received') 'received_by': updatedBy,
-      if (newStatus == 'received') 'received_at': DateTime.now().toIso8601String(),
+      if (newStatus == 'received') 'received_at': Helpers.now().toIso8601String(),
       if (newStatus == 'resolved') 'resolved_by': updatedBy,
-      if (newStatus == 'resolved') 'resolved_at': DateTime.now().toIso8601String(),
+      if (newStatus == 'resolved') 'resolved_at': Helpers.now().toIso8601String(),
     }).eq('id', reportId).select().single();
 
     await _supabase.from('incident_updates').insert({

@@ -96,9 +96,9 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
       // Build verification identity FIRST so the PDF can embed the QR + expiry.
       final payload = ReleasePayload.buildIdentity(
         requestId: request.id,
-        sequence: DateTime.now().millisecondsSinceEpoch,
+        sequence: Helpers.now().millisecondsSinceEpoch,
         releasedBy: auth.userProfile!.id,
-        now: DateTime.now(),
+        now: Helpers.now(),
         singleUse: policy.singleUse,
         maxUses: policy.singleUse ? null : policy.maxUses,
         validFor: policy.noExpiry
@@ -107,7 +107,7 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
         noExpiry: policy.noExpiry,
       );
       final expiresAtLabel = payload.expiresAt != null
-          ? DateFormat('MMM dd, yyyy').format(payload.expiresAt!)
+          ? DateFormat('MMM dd, yyyy').format(Helpers.toPh(payload.expiresAt!))
           : null;
 
       // Generate FINAL PDF with e-signature
@@ -153,7 +153,7 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
             civilStatus: citizen.civilStatus,
             dateOfBirth: DateFormat(
               'MMMM dd, yyyy',
-            ).format(citizen.dateOfBirth),
+            ).format(Helpers.toPh(citizen.dateOfBirth)),
             placeOfBirth: citizen.placeOfBirth,
             gender: citizen.gender,
             profilePhotoUrl: citizen.profilePhotoUrl,
@@ -169,7 +169,7 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
             address: citizen.address,
             dateOfBirth: DateFormat(
               'MMMM dd, yyyy',
-            ).format(citizen.dateOfBirth),
+            ).format(Helpers.toPh(citizen.dateOfBirth)),
             contactNumber: citizen.phoneNumber,
             emergencyContactName:
                 request.documentData['emergency_contact_name']?.toString() ??

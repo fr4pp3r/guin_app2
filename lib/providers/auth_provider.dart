@@ -6,6 +6,7 @@ import 'package:guin_app/services/user_service.dart';
 import 'package:guin_app/services/notification_service.dart';
 import 'package:guin_app/models/user_profile.dart';
 import 'package:guin_app/utils/role_access.dart';
+import 'package:guin_app/utils/helpers.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -140,7 +141,7 @@ class AuthProvider extends ChangeNotifier {
       String? profilePhotoUrl;
       if (profilePhoto != null) {
         // We'll upload with a temporary ID, then update after user creation
-        final tempId = DateTime.now().millisecondsSinceEpoch.toString();
+        final tempId = Helpers.now().millisecondsSinceEpoch.toString();
         profilePhotoUrl = await _userService.uploadProfilePhoto(
           tempId,
           profilePhoto,
@@ -152,11 +153,11 @@ class AuthProvider extends ChangeNotifier {
       String? validIdUrl;
       String? validIdBackUrl;
       if (validIdFront != null) {
-        final tempId = DateTime.now().millisecondsSinceEpoch.toString();
+        final tempId = Helpers.now().millisecondsSinceEpoch.toString();
         validIdUrl = await _userService.uploadValidId(tempId, validIdFront);
       }
       if (validIdBack != null) {
-        final tempId = DateTime.now().millisecondsSinceEpoch.toString();
+        final tempId = Helpers.now().millisecondsSinceEpoch.toString();
         validIdBackUrl = await _userService.uploadValidId(tempId, validIdBack);
       }
 

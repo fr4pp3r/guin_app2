@@ -1,7 +1,7 @@
 name: guin_app
 description: "A new Flutter project."
 publish_to: 'none'
-version: 0.7.4
+version: 0.7.5
 environment:
   sdk: ^3.10.1
 
@@ -36,6 +36,7 @@ dependencies:
   
   # Utilities
   intl: ^0.20.3
+  timezone: ^0.9.4
   flutter_dotenv: ^5.1.0
   
   # Security & Encryption

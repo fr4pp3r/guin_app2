@@ -4,6 +4,7 @@ import 'package:guin_app/automation/verification_qr.dart';
 import 'package:guin_app/models/document_print_copy.dart';
 import 'package:guin_app/models/document_verification.dart';
 import 'package:guin_app/services/verification_service.dart';
+import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -262,7 +263,7 @@ class _VerifyDocumentScreenState extends State<VerifyDocumentScreen> {
   }
 
   String _formatDate(DateTime value) {
-    final date = value.toLocal();
+    final date = Helpers.toPh(value);
     return '${_monthNames[date.month - 1]} ${date.day}, ${date.year}';
   }
 

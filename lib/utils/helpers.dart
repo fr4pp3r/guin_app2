@@ -1,8 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:guin_app/l10n/app_l10n.dart';
 
 class Helpers {
+  static tz.Location? _phLocation;
+
+  /// Initialize timezone support. Call once in main() before runApp.
+  static void initialize() {
+    tzdata.initializeTimeZones();
+    _phLocation = tz.getLocation('Asia/Manila');
+  }
+
+  /// Get current time in PH timezone.
+  static DateTime now() {
+    if (_phLocation == null) return DateTime.now();
+    return tz.TZDateTime.now(_phLocation!);
+  }
+
+  /// Convert any DateTime to PH timezone.
+  static DateTime toPh(DateTime dt) {
+    if (_phLocation == null) return dt;
+    return tz.TZDateTime.from(dt, _phLocation!);
+  }
+
   // Show snackbar
   static void showSnackBar(
     BuildContext context,
@@ -96,18 +118,19 @@ class Helpers {
 
   // Format date
   static String formatDate(DateTime date) {
-    return DateFormat('MMM dd, yyyy').format(date);
+    return DateFormat('MMM dd, yyyy').format(toPh(date));
   }
 
   // Format date with time
   static String formatDateTime(DateTime date) {
-    return DateFormat('MMM dd, yyyy hh:mm a').format(date);
+    return DateFormat('MMM dd, yyyy hh:mm a').format(toPh(date));
   }
 
   // Format time ago
   static String timeAgo(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
+    final now = (_phLocation == null) ? DateTime.now() : tz.TZDateTime.now(_phLocation!);
+    final phDate = toPh(date);
+    final difference = now.difference(phDate);
 
     if (difference.inDays > 365) {
       final years = (difference.inDays / 365).floor();

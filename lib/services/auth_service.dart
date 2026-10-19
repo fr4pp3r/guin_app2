@@ -6,6 +6,7 @@ import 'package:guin_app/services/document_cache_service.dart';
 import 'package:guin_app/services/incident_report_cache_service.dart';
 import 'package:guin_app/utils/password_hash.dart';
 import 'package:guin_app/utils/session_manager.dart';
+import 'package:guin_app/utils/helpers.dart';
 
 class AuthService {
   final SupabaseClient _supabase = SupabaseConfig.client;
@@ -111,7 +112,7 @@ class AuthService {
             'id_expiry_at': _dateOnly(idExpiryAt),
             'liveness_verified': livenessVerified,
             if (livenessVerified)
-              'liveness_verified_at': DateTime.now().toIso8601String(),
+              'liveness_verified_at': Helpers.now().toIso8601String(),
             // Advisory only — kyc_method stays null until a human approves.
             'kyc_ai_result': kycAiResult,
             'is_indigent': isIndigent,

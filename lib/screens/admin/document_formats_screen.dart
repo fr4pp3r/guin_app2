@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:guin_app/utils/helpers.dart';
 import 'package:provider/provider.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/providers/barangay_provider.dart';
@@ -393,7 +394,7 @@ class _DocumentFormatsScreenState extends State<DocumentFormatsScreen> {
       }
 
       // Create sample data
-      final now = DateTime.now();
+      final now = Helpers.now();
       final sampleRequest = DocumentRequest(
         id: 'SAMPLE-${now.millisecondsSinceEpoch}',
         userId: 'sample-user-id',

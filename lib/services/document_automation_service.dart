@@ -15,6 +15,7 @@ import 'package:guin_app/services/document_service.dart';
 import 'package:guin_app/services/notification_service.dart';
 import 'package:guin_app/services/pdf_service.dart';
 import 'package:guin_app/services/user_service.dart';
+import 'package:guin_app/utils/helpers.dart';
 
 /// Outcome of an automated pipeline step.
 class AutomationOutcome {
@@ -351,7 +352,7 @@ class DocumentAutomationService {
     required UserProfile citizen,
     String? approverName,
   }) async {
-    final now = DateTime.now();
+    final now = Helpers.now();
     var payload = ReleasePayload.buildIdentity(
       requestId: request.id,
       sequence: now.millisecondsSinceEpoch,
@@ -369,7 +370,7 @@ class DocumentAutomationService {
       documentId: payload.documentId,
       qrUrl: payload.qrUrl,
       expiresAtLabel: payload.expiresAt != null
-          ? DateFormat('MMM dd, yyyy').format(payload.expiresAt!)
+          ? DateFormat('MMM dd, yyyy').format(Helpers.toPh(payload.expiresAt!))
           : null,
     );
 
@@ -406,7 +407,7 @@ class DocumentAutomationService {
           qrUrl: payload.qrUrl,
           verificationToken: payload.verificationToken,
           expiresAtLabel: payload.expiresAt != null
-              ? DateFormat('MMM dd, yyyy').format(payload.expiresAt!)
+              ? DateFormat('MMM dd, yyyy').format(Helpers.toPh(payload.expiresAt!))
               : null,
         );
       } catch (_) {}
@@ -448,7 +449,7 @@ class DocumentAutomationService {
 
   /// Flag overdue invoices (mechanical). Does not auto-approve anything.
   Future<List<DocumentRequest>> findOverdueInvoices({DateTime? now}) {
-    final cutoff = now ?? DateTime.now();
+    final cutoff = now ?? Helpers.now();
     return _documentService
         .getPendingPayments()
         .then(
@@ -830,7 +831,7 @@ ReleasePayload buildReleasePayload({
   DateTime? now,
   String verificationBaseUrl = 'https://citeease-verify.vercel.app',
 }) {
-  final timestamp = now ?? DateTime.now();
+  final timestamp = now ?? Helpers.now();
   return ReleasePayload.buildIdentity(
     requestId: requestId,
     sequence: timestamp.millisecondsSinceEpoch,

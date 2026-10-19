@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:guin_app/config/supabase_config.dart';
 import 'package:guin_app/models/user_profile.dart';
 import 'package:guin_app/models/guarantor.dart';
+import 'package:guin_app/utils/helpers.dart';
 
 class GuarantorService {
   final SupabaseClient _supabase = SupabaseConfig.client;
@@ -105,7 +106,7 @@ class GuarantorService {
       if (notes != null && notes.trim().isNotEmpty) {
         updateData['review_notes'] = notes.trim();
       }
-      updateData['reviewed_at'] = DateTime.now().toIso8601String();
+      updateData['reviewed_at'] = Helpers.now().toIso8601String();
 
       await _supabase
           .from('kyc_guarantors')

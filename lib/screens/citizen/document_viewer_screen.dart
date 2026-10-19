@@ -105,7 +105,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
   void initState() {
     super.initState();
     _viewNonce = _generateNonce();
-    _openedAtLabel = _formatStamp(DateTime.now());
+    _openedAtLabel = _formatStamp(Helpers.now());
     _integrityDetailsController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 230),
@@ -165,9 +165,10 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
   }
 
   String _formatStamp(DateTime time) {
+    final phTime = Helpers.toPh(time);
     String pad(int value) => value.toString().padLeft(2, '0');
-    return '${time.year}-${pad(time.month)}-${pad(time.day)} '
-        '${pad(time.hour)}:${pad(time.minute)}';
+    return '${phTime.year}-${pad(phTime.month)}-${pad(phTime.day)} '
+        '${pad(phTime.hour)}:${pad(phTime.minute)}';
   }
 
   String get _watermarkText => '$_viewerName • $_viewNonce • $_openedAtLabel';
@@ -1180,8 +1181,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
   }
 
   String _isoDateLabel(DateTime date) {
+    final phDate = Helpers.toPh(date);
     String pad(int value) => value.toString().padLeft(2, '0');
-    return '${date.year}-${pad(date.month)}-${pad(date.day)}';
+    return '${phDate.year}-${pad(phDate.month)}-${pad(phDate.day)}';
   }
 
   String _printCopyFilename(DocumentPrintCopy copy) =>
@@ -1463,7 +1465,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
       final copyNotice = PrintCopyRules.noticeFor(
         copyNumber: copy.copyNumber,
         issuedTo: _viewerName,
-        issuedAt: request.releasedAt ?? DateTime.now(),
+        issuedAt: request.releasedAt ?? Helpers.now(),
       );
       final expiresAt = request.expiresAt;
 

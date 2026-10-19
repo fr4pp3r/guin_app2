@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:guin_app/models/document_request.dart';
+import 'package:guin_app/utils/helpers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// A cached snapshot of a user's document requests plus when it was stored.
@@ -31,7 +32,7 @@ class DocumentCacheService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final payload = jsonEncode({
-        'cachedAt': DateTime.now().toIso8601String(),
+        'cachedAt': Helpers.now().toIso8601String(),
         'requests': requests.map((r) => r.toJson()).toList(),
       });
       await prefs.setString(_key(userId), payload);
