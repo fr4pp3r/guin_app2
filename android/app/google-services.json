@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1008931844190",
+    "project_id": "citeease-fb964",
+    "storage_bucket": "citeease-fb964.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1008931844190:android:25d644c1011cdbc29fc4cf",
+        "android_client_info": {
+          "package_name": "com.example.citeease"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCCBf_BAmMp4TpPj-VP5nlDdCIuIP4hWM4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
