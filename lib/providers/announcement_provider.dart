@@ -112,7 +112,7 @@ class AnnouncementProvider extends ChangeNotifier {
       try {
         await _notificationService.notifyAllApproved(
           title: 'New announcement: ${title.trim()}',
-          message: authorName,
+          message: body.trim(),
           type: 'system',
         );
       } catch (e) {

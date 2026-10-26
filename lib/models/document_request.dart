@@ -30,6 +30,10 @@ class DocumentRequest {
   final String? rejectionReason;
   final double paymentAmount;
   final String? paymentReceiptUrl;
+
+  /// Official receipt image uploaded by the treasurer at confirmation time
+  /// (distinct from [paymentReceiptUrl], the citizen's own GCash screenshot).
+  final String? officialReceiptUrl;
   final String paymentStatus;
   final DateTime? paymentVerifiedAt;
   final String? paymentVerifiedBy;
@@ -90,6 +94,7 @@ class DocumentRequest {
     this.rejectionReason,
     required this.paymentAmount,
     this.paymentReceiptUrl,
+    this.officialReceiptUrl,
     required this.paymentStatus,
     this.paymentVerifiedAt,
     this.paymentVerifiedBy,
@@ -148,6 +153,7 @@ class DocumentRequest {
       rejectionReason: json['rejection_reason'] as String?,
       paymentAmount: (json['payment_amount'] as num).toDouble(),
       paymentReceiptUrl: json['payment_receipt_url'] as String?,
+      officialReceiptUrl: json['official_receipt_url'] as String?,
       paymentStatus: json['payment_status'] as String,
       paymentVerifiedAt: json['payment_verified_at'] != null
           ? DateTime.parse(json['payment_verified_at'] as String)
@@ -225,6 +231,7 @@ class DocumentRequest {
       'rejection_reason': rejectionReason,
       'payment_amount': paymentAmount,
       'payment_receipt_url': paymentReceiptUrl,
+      'official_receipt_url': officialReceiptUrl,
       'payment_status': paymentStatus,
       'payment_verified_at': paymentVerifiedAt?.toIso8601String(),
       'payment_verified_by': paymentVerifiedBy,

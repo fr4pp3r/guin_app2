@@ -5,6 +5,7 @@ import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/incident_report_provider.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
+import 'package:guin_app/utils/maps_launcher.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/widgets/incident_location_map.dart';
 
@@ -33,6 +34,25 @@ class _IncidentReportsScreenState extends State<IncidentReportsScreen> {
       newStatus: status,
       remarks: 'Updated from mobile dashboard',
     );
+  }
+
+  /// Hands the pin to Google Maps as a directions destination. The starting
+  /// point is the device's current location (the URL sends no `origin`).
+  Future<void> _openDirections(
+    IncidentReport report,
+    AppLocalizations l10n,
+  ) async {
+    final lat = report.latitude;
+    final lng = report.longitude;
+    if (lat == null || lng == null) return;
+
+    final opened = await MapsLauncher.openDirections(
+      latitude: lat,
+      longitude: lng,
+    );
+    if (!opened && mounted) {
+      Helpers.showErrorSnackBar(context, l10n.aincGoDirectionFailed);
+    }
   }
 
   /// Bottom sheet with the report's exact GPS pin (only offered when the
@@ -94,7 +114,39 @@ class _IncidentReportsScreenState extends State<IncidentReportsScreen> {
                       longitude: report.longitude!,
                     ),
                   ],
-                  const SizedBox(height: 16),
+                  if (report.latitude != null &&
+                      report.longitude != null) ...[
+                    const SizedBox(height: 16),
+                    // Opens Google Maps turn-by-turn directions from the
+                    // device's current location to the incident pin.
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          _openDirections(report, l10n);
+                        },
+                        icon: const Icon(Icons.directions, size: 20),
+                        label: Text(
+                          l10n.aincGoDirection,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2E7D32),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
                     height: 48,

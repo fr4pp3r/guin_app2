@@ -1,0 +1,14 @@
+flowchart TD
+  A[Admin Dashboard] --> B[Manage Users Screen]
+  B --> C[Pending Tab]
+  B --> D[All Users Tab]
+  C --> E[List of pending registrations]
+  E --> F[Click user to open details]
+  F --> G[User Registration Detail Screen]
+  G --> H[Approve / Reject]
+  H --> E
+  D --> I[All users list with search & filter]
+  D --> J[Create User button]
+  J --> K[Create User Screen]
+  K --> D
+  I --> L[Change Role / Delete User]

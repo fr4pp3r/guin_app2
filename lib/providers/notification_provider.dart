@@ -53,6 +53,20 @@ class NotificationProvider extends ChangeNotifier {
     }
   }
 
+  /// Lightweight reload used by [PushService] when a foreground FCM message
+  /// arrives. Unlike [loadNotifications] it does not touch the loading flag, so
+  /// it never flashes a spinner over a screen the user is already reading.
+  Future<void> refresh(String userId) async {
+    try {
+      _notifications = await _notificationService.getUserNotifications(userId);
+      _unreadCount = await _notificationService.getUnreadCount(userId);
+      _errorMessage = null;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('NotificationProvider.refresh failed: $e');
+    }
+  }
+
   void subscribeToNotifications(String userId) {
     _subscription = _notificationService.subscribeToNotifications(userId, (
       notification,

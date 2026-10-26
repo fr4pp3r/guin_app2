@@ -90,6 +90,7 @@ DROP TABLE IF EXISTS public.cedula_details          CASCADE;
 DROP TABLE IF EXISTS public.indigency_details       CASCADE;
 DROP TABLE IF EXISTS public.barangay_id_details     CASCADE;
 DROP TABLE IF EXISTS public.notifications           CASCADE;
+DROP TABLE IF EXISTS public.device_push_tokens     CASCADE;
 DROP TABLE IF EXISTS public.document_requests       CASCADE;
 DROP TABLE IF EXISTS public.document_fees           CASCADE;
 DROP TABLE IF EXISTS public.kyc_guarantors          CASCADE;
@@ -291,6 +292,9 @@ CREATE TABLE public.document_requests (
   payment_method           TEXT CHECK (payment_method IN ('gcash','cash_on_site','cash_onsite','manual_cashier')),
   payment_reference_number TEXT,
   payment_receipt_url      TEXT,
+  -- Official receipt image uploaded by the treasurer at confirmation time
+  -- (bucket `payment-receipts`, path <request_id>/official_<ts>.<ext>)
+  official_receipt_url     TEXT,
   payment_parsed_at        TIMESTAMPTZ,
   payment_parsed_confidence DECIMAL(3,2) CHECK (payment_parsed_confidence >= 0 AND payment_parsed_confidence <= 1),
   payment_parse_error      TEXT,
@@ -394,6 +398,23 @@ CREATE TABLE public.notifications (
   type       notification_type NOT NULL DEFAULT 'system',
   is_read    BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 3f-bis. FCM device push tokens ----------------------------------------
+-- One row per (user, device). The client upserts its token at login and
+-- deletes it at sign-out; the `push` Edge Function reads this table to fan a
+-- notification out to FCM. Added to a live database by
+-- supabase/migrations/20261025_device_push_tokens.sql — see
+-- PUSH_NOTIFICATIONS.md.
+CREATE TABLE public.device_push_tokens (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      UUID NOT NULL REFERENCES public.users_profile(id) ON DELETE CASCADE,
+  token        TEXT NOT NULL UNIQUE,
+  platform     TEXT NOT NULL DEFAULT 'android',
+  device_model TEXT,
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 3g. Payments ledger ---------------------------------------------------
@@ -648,7 +669,7 @@ CREATE INDEX idx_barangay_id_details_request   ON public.barangay_id_details(req
 CREATE INDEX idx_indigency_details_request     ON public.indigency_details(request_id);
 CREATE INDEX idx_cedula_details_request       ON public.cedula_details(request_id);
 CREATE INDEX idx_notifications_user           ON public.notifications(user_id);
-CREATE INDEX idx_payments_request             ON public.payments(request_id);
+CREATE INDEX idx_device_push_tokens_user       ON public.device_push_tokens(user_id);CREATE INDEX idx_payments_request             ON public.payments(request_id);
 CREATE INDEX idx_payments_status              ON public.payments(status);
 CREATE INDEX idx_document_versions_request    ON public.document_versions(request_id);
 CREATE INDEX idx_document_verifications_docid ON public.document_verifications(document_id);
@@ -736,6 +757,8 @@ ALTER TABLE public.barangay_id_details    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.indigency_details      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cedula_details         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.device_push_tokens      ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "app_access_device_push_tokens"  ON public.device_push_tokens      FOR ALL USING (true) WITH CHECK (true);
 ALTER TABLE public.payments               ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.document_versions      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.document_verifications ENABLE ROW LEVEL SECURITY;

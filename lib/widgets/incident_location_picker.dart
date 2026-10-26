@@ -104,7 +104,8 @@ class LocationPinPickerState extends State<LocationPinPicker> {
               ),
           ],
         ),
-        // No onTap: url_launcher is intentionally not a dependency.
+        // No onTap: the attribution stays plain text so the map never leaves
+        // the app when the reporter taps the credits.
         RichAttributionWidget(
           attributions: [TextSourceAttribution('OpenStreetMap contributors')],
         ),

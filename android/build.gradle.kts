@@ -1,3 +1,11 @@
+plugins {
+    // FlutterFire's google-services plugin must be declared (and on the
+    // classpath) here, or android/app/build.gradle.kts cannot apply it. It is
+    // only APPLIED there when android/app/google-services.json exists.
+    // See PUSH_NOTIFICATIONS.md.
+    id("com.google.gms.google-services") version "4.4.4" apply false
+}
+
 allprojects {
     repositories {
         google()

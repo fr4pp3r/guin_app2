@@ -144,6 +144,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final canReleaseDocuments = AppRoles.canReleaseDocuments(role);
     final canApproveDocuments = AppRoles.canApproveDocuments(role);
     final canManageReports = AppRoles.canManageReports(role);
+    final canManageFees = AppRoles.canManageFees(role);
     final canManageSettings =
         role == AppRoles.captain || role == AppRoles.legacyAdmin;
 
@@ -549,16 +550,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
               const SizedBox(height: 8),
               _buildActionButton(
-                l10n.adashManageDocumentFees,
-                Icons.money,
-                () => Navigator.of(context).pushNamed('/admin/document-fees'),
-              ),
-              const SizedBox(height: 8),
-              _buildActionButton(
                 l10n.adashViewDocumentFormats,
                 Icons.preview,
                 () =>
                     Navigator.of(context).pushNamed('/admin/document-formats'),
+              ),
+              const SizedBox(height: 8),
+            ],
+            // Document fees: captain / treasurer / admin may view and edit
+            // pricing (treasurer has no other settings access).
+            if (canManageFees) ...[
+              _buildActionButton(
+                l10n.adashManageDocumentFees,
+                Icons.money,
+                () => Navigator.of(context).pushNamed('/admin/document-fees'),
               ),
               const SizedBox(height: 8),
             ],

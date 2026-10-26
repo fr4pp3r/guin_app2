@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:guin_app/services/auth_service.dart';
 import 'package:guin_app/services/user_service.dart';
 import 'package:guin_app/services/notification_service.dart';
+import 'package:guin_app/services/push_service.dart';
 import 'package:guin_app/models/user_profile.dart';
 import 'package:guin_app/utils/role_access.dart';
 import 'package:guin_app/utils/helpers.dart';
@@ -47,6 +48,12 @@ class AuthProvider extends ChangeNotifier {
     try {
       _userProfile = await _authService.restoreSession();
       notifyListeners();
+      // Re-register this device's push token for the restored session. No-op
+      // when push is unavailable (best-effort, never throws).
+      final id = _userProfile?.id;
+      if (id != null) {
+        await PushService.registerForUser(id);
+      }
     } catch (e) {
       debugPrint('Error restoring session: $e');
       _userProfile = null;
@@ -76,6 +83,13 @@ class AuthProvider extends ChangeNotifier {
         email: email,
         password: password,
       );
+
+      // Point this device's push token at the signed-in user. Best-effort:
+      // push being unavailable must never fail a login.
+      final id = _userProfile?.id;
+      if (id != null) {
+        await PushService.registerForUser(id);
+      }
 
       _isLoading = false;
       notifyListeners();
@@ -222,6 +236,10 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Stop pushes for this device BEFORE clearing the session, so the next
+      // account on this phone never receives the previous user's notifications.
+      // Best-effort — a failure here must not block sign-out.
+      await PushService.unregisterForUser(_userProfile?.id);
       await _authService.signOut();
       _userProfile = null;
     } catch (e) {

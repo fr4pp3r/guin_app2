@@ -51,41 +51,67 @@ function buildPrompt(expectedAmount?: number): string {
   return p;
 }
 
-export async function receiptParser(
+async function receiptParser(
   payload: Record<string, unknown>,
 ): Promise<Response> {
-  const images = decodeImages(payload, IMAGE_SLOTS);
-  if (!hasImage(images, "receipt_b64")) {
-    return errorResponse("missing_receipt", "receipt_b64 is required");
+  // decodeImages returns a discriminated union and decodes in slot order; a
+  // non-optional slot that is missing or malformed comes back as ok:false with
+  // a caller-safe message, so no separate hasImage() probe is needed.
+  const decoded = decodeImages(payload, IMAGE_SLOTS);
+  if (!decoded.ok) {
+    return errorResponse(400, "bad_request", decoded.message);
   }
+  const images: B64Image[] = decoded.images;
+  if (!hasImage(images, "receipt_b64")) {
+    return errorResponse(400, "bad_request", '"receipt_b64" is required');
+  }
+  const receipt = images.find((image) => image.key === "receipt_b64");
 
   const expectedAmount = typeof payload.expectedAmount === "number"
     ? payload.expectedAmount
     : (typeof payload.expected_amount === "number" ? payload.expected_amount : undefined);
 
-  const contents = [
-    {
-      role: "user",
-      parts: [
-        { text: buildPrompt(expectedAmount) },
-        { inline_data: { mime_type: "image/png", data: (images.receipt_b64 as B64Image).data } },
-      ],
-    },
-  ];
+  const prompt = `${SYSTEM_PROMPT}\n\n${buildPrompt(expectedAmount)}`;
 
-  const geminiResult = await callGemini({
-    systemInstruction: SYSTEM_PROMPT,
-    contents,
-    responseSchema: RESPONSE_SCHEMA,
-    temperature: 0,
-  });
-
-  if (!geminiResult.ok) {
-    return errorResponse(geminiResult.error.code, geminiResult.error.message);
+  let raw: unknown;
+  try {
+    raw = await callGemini(prompt, {
+      responseSchema: RESPONSE_SCHEMA,
+      temperature: 0,
+      images: receipt
+        ? [{ mime_type: receipt.mimeType, data: receipt.data }]
+        : [],
+    });
+  } catch (e) {
+    const err = e as { status?: number; code?: string; message?: string };
+    return errorResponse(
+      typeof err.status === "number" ? err.status : 502,
+      typeof err.code === "string" ? err.code : "upstream_failure",
+      typeof err.message === "string" ? err.message : "AI request failed",
+    );
   }
 
-  return jsonResponse({
-    result: geminiResult.data,
+  // Advisory only: whatever cannot be read is reported as null/low confidence
+  // rather than guessed, and the treasurer still confirms every payment.
+  const obj = (typeof raw === "object" && raw !== null && !Array.isArray(raw))
+    ? raw as Record<string, unknown>
+    : {};
+
+  return jsonResponse(200, {
+    result: {
+      referenceNumber: typeof obj.referenceNumber === "string"
+        ? obj.referenceNumber
+        : "",
+      amount: typeof obj.amount === "number" && isFinite(obj.amount)
+        ? obj.amount
+        : 0,
+      date: typeof obj.date === "string" ? obj.date : "",
+      // An unusable read can never look confident.
+      confidence: typeof obj.confidence === "number" && isFinite(obj.confidence)
+        ? Math.min(Math.max(obj.confidence, 0), 1)
+        : 0,
+      ambiguous: obj.ambiguous !== false,
+    },
     meta: {
       prompt_version: PROMPT_VERSION,
       image_count: 1,

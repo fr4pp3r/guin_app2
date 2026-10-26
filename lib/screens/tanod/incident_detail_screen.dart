@@ -7,6 +7,7 @@ import 'package:guin_app/providers/incident_report_provider.dart';
 import 'package:guin_app/screens/tanod/incident_visuals.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
+import 'package:guin_app/utils/maps_launcher.dart';
 import 'package:guin_app/utils/role_access.dart';
 import 'package:guin_app/widgets/incident_location_map.dart';
 
@@ -50,6 +51,26 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
       if (!mounted) return;
       setState(() => _isUpdating = false);
       Helpers.showErrorSnackBar(context, l10n.tdashStatusUpdateFailed);
+    }
+  }
+
+  /// Opens Google Maps directions from the device's current location to the
+  /// incident pin. Silent no-op when the report has no coordinates; a snackbar
+  /// reports the rare case where nothing on the device can handle the link.
+  Future<void> _openDirections(
+    IncidentReport report,
+    AppLocalizations l10n,
+  ) async {
+    final lat = report.latitude;
+    final lng = report.longitude;
+    if (lat == null || lng == null) return;
+
+    final opened = await MapsLauncher.openDirections(
+      latitude: lat,
+      longitude: lng,
+    );
+    if (!opened && mounted) {
+      Helpers.showErrorSnackBar(context, l10n.aincGoDirectionFailed);
     }
   }
 
@@ -299,6 +320,33 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
                   label: l10n.tdetCoordinates,
                   latitude: report.latitude!,
                   longitude: report.longitude!,
+                ),
+                const SizedBox(height: 12),
+                // Hands the pin to Google Maps; the start point is the
+                // device's current location, so the tanod can navigate
+                // straight to the incident while en route.
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _openDirections(report, l10n),
+                    icon: const Icon(Icons.directions, size: 20),
+                    label: Text(
+                      l10n.aincGoDirection,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2E7D32),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ],

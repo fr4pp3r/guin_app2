@@ -81,7 +81,7 @@ function renderFaqs(value: unknown): string {
   return lines.join("\n\n");
 }
 
-export async function chatbot(
+async function chatbot(
   payload: Record<string, unknown>,
 ): Promise<Response> {
   const message =
@@ -181,5 +181,4 @@ export async function chatbot(
   return jsonResponse(200, { result: { reply, suggestions } });
 }
 
-export { chatbot };
 export default chatbot;

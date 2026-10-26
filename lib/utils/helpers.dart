@@ -65,7 +65,12 @@ class Helpers {
             children: [
               const CircularProgressIndicator(),
               const SizedBox(width: 20),
-              Text(message ?? AppL10n.current.splashLoading),
+              Expanded(
+                child: Text(
+                  message ?? AppL10n.current.splashLoading,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
         ),

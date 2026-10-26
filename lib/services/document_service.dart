@@ -68,33 +68,6 @@ class DocumentService {
     return DocumentRequest.fromJson(response);
   }
 
-  Future<DocumentRequest> requestRevision({
-    required String requestId,
-    required String secretaryId,
-    required String notes,
-  }) async {
-    final response = await _supabase
-        .from('document_requests')
-        .update({
-          'request_status': DocStatus.needsRevision,
-          'secretary_notes': notes,
-          'reviewed_by_secretary': secretaryId,
-        })
-        .eq('id', requestId)
-        .select()
-        .single();
-    await _audit(
-      requestId,
-      secretaryId,
-      'secretary',
-      'request_revision',
-      DocStatus.draftGenerated,
-      DocStatus.needsRevision,
-      notes: notes,
-    );
-    return DocumentRequest.fromJson(response);
-  }
-
   Future<DocumentRequest> markVerifiedForPayment({
     required String requestId,
     required String? secretaryId,
@@ -138,6 +111,7 @@ class DocumentService {
     required String treasurerId,
     String? method,
     String? referenceNumber,
+    String? officialReceiptUrl,
   }) async {
     final response = await _supabase
         .from('document_requests')
@@ -148,6 +122,9 @@ class DocumentService {
           'payment_reference_number': referenceNumber,
           'payment_verified_at': Helpers.now().toIso8601String(),
           'payment_verified_by': treasurerId,
+          // Written in the same UPDATE as the status change so the receipt
+          // and the confirmation land atomically (null = no receipt passed).
+          'official_receipt_url': officialReceiptUrl,
         })
         .eq('id', requestId)
         .select()
@@ -236,6 +213,25 @@ class DocumentService {
     } catch (e) {
       rethrow;
     }
+  }
+
+  /// Storage path for the treasurer's official receipt image. Request-scoped
+  /// (`<request_id>/official_<ts>.<ext>`) so it is visibly distinct from the
+  /// citizen's user-scoped GCash screenshot (`<user_id>/receipt_<ts>.<ext>`).
+  static String officialReceiptPath(String requestId, String fileExt) =>
+      '$requestId/official_${Helpers.now().millisecondsSinceEpoch}.$fileExt';
+
+  /// Uploads the treasurer's official receipt image to the `payment-receipts`
+  /// bucket and returns its public URL. Mirrors [uploadPaymentReceipt].
+  Future<String> uploadOfficialReceipt({
+    required String requestId,
+    required File imageFile,
+  }) async {
+    final fileExt = imageFile.path.split('.').last;
+    final fileName = officialReceiptPath(requestId, fileExt);
+
+    await _supabase.storage.from('payment-receipts').upload(fileName, imageFile);
+    return _supabase.storage.from('payment-receipts').getPublicUrl(fileName);
   }
 
   Future<DocumentRequest> submitPaymentReceipt({

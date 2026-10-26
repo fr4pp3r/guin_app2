@@ -13,6 +13,7 @@ import 'package:guin_app/providers/incident_report_provider.dart';
 import 'package:guin_app/providers/connectivity_provider.dart';
 import 'package:guin_app/providers/locale_provider.dart';
 import 'package:guin_app/providers/hotline_provider.dart';
+import 'package:guin_app/services/push_service.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/l10n/app_l10n.dart';
 import 'package:guin_app/utils/helpers.dart';
@@ -25,6 +26,12 @@ void main() async {
 
   try {
     await SupabaseConfig.initialize();
+
+    // FCM setup is best-effort and never throws: if Firebase is not configured
+    // (no android/app/google-services.json) this logs and returns without a
+    // token. It runs before runApp because a push tap that launched the app
+    // must be handled by the listeners it installs. See PUSH_NOTIFICATIONS.md.
+    await PushService.initialize();
 
     runApp(const MainApp());
   } catch (e) {
@@ -92,9 +99,19 @@ class MainApp extends StatelessWidget {
           // The builder wraps the app's Navigator, so the offline pill overlays
           // every route and survives navigation. MediaQuery/Directionality are
           // provided by MaterialApp above this builder. It also keeps the
-          // context-free [AppL10n] accessor in sync with the active locale.
+          // context-free [AppL10n] accessor in sync with the active locale and
+          // hands [PushService] the lookups it needs to refresh the
+          // notification bell from a foreground push.
           builder: (context, child) {
             AppL10n.current = AppLocalizations.of(context);
+            // Hand PushService the two lookups it needs to refresh the bell
+            // from a foreground push (it has no BuildContext of its own).
+            PushService.bindProviderAccess(
+              readNotificationProvider: () async =>
+                  context.read<NotificationProvider>(),
+              readUserId: () async =>
+                  context.read<AuthProvider>().currentUserId,
+            );
             return Stack(
               children: [
                 child ?? const SizedBox.shrink(),

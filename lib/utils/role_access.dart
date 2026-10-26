@@ -20,8 +20,9 @@ class AppRoles {
   static bool isOfficial(String role) => officialRoles.contains(role);
   static bool canManageUsers(String role) =>
       role == captain || role == legacyAdmin;
+  // Document fees: captain / treasurer / admin may view and edit pricing.
   static bool canManageFees(String role) =>
-      role == captain || role == admin;
+      role == captain || role == treasurer || role == admin;
 
   // Announcements: barangay-wide notices every signed-in user can read.
   // Posting is limited to the communications set (captain / secretary / admin).

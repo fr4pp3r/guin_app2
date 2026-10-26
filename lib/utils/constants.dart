@@ -16,7 +16,7 @@ class AppColors {
 
 // App Strings
 class AppStrings {
-  static const String appName = 'Barangay E-Document System';
+  static const String appName = 'CiteEase';
 
   // Auth
   static const String login = 'Login';

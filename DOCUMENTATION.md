@@ -135,7 +135,7 @@ old files.
 | ---------------------- | --------------------- | ------------------------------ |
 | `captain`              | Barangay Captain      | Final document approval        |
 | `secretary`            | Secretary             | Drafts, review, release        |
-| `treasurer`            | Treasurer             | Payment verification only      |
+| `treasurer`            | Treasurer             | Payment verification; document fees |
 | `kagawad_representative` | Kagawad Representative | Final document approval (substitute) |
 | `barangay_tanod`       | Barangay Tanod        | Incident reports               |
 | `citizen`              | Citizen               | Default role                   |
@@ -153,6 +153,7 @@ old files.
 | `canReviewDocuments`                | secretary, admin                                            |
 | `canReleaseDocuments`               | secretary, admin                                            |
 | `canVerifyPayments`                 | treasurer, admin                                            |
+| `canManageFees`                     | captain, treasurer, admin                                    |
 | `canApproveDocuments`               | captain, kagawad_representative, admin                      |
 | `canDeleteDocuments`                | captain, admin                                              |
 | `canManageReports`                  | captain, barangay_tanod, kagawad_representative, admin      |
@@ -186,7 +187,7 @@ role-gated pipeline:
       │
       ├──► recordDraftGenerated() ──► [draft_generated]
       │                                        │
-      │                                        ├── requestRevision() ──► [needs_revision]
+      │                                        │
       │                                        │        (citizen edits, resubmits)
       │                                        │
       │                                        └── markVerifiedForPayment()
@@ -206,6 +207,8 @@ role-gated pipeline:
       │                                        │      ──► [payment_rejected] ──► citizen repays
       │                                        │
       │                                        └── treasurerConfirmPayment()
+      │                                            (official receipt photo required;
+      │                                             stored in official_receipt_url)
       │                                                 └──► [for_approval]
       │                                                            │
       │                                    ┌───────────────────────┴────────┐
@@ -226,7 +229,7 @@ role-gated pipeline:
 | ------------------------- | ----------------------- | ---------------------------------------------- |
 | `submitted`               | `submitted`             | Citizen submitted, awaiting secretary           |
 | `draftGenerated`          | `draft_generated`       | Secretary generated the draft                   |
-| `needsRevision`           | `needs_revision`        | Secretary sent back for correction              |
+| `needsRevision`           | `needs_revision`        | Secretary sent back for correction (legacy — the "Needs Revision" action was removed 2026-10-20; rows already in this state still display) |
 | `verifiedForPayment`      | `verified_for_payment`  | Verified; fee assessment pending                |
 | `invoiced`                | `invoiced`              | Invoice issued, awaiting payment                |
 | `paymentSubmitted`        | `payment_submitted`     | Receipt uploaded, awaiting verification         |
@@ -378,6 +381,17 @@ drop a pin on submit, but it is optional (NULL for legacy rows and for reporters
 map), so reporting is never blocked when GPS is unavailable. Live databases need
 `supabase/migrations/20261022_incident_report_geo.sql` applied for the columns to exist.
 
+The admin triage screen's map sheet (`_openMapSheet`) renders the pin on OpenStreetMap
+(`flutter_map` + OSM tiles, no API key) and offers a **Go Direction** button above Close;
+the tanod detail screen (`lib/screens/tanod/incident_detail_screen.dart`) shows the same
+button inside its map card. Both hand off to Google Maps via
+`MapsLauncher.openDirections()` (`lib/utils/maps_launcher.dart`,
+`url_launcher`): the universal `https://www.google.com/maps/dir/?api=1&destination=lat,lng`
+URL sends **no `origin`**, so Google Maps starts from the device's current location. The button
+only renders when the report has both coordinates; if no app/browser can handle the hand-off
+the user gets a snackbar instead of a silent failure. Android 11+ needs the `https` `<queries>`
+entry in `AndroidManifest.xml` (already present).
+
 ---
 
 ## 7. Document Verification
@@ -505,12 +519,15 @@ Editor. The ones that matter to current features:
 | `20261021_announcements_images.sql`          | `announcements.image_url` + `announcement-images` bucket     |
 | `20261022_incident_report_geo.sql`           | `incident_reports.latitude` / `longitude` (optional map pin) |
 | `20261023_document_fees_is_free.sql`         | `document_fees.is_free` (explicit free-document tag; backfills zero-fee rows) |
+| `20261024_official_receipt_url.sql`          | `document_requests.official_receipt_url` (treasurer's official receipt image) |
 
 Each file is idempotent and non-destructive. Skipping `20261020_announcements.sql` leaves
 the announcement feed empty and its realtime channel silent — with no error shown in the
 app. Skipping `20261021_announcements_images.sql` leaves posting an announcement *with an
 image* failing: the upload hits a missing bucket and surfaces as **"Record not found"**
-(Supabase Storage reports a missing bucket as a 404).
+(Supabase Storage reports a missing bucket as a 404). Skipping
+`20261024_official_receipt_url.sql` is louder: **Confirm Payment fails** on the
+treasurer side with a "column ... does not exist" error until it is applied.
 
 The **only** case that still needs the commented-out **Incremental repair** block at the
 bottom of `setup.sql` is a database created by the pre-`setup.sql` legacy scripts, where
@@ -577,7 +594,7 @@ and services — not a copy of any single legacy script.
 | `document_requests`    | Requests, payment tracking, release + verification metadata    |
 | `barangay_config`      | Barangay identity + GCash payment details + sample Barangay ID (front/back, single-row config)  |
 | `kyc_guarantors`       | Guarantor registrations linking indigent citizens to approved guarantors                     |
-| `document_fees`        | Per-`document_type` pricing; `is_free` tag (captain/admin) forces `fee_amount` to 0 — free docs are excluded from price editing |
+| `document_fees`        | Per-`document_type` pricing; `is_free` tag (captain/treasurer/admin) forces `fee_amount` to 0 — free docs are excluded from price editing |
 | `barangay_id_details`  | Type-specific fields for Barangay ID                           |
 | `indigency_details`    | Type-specific fields for Certificate of Indigency              |
 | `cedula_details`       | Type-specific fields for Cedula                                |
@@ -625,7 +642,7 @@ request-scoped, e.g. `profile-photos/<user_id>/<timestamp>.jpg`.
 | --------------------- | ----------------------------------- | -------------------------------------- |
 | `profile-photos`      | Registration, admin user creation   | Dashboards, PDF generation             |
 | `valid-ids`           | Registration, admin user creation   | Pending-user review                    |
-| `payment-receipts`    | Citizen, via `DocumentProvider.submitPaymentReceipt()` | Treasurer (`pending_payments_screen`)  |
+| `payment-receipts`    | Citizen (GCash screenshot, `DocumentProvider.uploadReceipt()`); Treasurer (official receipt photo at confirm, path `<request_id>/official_*.jpg`) | Treasurer (`pending_payments_screen`); Citizen (My Requests — View Official Receipt) |
 | `announcement-images` | Officials posting an announcement (`AnnouncementProvider.createAnnouncement`) | Announcement feed / detail (everyone) |
 | `documents`           | PDF generation and release          | Citizen download, verification         |
 
@@ -831,7 +848,7 @@ currently loses audit rows without any visible error.
 | ------------------------------------- | ------------------------------------------------------------- |
 | `lib/screens/admin/admin_dashboard_screen.dart` | Unreferenced — `routes.dart` uses `dashboard_screen.dart` aliased as `admin` |
 | `lib/screens/admin/pending_users_screen.dart`   | Unreferenced — `/admin/pending-users` is wired to `ManageUsersScreen` |
-| `lib/screens/citizen/upload_payment_screen.dart` | Unreferenced (547 lines) — no route registered; receipt upload happens via `DocumentProvider.submitPaymentReceipt()` inside the request flow |
+| `lib/screens/citizen/upload_payment_screen.dart` | ~~Unreferenced~~ **LIVE** (corrected 2026-10-20) — no *named* route, but pushed via `MaterialPageRoute` from `my_requests_screen.dart` and the citizen dashboard's invoice card; receipt upload happens via `DocumentProvider.uploadReceipt()` from this screen |
 | `lib/services/document_service_backup.dart`    | Unreferenced backup copy                                     |
 | `lib/utils/password_helper.dart`                | Unreferenced — `password_hash.dart` is the one in use          |
 
@@ -882,7 +899,7 @@ connectivity banner widget (`test/widgets/`).
 Screens, Supabase-bound services, and the document workflow rules in `lib/automation/` are
 still **untested** — verify those manually against §5's workflows.
 
-### 8. Notification fan-out is client-side and one-insert-per-recipient — **open**
+### 8. Notification fan-out is client-side and one-insert-per-recipient — **partly resolved**
 
 Notifications are written by whichever client performs the action
 (`NotificationService.notifyRoles` / `notifyAllApproved`), not by database triggers. Two
@@ -894,11 +911,52 @@ consequences:
 - Posting an announcement inserts one row per approved user. That is fine at barangay
   scale, but a larger user base would want a trigger or a scheduled sender instead.
 
+> **Fixed (2026-10-21):** announcements no longer insert one row per recipient
+> sequentially, and — more importantly — the per-recipient push handoff is no longer
+> dropped. `notifyAllApproved` now batch-inserts (200/request) and hands the whole
+> recipient list to the `push` edge function **once**, as `user_ids`, awaiting the call
+> behind a 20 s bound. Previously each insert fired an un-awaited
+> `functions.invoke('push')`; the post finished, the screen navigated away, and those
+> in-flight requests were discarded — so single-recipient pushes worked while
+> announcements silently produced none. The push body is also the announcement text
+> now, not the poster's name. **Requires redeploying `push`** (`supabase functions
+> deploy push`) — the old deployment rejects `user_ids` with a 400.
+
 Related: `notifications.type` is a **closed Postgres enum** (`notification_type`, ten
 values — see [§9](#9-database-schema)). Queue notices aimed at officials therefore reuse
 `system` rather than inventing new codes; a genuinely new notice kind needs
 `ALTER TYPE ... ADD VALUE` in a migration, or the insert fails silently inside the
 best-effort wrapper.
+
+### 8a. An AI feature can be down while the app looks healthy — **watch for this**
+
+Every AI feature is *designed* to fail quietly: `AiService.invoke` returns `null` on any
+failure and each screen falls back to its non-AI path (the chatbot to a local keyword
+match over `lib/utils/faqs.dart`). That is the right product behaviour, but it means a
+completely dead `ai` edge function and a free-tier quota blip look **identical** in the
+UI: "the assistant is unavailable, please try again".
+
+If a user reports the AI "always says error / please try again / no connection", probe
+the function before touching Dart:
+
+```bash
+curl -i -X POST "https://<project-ref>.supabase.co/functions/v1/ai" \
+  -H "Authorization: Bearer <SUPABASE_ANON_KEY>" \
+  -H "Content-Type: application/json" -d '{"task":"ping","payload":{}}'
+```
+
+- `{"ok":true}` → the function is up; suspect `GEMINI_API_KEY` / `AI_MODEL` secrets or
+  quota (429).
+- `503 {"code":"BOOT_ERROR"}` → the function never started, so *every* task fails,
+  including `ping`. The handlers are never reached, so no Dart change can help. Full
+  playbook: `supabase/functions/ai/README.md`
+  § [When every task returns 503 BOOT_ERROR](../supabase/functions/ai/README.md).
+  Note that an unauthenticated probe also returns 503 here, so always send the anon key.
+
+The checked-in `supabase/functions/ai/config.json` (`verify_jwt: false`) exists for this
+reason: this app has no Supabase Auth, so a function deployed without it can land in a
+non-booting state. Redeploy with the plain `supabase functions deploy ai` — never add
+`--no-verify-jwt`.
 
 ---
 
@@ -1030,6 +1088,7 @@ consolidated into this document. Listed newest-first by their own stated dates.
 
 | Date        | Milestone                                                                 |
 | ----------- | ------------------------------------------------------------------------- |
+| 2026-10-20  | Treasurer-uploaded official receipt: required photo step in Confirm Payment, citizen view + download/share from My Requests |
 | 2026-10-16  | Tanod incident dashboard (`/tanod/dashboard`): open-incident counts, priority-filterable urgent-first feed, status transitions via the existing `updateStatus`; tanods now land here from login and splash |
 | 2026-10-15  | Approval review pages (full registration / request + requestor detail before approve/refuse), notifications for every role with in-app queue badges, and the announcement board |
 | 2026-10    | AI features (ID verifier, document processor, receipt parser, incident classifier), automation pipeline, offline cache, i18n, guarantor system, profile screens |
@@ -1086,6 +1145,16 @@ Officials post barangay-wide notices; **every signed-in user reads the same boar
 - `announcements_screen.dart` — the feed (pinned-first cards, pull-to-refresh, loading /
   empty / error states, live reload). The "New announcement" FAB appears only for posting
   roles.
+- **Search bar** (same screen) — free text plus a calendar-day filter. Both are applied in
+  memory over the whole loaded board by `AnnouncementSearch.filter`
+  (`lib/utils/announcement_search.dart`), so the search covers **every** announcement, not
+  just the rows scrolled into view, and behaves identically online and offline. The text
+  matches the title, body, poster name, and the date written either as `yyyy-MM-dd` or as the
+  localized `MMM dd, yyyy` the card prints (so "2026-10-20", "oct 20" and "2026-10" all
+  work); the calendar button keeps one day, evaluated in Asia/Manila so the day the user sees
+  is the day they can filter by. Filters combine with AND, pinned-first order is preserved, a
+  "Showing x of y" line makes the scope explicit, and an empty result swaps the list for a
+  no-match state.
 - `announcement_detail_screen.dart` — full read view; the delete action appears only for
   posting roles and confirms before deleting.
 - `create_announcement_screen.dart` — title + body (both required), a "Pin to top" switch,
@@ -1145,9 +1214,8 @@ needed** for the current behaviour. See [Known Gaps #8](#13-known-gaps-and-discr
 | Citizen uploads a payment receipt                 | treasurer, admin (`system`)                                             |
 | Secretary verifies for payment — fee required     | treasurer, admin (`payment_verified`)                                   |
 | Secretary verifies for payment — no fee           | captain, kagawad, admin (`system`)                                      |
-| Secretary requests a revision                     | the citizen (`system`)                                                  |
 | Secretary / admin rejects a request               | the citizen (`request_rejected`)                                        |
-| Treasurer confirms payment                        | captain, kagawad, admin (`system`) — the citizen's own notice comes from the automation pipeline |
+| Treasurer confirms payment                        | captain, kagawad, admin (`system`) — the citizen's own notice comes from the automation pipeline (`payment_verified`, which also mentions the official receipt when one was attached) |
 | Captain / kagawad releases the document           | the citizen (`request_released`)                                        |
 | Captain / kagawad rejects                         | the citizen (`request_rejected`)                                        |
 | Registration approved / rejected                  | the citizen (`registration_approved` / `registration_rejected`)          |

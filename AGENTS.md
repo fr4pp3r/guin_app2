@@ -9,7 +9,7 @@ Flutter CLI.
 ```bash
 flutter pub get        # after any pubspec change
 flutter analyze        # lint (flutter_lints) — the pre-commit gate
-flutter test           # 62 offline tests (test/automation, providers, services, utils, widgets)
+flutter test           # 116 offline tests (test/automation, models, providers, services, utils, widgets)
 flutter test test/automation/kyc_models_test.dart   # run one test file
 flutter run -d chrome  # web; `flutter run` for an attached device
 ```
@@ -36,7 +36,12 @@ with the same graceful-degradation rule.
 
 - **Deploy** (see `supabase/functions/ai/README.md`): `supabase functions deploy ai`,
   `supabase secrets set GEMINI_API_KEY=... AI_MODEL=gemini-2.5-flash`. The AI key lives
-  ONLY in Supabase secrets — never in `.env` or client code.
+  ONLY in Supabase secrets — never in `.env` or client code. Deploy with the plain
+  command: `config.json` pins `verify_jwt: false`, which is what keeps the function
+  bootable and reachable (this app has no Supabase Auth). Do NOT add `--no-verify-jwt`.
+  A function that fails to boot answers **every** task with `503 BOOT_ERROR` — including
+  `ping` — and the chatbot just shows its offline FAQ fallback, so always smoke-test
+  `ping` first. `npx --yes deno@latest check supabase/functions/ai/index.ts` must exit 0.
 - **Free tier reality**: Flash models only (~5–15 RPM, few hundred RPD), so AI features
   must never block the core workflow; callers treat null as "AI unavailable".
 - Feature status: incident classifier + document processor wired into citizen screens
@@ -48,6 +53,10 @@ with the same graceful-degradation rule.
 
 - `DOCUMENTATION.md` — architecture, roles, workflow statuses, setup, security posture,
   and §13 Known Gaps. README points here.
+- `PUSH_NOTIFICATIONS.md` — FCM push notifications (Android-only): wiring, the
+  Firebase + Supabase setup steps, and troubleshooting. Push stays inactive until
+  a deployment drops in `android/app/google-services.json` and sets the
+  `FIREBASE_SERVICE_ACCOUNT` secret; without them the app behaves exactly as before.
 - Trust executable sources over prose: README/DOCUMENTATION previously claimed "no tests" and
   "`.env` tracked in git" — both were stale and are now corrected (tests exist across `test/`;
   `.env` is gitignored).
@@ -68,7 +77,8 @@ with the same graceful-degradation rule.
   `assets:`.
 - Database: `setup.sql` is the single source of schema and is **destructive**
   (`DROP ... CASCADE`) — run only against a fresh Supabase project via the SQL Editor.
-  Never run `sql-legacy/` (archived, historically wrong).
+  Never run `sql-legacy/` (archived, historically wrong). It now defines 22 tables
+  (`device_push_tokens` is the newest).
 - `request_status` / `payment_status` are `TEXT` + CHECK (16 statuses), **not** Postgres
   enums. `DOCUMENTATION.md` §13.5 says legacy 4-status code lingers in
   `document_service.dart`; new code must use the full status set from
@@ -86,6 +96,8 @@ with the same graceful-degradation rule.
 - Realtime self-updates require tables in the `supabase_realtime` publication
   (`setup.sql` handles it); a missing table fails silently (dashboards just stop updating).
   Live tables are `document_requests`, `users_profile`, `notifications`, `announcements`.
+  `emergency_hotlines` is also in the publication list in `setup.sql`.
+  `device_push_tokens` is intentionally NOT in it — nothing subscribes live.
 - Notifications (`lib/services/notification_service.dart`): `createNotification` targets one
   user, `notifyRoles` fans out to every APPROVED official holding one of the roles, and
   `notifyAllApproved` fans out to all approved users (announcements). `notifications.type` is
@@ -93,6 +105,14 @@ with the same graceful-degradation rule.
   request_rejected|request_released|payment_verified|payment_rejected|incident_submitted|
   incident_updated|system` exist; new codes need a migration. All fan-outs are best-effort
   (errors swallowed) and never block the action that triggered them.
+- Push (FCM, Android-only) piggybacks on the row above: `createNotification`'s `finally`
+  fires a fire-and-forget `functions.invoke('push')`, and `supabase/functions/push/` looks up
+  `device_push_tokens` and calls FCM HTTP v1 with a service-account key held in Supabase
+  secrets. `lib/services/push_service.dart` owns the device half (init in `main.dart`,
+  register on login/restore, delete on sign-out). It is inert without
+  `android/app/google-services.json` + the `FIREBASE_SERVICE_ACCOUNT` secret — never let it
+  become required for the in-app bell to work. Table: `device_push_tokens`
+  (`supabase/migrations/20261025_device_push_tokens.sql`). Full guide: `PUSH_NOTIFICATIONS.md`.
 - Approver review is **page-based**, not list-card based: `user_registration_detail_screen.dart`
   opens for pending registration reviews (captain/admin only; `canManageUsers`) and
   `document_request_detail_screen.dart` opens for secretary/captain/kagawad queues with a

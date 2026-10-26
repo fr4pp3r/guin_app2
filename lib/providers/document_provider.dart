@@ -244,6 +244,19 @@ class DocumentProvider with ChangeNotifier {
     }
   }
 
+  // Treasurer: upload the official receipt image (confirm dialog step).
+  // Thin storage passthrough — the screen owns the loading dialog; the URL
+  // is written by treasurerConfirmPayment so status + receipt stay atomic.
+  Future<String> uploadOfficialReceipt({
+    required String requestId,
+    required File image,
+  }) {
+    return _documentService.uploadOfficialReceipt(
+      requestId: requestId,
+      imageFile: image,
+    );
+  }
+
   // Citizen: Upload payment receipt
   Future<void> uploadReceipt({
     required String requestId,
@@ -589,44 +602,6 @@ class DocumentProvider with ChangeNotifier {
     }
   }
 
-  Future<void> requestRevision({
-    required String requestId,
-    required String secretaryId,
-    required String notes,
-  }) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-    try {
-      await _documentService.requestRevision(
-        requestId: requestId,
-        secretaryId: secretaryId,
-        notes: notes,
-      );
-
-      // Citizen-side notify: changes were requested before approval.
-      final revision = await _requestForNotify(requestId);
-      if (revision != null) {
-        await _safeNotifyUser(
-          revision.userId,
-          'Document needs revision',
-          'Your ${revision.documentTypeDisplay} request needs changes '
-              'before it can proceed. Notes: $notes',
-          'system',
-        );
-      }
-
-      await loadPendingReviews();
-      _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _error = e.toString();
-      _isLoading = false;
-      notifyListeners();
-      rethrow;
-    }
-  }
-
   Future<void> markVerifiedForPayment({
     required String requestId,
     required String secretaryId,
@@ -705,6 +680,7 @@ class DocumentProvider with ChangeNotifier {
     required String treasurerId,
     String? method,
     String? referenceNumber,
+    String? officialReceiptUrl,
   }) async {
     _isLoading = true;
     _error = null;
@@ -718,6 +694,7 @@ class DocumentProvider with ChangeNotifier {
           treasurerId: treasurerId,
           method: method,
           referenceNumber: referenceNumber,
+          officialReceiptUrl: officialReceiptUrl,
         );
       } else {
         debugPrint('treasurerConfirmPayment: request $requestId not found');
@@ -726,6 +703,7 @@ class DocumentProvider with ChangeNotifier {
           treasurerId: treasurerId,
           method: method,
           referenceNumber: referenceNumber,
+          officialReceiptUrl: officialReceiptUrl,
         );
       }
 

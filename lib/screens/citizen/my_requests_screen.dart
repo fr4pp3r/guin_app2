@@ -11,6 +11,7 @@ import 'package:guin_app/screens/citizen/upload_payment_screen.dart';
 import 'package:guin_app/screens/citizen/e_receipt_viewer_screen.dart';
 import 'package:guin_app/config/routes.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
+import 'package:guin_app/widgets/full_screen_image_viewer.dart';
 
 // ignore_for_file: unused_import
 
@@ -553,6 +554,30 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                   ),
                 ],
 
+                // View the official receipt (uploaded by the treasurer when
+                // the payment was confirmed) — zoom + download/share.
+                if (request.officialReceiptUrl != null) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _openOfficialReceipt(request),
+                      icon: const Icon(Icons.receipt_outlined, size: 18),
+                      label: Text(
+                        l10n.payViewOfficialReceipt,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: BorderSide(color: AppColors.primary),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+
                 // Payment rejection reason (treasurer sent the receipt back)
                 if (request.requestStatus == DocStatus.paymentRejected &&
                     request.paymentRejectionReason != null) ...[
@@ -754,6 +779,20 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
       context,
       AppRoutes.eReceipt,
       arguments: request,
+    );
+  }
+
+  void _openOfficialReceipt(DocumentRequest request) {
+    final l10n = AppLocalizations.of(context);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FullScreenImageViewer(
+          title: l10n.payOfficialReceiptTitle,
+          url: request.officialReceiptUrl!,
+          shareFileBaseName: 'official_receipt_${request.id}',
+        ),
+      ),
     );
   }
 

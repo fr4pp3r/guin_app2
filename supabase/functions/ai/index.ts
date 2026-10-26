@@ -5,11 +5,10 @@
 //   Success:  200 { "ok": true } (ping) or { "result": {...} } (feature tasks)
 //   Failure:  <status> { "error": { "code": string, "message": string } }
 //
-// Auth: the platform gateway enforces verify_jwt (default ON) — requests must
-// carry `Authorization: Bearer <jwt>` where the JWT is a valid project token.
-// The app does not use Supabase Auth, so in practice the bearer token is the
-// project's anon key (itself such a JWT). If SUPABASE_JWT_SECRET is set the
-// function re-verifies locally; otherwise the gateway is the gate.
+// Auth: the client sends `Authorization: Bearer <anon key>` — see
+// `supabase/functions/ai/README.md` § Auth model. Note the deployed function
+// does NOT accept a Supabase Auth access token (this app has no Supabase Auth);
+// only the project credential the client already holds.
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import * as jose from "https://esm.sh/jose@5.9.6";
@@ -25,15 +24,23 @@ import idVerifier from "./handlers/id_verifier.ts";
 import receiptParser from "./handlers/receipt_parser.ts";
 import chatbot from "./handlers/chatbot.ts";
 
+// Redeploy note: `supabase functions deploy ai` (no --no-verify-jwt) is the
+// correct command. It ships `config.json` alongside this file, which is what
+// pins verify_jwt=false so the gateway does not demand a Supabase Auth JWT —
+// this app does not use Supabase Auth, so without that file every call gets
+// rejected before it reaches the handlers. A missing/incorrect config is one of
+// the few ways this function can fail to boot (HTTP 503 BOOT_ERROR), so keep
+// it in sync with the deployed function.
+
 const JWT_SECRET = Deno.env.get("SUPABASE_JWT_SECRET") ?? "";
 
 async function verifyJwt(req: Request): Promise<boolean> {
-  // The platform gateway (verify_jwt, default ON for deployed functions)
-  // already rejects calls without a valid project JWT, so in-function
-  // re-verification is defense-in-depth, not the primary gate. It only runs
-  // when SUPABASE_JWT_SECRET is available; the CLI refuses to set
-  // SUPABASE_-prefixed secret names, so on standard deployments this is
-  // skipped and the gateway is the gate.
+  // verify_jwt is OFF for this function (see config.json): the app does not use
+  // Supabase Auth, so a gateway that demands an Auth JWT would reject every
+  // call. The bearer token the client sends is the project anon key, which
+  // stops open internet abuse but is not an identity — this function is
+  // therefore callable by anyone holding a project credential, exactly like the
+  // app's own direct Supabase calls.
   if (!JWT_SECRET) return true;
   const header = req.headers.get("Authorization") ?? "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : "";

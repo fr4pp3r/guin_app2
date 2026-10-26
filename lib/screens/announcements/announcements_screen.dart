@@ -7,6 +7,7 @@ import 'package:guin_app/providers/announcement_provider.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/screens/announcements/announcement_detail_screen.dart';
 import 'package:guin_app/screens/announcements/create_announcement_screen.dart';
+import 'package:guin_app/utils/announcement_search.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/utils/role_access.dart';
@@ -26,6 +27,15 @@ class AnnouncementsScreen extends StatefulWidget {
 class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   AnnouncementProvider? _provider;
 
+  final TextEditingController _searchController = TextEditingController();
+
+  /// Live text from the search bar (lowercased on compare, kept verbatim here so
+  /// the field's clear button can be toggled off the raw value).
+  String _query = '';
+
+  /// Single calendar day picked from the date button, or null for "all dates".
+  DateTime? _dayFilter;
+
   @override
   void initState() {
     super.initState();
@@ -39,9 +49,38 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
 
   @override
   void dispose() {
+    _searchController.dispose();
     _provider?.unsubscribe();
     super.dispose();
   }
+
+  void _onQueryChanged(String value) {
+    if (value == _query) return;
+    setState(() => _query = value);
+  }
+
+  void _clearQuery() {
+    _searchController.clear();
+    setState(() => _query = '');
+  }
+
+  void _clearDayFilter() => setState(() => _dayFilter = null);
+
+  /// Calendar button: picks the single day the feed should be limited to. The
+  /// active day is shown as a removable chip; clearing it is done there.
+  Future<void> _pickDayFilter() async {
+    final now = Helpers.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dayFilter ?? now,
+      firstDate: DateTime(2020, 1, 1),
+      lastDate: DateTime(now.year + 1, 12, 31),
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _dayFilter = picked);
+  }
+
+  bool get _isFiltering => _query.trim().isNotEmpty || _dayFilter != null;
 
   Future<void> _openCreate() async {
     final l10n = AppLocalizations.of(context);
@@ -76,6 +115,15 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
     final role = context.watch<AuthProvider>().userProfile?.role ?? '';
     final canPost = AppRoles.canPostAnnouncements(role);
 
+    // Filter over the full list: the feed is global, so "all announcements"
+    // means every loaded row, not just the ones on screen.
+    final all = provider.announcements;
+    final results = AnnouncementSearch.filter(
+      all,
+      query: _query,
+      day: _dayFilter,
+    );
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -106,14 +154,126 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               ),
             )
           : null,
-      body: RefreshIndicator(
-        onRefresh: provider.loadAnnouncements,
-        child: _buildBody(provider),
+      body: Column(
+        children: [
+          _searchBar(l10n),
+          if (_dayFilter != null) _dayFilterChip(),
+          if (_isFiltering && all.isNotEmpty)
+            _resultCount(l10n, results.length, all.length),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: provider.loadAnnouncements,
+              child: _buildBody(provider, results),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildBody(AnnouncementProvider provider) {
+  /// Search bar: free text (title / poster / date) plus a calendar day filter.
+  Widget _searchBar(AppLocalizations l10n) {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onQueryChanged,
+              textInputAction: TextInputAction.search,
+              style: const TextStyle(fontSize: 14),
+              decoration: InputDecoration(
+                hintText: l10n.annSearchHint,
+                hintStyle: TextStyle(fontSize: 13.5, color: Colors.grey.shade500),
+                prefixIcon: const Icon(Icons.search, size: 20),
+                suffixIcon: _query.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.close, size: 18),
+                        tooltip: l10n.commonClear,
+                        onPressed: _clearQuery,
+                      ),
+                isDense: true,
+                filled: true,
+                fillColor: Colors.grey[100],
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Tooltip(
+            message: l10n.annSearchByDate,
+            child: Material(
+              color: _dayFilter != null
+                  ? AppColors.primary.withValues(alpha: 0.12)
+                  : Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: _pickDayFilter,
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Icon(
+                    Icons.calendar_month_outlined,
+                    size: 22,
+                    color: _dayFilter != null
+                        ? AppColors.primary
+                        : Colors.grey.shade700,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Removable chip showing the active calendar day.
+  Widget _dayFilterChip() {
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: InputChip(
+          avatar: const Icon(Icons.event, size: 16),
+          label: Text(Helpers.formatDate(_dayFilter!)),
+          onDeleted: _clearDayFilter,
+          deleteIconColor: AppColors.textSecondary,
+          backgroundColor: AppColors.primary.withValues(alpha: 0.08),
+          side: BorderSide(color: AppColors.primary.withValues(alpha: 0.25)),
+          labelStyle: const TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// "Showing x of y" so it is obvious the search covers every announcement.
+  Widget _resultCount(AppLocalizations l10n, int shown, int total) {
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(18, 0, 16, 10),
+      child: Text(
+        l10n.annSearchShowing(shown, total),
+        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+      ),
+    );
+  }
+
+  Widget _buildBody(AnnouncementProvider provider, List<Announcement> results) {
     // First load with nothing cached yet → spinner.
     if (provider.isLoading && provider.announcements.isEmpty) {
       return _scrollableCentered(const CircularProgressIndicator());
@@ -124,12 +284,14 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       }
       return _emptyState();
     }
+    if (results.isEmpty) {
+      return _noResultsState();
+    }
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
-      itemCount: provider.announcements.length,
-      itemBuilder: (context, index) =>
-          _announcementCard(provider.announcements[index]),
+      itemCount: results.length,
+      itemBuilder: (context, index) => _announcementCard(results[index]),
     );
   }
 
@@ -227,6 +389,51 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               const SizedBox(height: 8),
               Text(
                 l10n.annFeedEmptyBody,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Shown when the feed has rows but none match the active search.
+  Widget _noResultsState() {
+    final l10n = AppLocalizations.of(context);
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      children: [
+        SizedBox(height: MediaQuery.sizeOf(context).height * 0.18),
+        Center(
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(60),
+                ),
+                child: Icon(
+                  Icons.search_off_outlined,
+                  size: 52,
+                  color: Colors.grey.withValues(alpha: 0.5),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                l10n.annSearchNoResultsTitle,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                l10n.annSearchNoResultsBody,
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
               ),

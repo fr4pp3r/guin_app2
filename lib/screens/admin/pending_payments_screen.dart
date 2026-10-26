@@ -6,6 +6,7 @@ import 'package:guin_app/providers/document_provider.dart';
 import 'package:guin_app/models/document_request.dart';
 import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
+import 'package:guin_app/screens/admin/confirm_payment_dialog.dart';
 
 class PendingPaymentsScreen extends StatefulWidget {
   const PendingPaymentsScreen({super.key});
@@ -28,21 +29,29 @@ class _PendingPaymentsScreenState extends State<PendingPaymentsScreen> {
     final authProvider = context.read<AuthProvider>();
     final documentProvider = context.read<DocumentProvider>();
 
-    final confirm = await Helpers.showConfirmDialog(
+    // Confirm dialog now carries the mandatory official-receipt photo step.
+    final receiptImage = await showConfirmPaymentDialog(
       context,
-      title: l10n.atreasConfirmPayment,
       message: l10n.atreasConfirmPaymentMessage(
         request.paymentAmount.toStringAsFixed(2),
       ),
     );
 
-    if (!confirm) return;
+    if (receiptImage == null) return;
+    if (!mounted) return;
 
     Helpers.showLoadingDialog(context, l10n.atreasConfirmingPayment);
     try {
+      // Upload first so a failed upload never touches the status; the
+      // confirmation UPDATE then writes the URL and the status atomically.
+      final receiptUrl = await documentProvider.uploadOfficialReceipt(
+        requestId: request.id,
+        image: receiptImage,
+      );
       await documentProvider.treasurerConfirmPayment(
         requestId: request.id,
         treasurerId: authProvider.userProfile!.id,
+        officialReceiptUrl: receiptUrl,
       );
 
       if (!mounted) return;

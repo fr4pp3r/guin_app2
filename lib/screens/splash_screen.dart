@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/config/routes.dart';
 import 'package:guin_app/utils/role_access.dart';
+import 'package:guin_app/services/push_service.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -62,6 +63,9 @@ class _SplashScreenState extends State<SplashScreen>
         } else if (userProfile.isAdmin) {
           Navigator.of(context).pushReplacementNamed(AppRoutes.adminDashboard);
         } else {
+          // The dashboard screens normally install the push listener when they
+          // mount; this covers the roots that do not.
+          PushService.attachPushListener();
           Navigator.of(
             context,
           ).pushReplacementNamed(AppRoutes.citizenDashboard);

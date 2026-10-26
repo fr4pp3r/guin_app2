@@ -49,10 +49,10 @@ class DocumentAutomationService {
     NotificationService? notificationService,
     BarangayService? barangayService,
     UserService? userService,
-  })  : _documentService = documentService ?? DocumentService(),
-        _notificationService = notificationService ?? NotificationService(),
-        _barangayService = barangayService ?? BarangayService(),
-        _userService = userService ?? UserService();
+  }) : _documentService = documentService ?? DocumentService(),
+       _notificationService = notificationService ?? NotificationService(),
+       _barangayService = barangayService ?? BarangayService(),
+       _userService = userService ?? UserService();
 
   final DocumentService _documentService;
   final NotificationService _notificationService;
@@ -88,9 +88,7 @@ class DocumentAutomationService {
   /// Free fees (whether flagged via [DocumentFee.isFree] or a recorded
   /// `is_free` flag) always contribute `0.0` so automation never invoices a
   /// free document type, even if a stale nonzero amount is carried.
-  static Map<String, double> feeMapFromList(
-    Iterable<Object?> fees,
-  ) {
+  static Map<String, double> feeMapFromList(Iterable<Object?> fees) {
     final result = <String, double>{};
     for (final fee in fees) {
       if (fee is DocumentFee) {
@@ -174,7 +172,9 @@ class DocumentAutomationService {
     }
 
     final feeRequired = request.paymentRequired || request.paymentAmount > 0;
-    final nextStatus = PipelineRules.nextStatusAfterDraft(feeRequired: feeRequired);
+    final nextStatus = PipelineRules.nextStatusAfterDraft(
+      feeRequired: feeRequired,
+    );
 
     if (draftUrl == null && nextStatus == DocStatus.forApproval) {
       // Cannot auto-advance free docs without a generated draft record.
@@ -191,8 +191,9 @@ class DocumentAutomationService {
     // the invoice. Automation only prepares the draft and never reaches
     // `invoiced` on its own; free docs may still auto-advance.
     if (feeRequired) {
-      final leftStatus =
-          draftUrl != null ? DocStatus.draftGenerated : DocStatus.submitted;
+      final leftStatus = draftUrl != null
+          ? DocStatus.draftGenerated
+          : DocStatus.submitted;
 
       await _safeNotify(
         userId: request.userId,
@@ -305,18 +306,21 @@ class DocumentAutomationService {
     required String treasurerId,
     String? method,
     String? referenceNumber,
+    String? officialReceiptUrl,
   }) async {
     await _documentService.treasurerConfirmPayment(
       requestId: request.id,
       treasurerId: treasurerId,
       method: method,
       referenceNumber: referenceNumber,
+      officialReceiptUrl: officialReceiptUrl,
     );
     await _safeNotify(
       userId: request.userId,
       title: 'Payment verified',
       message:
-          'Payment for your ${AutomationConstants.labelFor(request.documentType)} was verified and forwarded for final approval.',
+          'Payment for your ${AutomationConstants.labelFor(request.documentType)} was verified and forwarded for final approval.'
+          '${officialReceiptUrl != null ? ' Your official receipt is ready to view and download in My Requests.' : ''}',
       type: 'payment_verified',
     );
   }
@@ -407,7 +411,9 @@ class DocumentAutomationService {
           qrUrl: payload.qrUrl,
           verificationToken: payload.verificationToken,
           expiresAtLabel: payload.expiresAt != null
-              ? DateFormat('MMM dd, yyyy').format(Helpers.toPh(payload.expiresAt!))
+              ? DateFormat(
+                  'MMM dd, yyyy',
+                ).format(Helpers.toPh(payload.expiresAt!))
               : null,
         );
       } catch (_) {}
@@ -450,16 +456,17 @@ class DocumentAutomationService {
   /// Flag overdue invoices (mechanical). Does not auto-approve anything.
   Future<List<DocumentRequest>> findOverdueInvoices({DateTime? now}) {
     final cutoff = now ?? Helpers.now();
-    return _documentService
-        .getPendingPayments()
-        .then(
-          (requests) =>
-              requests.where((r) => PipelineRules.isInvoiceOverdue(
-                    status: r.requestStatus,
-                    dueDate: r.invoiceDueDate,
-                    now: cutoff,
-                  )).toList(),
-        );
+    return _documentService.getPendingPayments().then(
+      (requests) => requests
+          .where(
+            (r) => PipelineRules.isInvoiceOverdue(
+              status: r.requestStatus,
+              dueDate: r.invoiceDueDate,
+              now: cutoff,
+            ),
+          )
+          .toList(),
+    );
   }
 
   Future<void> notifyOverdueInvoices({DateTime? now}) async {
@@ -655,14 +662,14 @@ class DocumentAutomationService {
           contactNumber: citizen.phoneNumber,
           emergencyContactName:
               request.documentData['emergency_contact_name']?.toString() ??
-                  request.documentData['contact_number']?.toString() ??
-                  'N/A',
+              request.documentData['contact_number']?.toString() ??
+              'N/A',
           emergencyContactNumber:
               request.documentData['emergency_contact_number']?.toString() ??
-                  request.documentData['contact_number']?.toString() ??
-                  'N/A',
-          bloodType: request.documentData['blood_type']?.toString() ??
-              'Unknown',
+              request.documentData['contact_number']?.toString() ??
+              'N/A',
+          bloodType:
+              request.documentData['blood_type']?.toString() ?? 'Unknown',
           config: config,
           profilePhotoUrl: citizen.profilePhotoUrl,
           documentId: documentId,
@@ -779,7 +786,8 @@ class DocumentAutomationService {
       request: request,
       config: config,
       citizen: citizen,
-      approverName: approverName ??
+      approverName:
+          approverName ??
           (request.approverRole != null
               ? approverNameFallback(request.approverRole!)
               : null),

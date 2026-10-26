@@ -51,7 +51,15 @@ app.*.map.json
 #Environment variables
 .env
 ".env" 
+# Stray copy of .env (same credentials, different name) and Supabase CLI state
+/env
+/supabase/.temp/
 
 # Keystore (contains signing credentials)
 /android/keystore.properties
-/android/app/release-keystore.jks 
+/android/app/release-keystore.jks
+
+# Firebase / FCM config (per-deployment; see PUSH_NOTIFICATIONS.md)
+/android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist
+/macos/Runner/GoogleService-Info.plist

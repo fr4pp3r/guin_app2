@@ -3,8 +3,29 @@ import java.util.Properties
 
 plugins {
     id("com.android.application")
+    // FlutterFire: reads android/app/google-services.json at BUILD time. The
+    // file is gitignored (each deployment has its own Firebase project). When
+    // it is absent the plugin is not applied, so the project still builds and
+    // runs — push just stays off (see lib/services/push_service.dart and
+    // PUSH_NOTIFICATIONS.md). The `apply false` + `apply(plugin = ...)` form is
+    // required because a plugins block has no `file()` accessor.
+    id("com.google.gms.google-services") apply false
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// Only wire Firebase into the build when a Firebase project has actually been
+// configured for this checkout; applied conditionally so an unconfigured
+// checkout (and CI) builds normally.
+val hasGoogleServices = File(project.projectDir, "google-services.json").exists()
+if (hasGoogleServices) {
+    apply(plugin = "com.google.gms.google-services")
+} else {
+    logger.lifecycle(
+        "google-services.json not found in android/app — " +
+            "FCM push notifications are disabled for this build. " +
+            "See PUSH_NOTIFICATIONS.md."
+    )
 }
 
 // Release signing credentials (android/keystore.properties + android/app/release-keystore.jks,
@@ -60,8 +81,17 @@ android {
             } else {
                 // Fail loudly instead of silently falling back to the debug keystore: a release
                 // built with a different key would make every device with the previous version
-                // reject the update ("App not installed").
-                throw GradleException("Release signing not configured: android/keystore.properties is missing. Restore it and android/app/release-keystore.jks to build a release.")
+                // reject the update ("App not installed"). This block runs during the
+                // configuration phase of EVERY build (including debug `flutter run`), so only
+                // raise the error when a release build is actually being requested.
+                val requestedTasks = gradle.startParameter.taskNames.map { it.substringAfterLast(':') }
+                val buildingRelease = requestedTasks.any {
+                    it.contains("Release", ignoreCase = true) ||
+                        it in setOf("build", "assemble", "bundle", "install")
+                }
+                if (buildingRelease) {
+                    throw GradleException("Release signing not configured: android/keystore.properties is missing. Restore it and android/app/release-keystore.jks to build a release.")
+                }
             }
         }
     }

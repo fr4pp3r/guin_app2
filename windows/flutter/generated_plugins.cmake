@@ -6,10 +6,12 @@ list(APPEND FLUTTER_PLUGIN_LIST
   app_links
   connectivity_plus
   file_selector_windows
+  firebase_core
   geolocator_windows
   no_screenshot
   permission_handler_windows
   printing
+  share_plus
   url_launcher_windows
 )
 

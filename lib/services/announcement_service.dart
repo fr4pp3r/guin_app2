@@ -6,7 +6,9 @@ import 'package:guin_app/models/announcement.dart';
 /// Data access for the barangay announcement board.
 ///
 /// Announcements are global (no audience column): every signed-in user reads
-/// the same rows, so there is nothing to filter client-side beyond ordering.
+/// the same rows, so the query needs no server-side filtering — the feed's
+/// search bar narrows the whole list in memory instead
+/// (`lib/utils/announcement_search.dart`).
 class AnnouncementService {
   final SupabaseClient _supabase = SupabaseConfig.client;
 

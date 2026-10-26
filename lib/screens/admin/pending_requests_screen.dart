@@ -214,81 +214,6 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
     }
   }
 
-  // ── Request Revision ─────────────────────────────────────────────────
-
-  Future<void> _handleRequestRevision(DocumentRequest request) async {
-    final l10n = AppLocalizations.of(context);
-    final notesCtrl = TextEditingController();
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.asecRequestRevision),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              l10n.asecRequestChangesToDocument(request.documentTypeDisplay),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: notesCtrl,
-              maxLines: 4,
-              decoration: InputDecoration(
-                labelText: l10n.asecRevisionNotesForCitizen,
-                hintText: l10n.asecRevisionNotesHint,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.commonCancel),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (notesCtrl.text.trim().isEmpty) {
-                Helpers.showErrorSnackBar(ctx, l10n.asecPleaseProvideNotes);
-                return;
-              }
-              Navigator.pop(ctx, true);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: Text(l10n.asecSendRevision),
-          ),
-        ],
-      ),
-    );
-    if (confirm != true || !mounted) return;
-
-    final documentProvider = context.read<DocumentProvider>();
-    final authProvider = context.read<AuthProvider>();
-    Helpers.showLoadingDialog(context, l10n.asecRequestingRevision);
-    try {
-      await documentProvider.requestRevision(
-        requestId: request.id,
-        secretaryId: authProvider.userProfile!.id,
-        notes: notesCtrl.text.trim(),
-      );
-      if (!mounted) return;
-      Helpers.dismissDialog(context);
-      Helpers.showSuccessSnackBar(
-        context,
-        l10n.asecRevisionRequestedNotified,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      Helpers.dismissDialog(context);
-      Helpers.showErrorSnackBar(
-        context,
-        Helpers.parseSupabaseError(e.toString()),
-      );
-    }
-  }
-
   // ── Verify for Payment / Forward to Approval ─────────────────────────
 
   Future<void> _handleVerifyForPayment(DocumentRequest request) async {
@@ -430,12 +355,6 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
     }
     if (status == DocStatus.draftGenerated) {
       return [
-        RequestAction(
-          label: l10n.asecNeedsRevision,
-          icon: Icons.edit_note,
-          color: Colors.orange,
-          onPressed: () => _handleRequestRevision(r),
-        ),
         RequestAction(
           label: r.paymentRequired
               ? l10n.asecSendInvoice
