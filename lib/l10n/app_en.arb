@@ -554,6 +554,7 @@
   },
   "reqDocOathUndertakingDesc": "For first-time job seekers",
   "reqDocOccupation": "Pinagkakakitaan (Trabaho/Negosyo)",
+  "reqDocPrefilledFromProfile": "Prefilled from your profile — tap to edit",
   "reqDocPaymentAmount": "   Amount: ₱{amount}",
   "@reqDocPaymentAmount": {
     "placeholders": {

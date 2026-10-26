@@ -2,7 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:guin_app/automation/profile_prefill.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
+import 'package:guin_app/models/user_profile.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/document_provider.dart';
 import 'package:guin_app/providers/barangay_provider.dart';
@@ -109,6 +111,7 @@ class RequestDocumentScreen extends StatefulWidget {
 
 class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _detailsController = ExpansibleController();
   final _purposeController = TextEditingController();
 
   // Barangay ID form controllers (only used by the barangay_id type).
@@ -117,14 +120,14 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
   final _idContactController = TextEditingController();
 
   // Shared controllers for the indigency fill-up form (oath_undertaking,
-  // indigency, good_moral). One set is reused across all three types.
+  // indigency, good_moral). One set is reused across all three types. The
+  // purpose is the shared top-level field, not stored here.
   final _indigencyFullNameController = TextEditingController();
   final _indigencyAddressController = TextEditingController();
   final _indigencyAgeController = TextEditingController();
   final _indigencyCivilStatusController = TextEditingController();
   final _indigencyRequesterController = TextEditingController();
   final _indigencyRequesterAddressController = TextEditingController();
-  final _indigencyPurposeController = TextEditingController();
 
   // Shared controllers for the cedula fill-up form (business_clearance,
   // certification, barangay_clearance, residency, cedula). One set is reused
@@ -176,6 +179,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
 
   @override
   void dispose() {
+    _detailsController.dispose();
     _purposeController.dispose();
     _idFullNameController.dispose();
     _idAddressController.dispose();
@@ -186,7 +190,6 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
     _indigencyCivilStatusController.dispose();
     _indigencyRequesterController.dispose();
     _indigencyRequesterAddressController.dispose();
-    _indigencyPurposeController.dispose();
     _cedulaLastNameController.dispose();
     _cedulaFirstNameController.dispose();
     _cedulaMiddleNameController.dispose();
@@ -199,6 +202,45 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
     _cedulaAnnualIncomeController.dispose();
     _cedulaCitizenshipController.dispose();
     super.dispose();
+  }
+
+  /// Fills the family's controllers with profile-backed values whenever the
+  /// citizen switches document families. Values already typed are kept when
+  /// staying inside the same family.
+  void _seedFromProfile(String documentType) {
+    final UserProfile? profile = context.read<AuthProvider>().userProfile;
+    if (profile == null) return;
+    final data = profileDocumentData(profile, documentType);
+    String value(String key) => data[key] as String? ?? '';
+
+    switch (_selectedOption?.family) {
+      case _FormFamily.barangayId:
+        _idFullNameController.text = value('full_name');
+        _idAddressController.text = value('address');
+        _idContactController.text = value('contact_number');
+      case _FormFamily.indigency:
+        _indigencyFullNameController.text = value('full_name');
+        _indigencyAddressController.text = value('address');
+        _indigencyAgeController.text = value('age');
+        _indigencyCivilStatusController.text = value('civil_status');
+        _indigencyRequesterController.text = value('requester');
+        _indigencyRequesterAddressController.text = value('requester_address');
+      case _FormFamily.cedula:
+        _cedulaLastNameController.text = value('last_name');
+        _cedulaFirstNameController.text = value('first_name');
+        _cedulaMiddleNameController.text = value('middle_name');
+        _cedulaAddressController.text = value('address');
+        _cedulaBirthPlaceController.text = value('birth_place');
+        _cedulaCitizenshipController.text = value('citizenship');
+        _cedulaBirthDate = profile.dateOfBirth;
+        _cedulaGender =
+            _genders.contains(profile.gender) ? profile.gender : 'Male';
+        _cedulaCivilStatus = _civilStatuses.contains(profile.civilStatus)
+            ? profile.civilStatus
+            : 'Single';
+      case null:
+        return;
+    }
   }
 
   Map<String, dynamic> _getDocumentData() {
@@ -217,7 +259,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
           'civil_status': _indigencyCivilStatusController.text.trim(),
           'requester': _indigencyRequesterController.text.trim(),
           'requester_address': _indigencyRequesterAddressController.text.trim(),
-          'purpose': _indigencyPurposeController.text.trim(),
+          'purpose': _purposeController.text.trim(),
         };
       case _FormFamily.cedula:
         final cedulaData = <String, dynamic>{
@@ -299,7 +341,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
           case 'requester_address':
             return _indigencyRequesterAddressController;
           case 'purpose':
-            return _indigencyPurposeController;
+            return _purposeController;
           default:
             return null;
         }
@@ -337,12 +379,6 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
     }
   }
 
-  // The indigency-family form carries its own Purpose field; every other
-  // family uses the shared top-level Purpose field.
-  String get _effectivePurpose => _selectedOption?.family == _FormFamily.indigency
-      ? _indigencyPurposeController.text.trim()
-      : _purposeController.text.trim();
-
   Future<void> _runAiCheck() async {
     if (_aiProcessing) return;
     final l10n = AppLocalizations.of(context);
@@ -352,7 +388,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
       );
       return;
     }
-    final purpose = _effectivePurpose;
+    final purpose = _purposeController.text.trim();
     if (purpose.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.reqDocEnterPurposeFirst)),
@@ -391,11 +427,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         }
       });
       if (suggestion.normalizedPurpose.trim().isNotEmpty) {
-        final purposeController =
-            _selectedOption?.family == _FormFamily.indigency
-                ? _indigencyPurposeController
-                : _purposeController;
-        purposeController.text = suggestion.normalizedPurpose;
+        _purposeController.text = suggestion.normalizedPurpose;
       }
       _aiSuggestionApplied = false;
       _aiSuggestion = null;
@@ -473,7 +505,11 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
 
   Future<void> _submitRequest() async {
     final l10n = AppLocalizations.of(context);
-    if (!_formKey.currentState!.validate()) return;
+    final isValid = _formKey.currentState!.validate();
+    if (!isValid) {
+      _detailsController.expand();
+      return;
+    }
     if (_selectedDocumentType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.reqDocPleaseSelectType)),
@@ -500,7 +536,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
       await documentProvider.createRequest(
         userId: authProvider.userProfile!.id,
         documentType: _selectedDocumentType!,
-        purpose: _effectivePurpose,
+        purpose: _purposeController.text.trim(),
         documentData: _getDocumentData(),
         paymentAmount: fee == null || fee.isFree ? 0.0 : fee.feeAmount,
       );
@@ -600,29 +636,27 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                 _buildDocumentTypeSection(),
                 const SizedBox(height: 24),
 
-                // Purpose — hidden for indigency-family types, which carry
-                // their own Purpose field inside the fill-up form.
-                if (_selectedOption?.family != _FormFamily.indigency) ...[
-                  TextFormField(
-                    controller: _purposeController,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      labelText: l10n.commonPurpose,
-                      border: const OutlineInputBorder(),
-                      hintText: l10n.reqDocPurposeHint,
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return l10n.reqDocPleaseEnterPurpose;
-                      }
-                      return null;
-                    },
+                // Purpose — the only field the citizen must write for every
+                // document type.
+                TextFormField(
+                  controller: _purposeController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: l10n.commonPurpose,
+                    border: const OutlineInputBorder(),
+                    hintText: l10n.reqDocPurposeHint,
                   ),
-                  const SizedBox(height: 24),
-                ],
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return l10n.reqDocPleaseEnterPurpose;
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 24),
 
-                // Fill-up form for the selected document type
-                _buildSelectedForm(),
+                // Prefilled, collapsible details for the selected type
+                _buildDetailsSection(),
 
                 const SizedBox(height: 24),
 
@@ -723,10 +757,14 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
     return GestureDetector(
       onTap: () {
         setState(() {
+          final previousFamily = _selectedOption?.family;
           if (_selectedDocumentType != option.type) {
             _businessStatus = 'NEW';
           }
           _selectedDocumentType = option.type;
+          if (option.family != previousFamily) {
+            _seedFromProfile(option.type);
+          }
           _aiSuggestionApplied = false;
           _aiSuggestion = null;
         });
@@ -812,6 +850,69 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
     }
   }
 
+  /// The NEW/RENEW segmented button plus an `ExpansionTile` holding the
+  /// prefilled fill-up form, so the citizen edits only what the profile
+  /// cannot answer.
+  Widget _buildDetailsSection() {
+    final l10n = AppLocalizations.of(context);
+    final selected = _selectedOption;
+    if (selected == null) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (selected.type == 'business_clearance') ...[
+          Text(
+            l10n.reqDocTypeOfApplication,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.blue.shade700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: SegmentedButton<String>(
+              segments: [
+                ButtonSegment(value: 'NEW', label: Text(l10n.reqDocNew)),
+                ButtonSegment(value: 'RENEW', label: Text(l10n.reqDocRenewal)),
+              ],
+              selected: {_businessStatus},
+              onSelectionChanged: (selection) {
+                setState(() => _businessStatus = selection.first);
+              },
+              style: ButtonStyle(
+                foregroundColor: WidgetStateProperty.resolveWith((states) =>
+                    states.contains(WidgetState.selected)
+                        ? Colors.white
+                        : Colors.blue.shade700),
+                backgroundColor: WidgetStateProperty.resolveWith((states) =>
+                    states.contains(WidgetState.selected)
+                        ? Colors.blue
+                        : Colors.white),
+                side: WidgetStateProperty.all(
+                  BorderSide(color: Colors.blue.shade300),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        ExpansionTile(
+          controller: _detailsController,
+          title: Text(l10n.reqDocDocumentDetails(selected.title)),
+          subtitle: Text(l10n.reqDocPrefilledFromProfile),
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: _buildSelectedForm(),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildSelectedForm() {
     switch (_selectedOption?.family) {
       case _FormFamily.barangayId:
@@ -830,11 +931,6 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.reqDocBarangayIdDetails,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
         TextFormField(
           controller: _idFullNameController,
           decoration: InputDecoration(
@@ -874,11 +970,6 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.reqDocDocumentDetails(_selectedOption?.title ?? 'Document'),
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
         TextFormField(
           controller: _indigencyFullNameController,
           decoration: InputDecoration(
@@ -937,18 +1028,6 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
             border: const OutlineInputBorder(),
           ),
         ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _indigencyPurposeController,
-          maxLines: 2,
-          decoration: InputDecoration(
-            labelText: l10n.commonPurpose,
-            border: const OutlineInputBorder(),
-            hintText: l10n.reqDocPurposeHintExample,
-          ),
-          validator: (value) =>
-              value?.isEmpty ?? true ? l10n.commonRequired : null,
-        ),
       ],
     );
   }
@@ -958,49 +1037,6 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.reqDocDocumentDetails(_selectedOption?.title ?? 'Document'),
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
-        if (_selectedOption?.type == 'business_clearance') ...[
-          Text(
-            l10n.reqDocTypeOfApplication,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.blue.shade700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: SegmentedButton<String>(
-              segments: [
-                ButtonSegment(value: 'NEW', label: Text(l10n.reqDocNew)),
-                ButtonSegment(value: 'RENEW', label: Text(l10n.reqDocRenewal)),
-              ],
-              selected: {_businessStatus},
-              onSelectionChanged: (selection) {
-                setState(() => _businessStatus = selection.first);
-              },
-              style: ButtonStyle(
-                foregroundColor: WidgetStateProperty.resolveWith((states) =>
-                    states.contains(WidgetState.selected)
-                        ? Colors.white
-                        : Colors.blue.shade700),
-                backgroundColor: WidgetStateProperty.resolveWith((states) =>
-                    states.contains(WidgetState.selected)
-                        ? Colors.blue
-                        : Colors.white),
-                side: WidgetStateProperty.all(
-                  BorderSide(color: Colors.blue.shade300),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
         Row(
           children: [
             Expanded(
