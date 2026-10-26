@@ -8,6 +8,8 @@ import 'package:camera/camera.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/services/ai_id_verifier.dart';
+import 'package:guin_app/services/captcha_service.dart';
+import 'package:guin_app/services/captcha_widget.dart';
 import 'package:guin_app/services/user_service.dart';
 import 'package:guin_app/models/user_profile.dart';
 import 'package:guin_app/utils/constants.dart';
@@ -73,6 +75,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // AI pre-check
   bool _idPreCheckRunning = false;
+
+  // reCAPTCHA
+  String? _captchaToken;
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -418,6 +423,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final authProvider = context.read<AuthProvider>();
     final l10n = AppLocalizations.of(context);
 
+    // reCAPTCHA is a hard gate — must be solved before submission.
+    if (_captchaToken == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.captchaRequired)),
+      );
+      return;
+    }
+
+    final captchaVerified = await CaptchaService().verify(_captchaToken!);
+    if (captchaVerified != true) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.captchaFailed),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      setState(() => _captchaToken = null);
+      return;
+    }
+
     final now = DateTime.now();
     final age =
         now.year -
@@ -648,6 +675,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ],
             ),
           ),
+          if (_currentStep == 3 && _captchaToken == null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.captchaTitle,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    l10n.captchaSubtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  CaptchaWidget(
+                    onSolved: (token) => setState(() => _captchaToken = token),
+                  ),
+                ],
+              ),
+            ),
           Container(
             color: Colors.white,
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),

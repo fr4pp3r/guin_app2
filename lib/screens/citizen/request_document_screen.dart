@@ -9,6 +9,8 @@ import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/document_provider.dart';
 import 'package:guin_app/providers/barangay_provider.dart';
 import 'package:guin_app/services/ai_document_processor.dart';
+import 'package:guin_app/services/captcha_service.dart';
+import 'package:guin_app/services/captcha_widget.dart';
 import 'package:guin_app/utils/helpers.dart';
 
 /// Which shared fill-up form a document type uses.
@@ -157,6 +159,9 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
   bool _aiProcessing = false;
   bool _aiSuggestionApplied = false;
   final _aiProcessor = AiDocumentProcessor();
+
+  // reCAPTCHA
+  String? _captchaToken;
 
   _DocumentTypeOption? get _selectedOption {
     final type = _selectedDocumentType;
@@ -524,6 +529,28 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
       return;
     }
 
+    // reCAPTCHA is a hard gate — must be solved before submission.
+    if (_captchaToken == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.captchaRequired)),
+      );
+      return;
+    }
+
+    final captchaVerified = await CaptchaService().verify(_captchaToken!);
+    if (captchaVerified != true) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.captchaFailed),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      setState(() => _captchaToken = null);
+      return;
+    }
+
     final authProvider = context.read<AuthProvider>();
     final documentProvider = context.read<DocumentProvider>();
     final barangayProvider = context.read<BarangayProvider>();
@@ -680,6 +707,30 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                 ),
                 const SizedBox(height: 8),
                 _buildAiSuggestionCard(),
+
+                // reCAPTCHA
+                if (_captchaToken == null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.captchaTitle,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    l10n.captchaSubtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  CaptchaWidget(
+                    onSolved: (token) => setState(() => _captchaToken = token),
+                  ),
+                ],
 
                 // Submit Button
                 Consumer<DocumentProvider>(

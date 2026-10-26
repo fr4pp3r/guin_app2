@@ -22,4 +22,7 @@ class SupabaseConfig {
   }
 
   static SupabaseClient get client => Supabase.instance.client;
+
+  /// Base URL of the Supabase project, used to construct Edge Function URLs.
+  static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
 }

@@ -283,6 +283,10 @@
   "authStepVerification": "Verification",
   "authStepVerificationDesc": "A barangay official reviews your documents and information.",
   "authSubmitRegistration": "Submit Registration",
+  "captchaTitle": "Verify you are human",
+  "captchaSubtitle": "Please complete the reCAPTCHA to continue.",
+  "captchaFailed": "Verification failed. Please try again.",
+  "captchaRequired": "Please complete the reCAPTCHA before submitting.",
   "authTapToCapture": "Tap to Capture",
   "authUsernameMinLength": "Must be at least {count} characters",
   "@authUsernameMinLength": {

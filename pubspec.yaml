@@ -73,6 +73,9 @@ dependencies:
   latlong2: ^0.10.1
   geolocator: ^14.0.1
 
+  # reCAPTCHA widget (webview-based, cross-platform)
+  webview_flutter: ^4.10.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -107,6 +110,7 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/fonts/
+    - assets/captcha.html
 
   fonts:
     - family: Roboto
