@@ -47,6 +47,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+# All other Android build output (lint reports, etc.)
+/android/build/
 
 #Environment variables
 .env
@@ -58,6 +60,16 @@ app.*.map.json
 # Keystore (contains signing credentials)
 /android/keystore.properties
 /android/app/release-keystore.jks
+
+# Generated / scratch artifacts that should never be committed
+# Android build reports
+/android/build/
+# Generated ERD output (regenerate with `dart run erd/generate_erd.dart`)
+/erd/out/
+# Scratch diagram files at the repo root (real diagrams live in diagrams/)
+/*.mmd
+# Supabase CLI state
+/supabase/.temp/
 
 # Firebase / FCM config (per-deployment; see PUSH_NOTIFICATIONS.md)
 /android/app/google-services.json
