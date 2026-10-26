@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/models/user_profile.dart';
+import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/user_provider.dart';
+import 'package:guin_app/screens/admin/edit_user_screen.dart';
 import 'package:guin_app/services/user_service.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
@@ -152,6 +154,18 @@ class _UserRegistrationDetailScreenState
     }
   }
 
+  Future<void> _handleEditUserInfo() async {
+    final l10n = AppLocalizations.of(context);
+    final edited = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => EditUserScreen(user: _user)),
+    );
+    if (edited != true || !mounted) return;
+    final fresh = await UserService().getUserProfile(widget.user.id);
+    if (mounted && fresh != null) setState(() => _user = fresh);
+    if (mounted) Helpers.showSuccessSnackBar(context, l10n.auserInfoUpdated);
+  }
+
   void _openViewer(String title, String url) {
     Navigator.push(
       context,
@@ -166,6 +180,9 @@ class _UserRegistrationDetailScreenState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final canEditUserInfo = AppRoles.canEditUserInfo(
+      context.read<AuthProvider>().userProfile?.role ?? '',
+    );
     // If a realtime refresh drops this registration from the pending list
     // while we're looking at it, re-read it — the officer must not be able to
     // approve something that was already decided elsewhere.
@@ -185,6 +202,14 @@ class _UserRegistrationDetailScreenState
           l10n.auregTitle,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
+        actions: [
+          if (canEditUserInfo)
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: l10n.auserEditInfo,
+              onPressed: _handleEditUserInfo,
+            ),
+        ],
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(

@@ -20,6 +20,10 @@ class AppRoles {
   static bool isOfficial(String role) => officialRoles.contains(role);
   static bool canManageUsers(String role) =>
       role == captain || role == legacyAdmin;
+  // Correcting an existing user's profile details (e.g. a KYC field mismatch).
+  // Narrower than user management: no approve/reject/role/delete rights.
+  static bool canEditUserInfo(String role) =>
+      role == captain || role == secretary || role == legacyAdmin;
   // Document fees: captain / treasurer / admin may view and edit pricing.
   static bool canManageFees(String role) =>
       role == captain || role == treasurer || role == admin;

@@ -140,6 +140,45 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
+  /// Corrects another user's profile details (secretary/captain/admin). The
+  /// DB trigger re-derives `full_name` from the name parts. Reloads both lists
+  /// so an open queue reflects the edit.
+  Future<bool> updateUserInfo({
+    required String userId,
+    String? givenName,
+    String? middleName,
+    String? lastName,
+    String? address,
+    int? age,
+    DateTime? dateOfBirth,
+    String? placeOfBirth,
+    String? civilStatus,
+    String? gender,
+    String? phoneNumber,
+  }) async {
+    try {
+      await _userService.updateUserProfile(
+        userId: userId,
+        givenName: givenName,
+        middleName: middleName,
+        lastName: lastName,
+        address: address,
+        age: age,
+        dateOfBirth: dateOfBirth,
+        placeOfBirth: placeOfBirth,
+        civilStatus: civilStatus,
+        gender: gender,
+        phoneNumber: phoneNumber,
+      );
+      await Future.wait([loadPendingUsers(), loadAllUsers()]);
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<bool> updateUserRole(String userId, String role) async {
     try {
       await _userService.updateUserRole(userId, role);

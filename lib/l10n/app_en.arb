@@ -1386,6 +1386,9 @@
   "auserCannotDeleteSelf": "You cannot delete your own account",
   "auserChangeRole": "Change Role",
   "auserCreateUser": "Create User",
+  "auserEditInfo": "Edit Information",
+  "auserEditUserTitle": "Edit User Information",
+  "auserInfoUpdated": "User information updated",
   "auserDeleteConfirm": "Permanently delete {name}? This cannot be undone.",
   "@auserDeleteConfirm": {
     "placeholders": {

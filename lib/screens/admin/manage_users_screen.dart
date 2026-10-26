@@ -7,6 +7,7 @@ import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/utils/role_access.dart';
 import 'package:guin_app/screens/admin/create_user_screen.dart';
+import 'package:guin_app/screens/admin/edit_user_screen.dart';
 import 'package:guin_app/screens/admin/user_registration_detail_screen.dart';
 import 'package:guin_app/l10n/app_l10n.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
@@ -193,6 +194,17 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
         context,
         Helpers.parseSupabaseError(userProvider.errorMessage),
       );
+    }
+  }
+
+  Future<void> _handleEditUserInfo(UserProfile user) async {
+    final l10n = AppLocalizations.of(context);
+    final edited = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => EditUserScreen(user: user)),
+    );
+    if (edited == true && mounted) {
+      Helpers.showSuccessSnackBar(context, l10n.auserInfoUpdated);
     }
   }
 
@@ -997,6 +1009,9 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
 
   Widget _buildUserTile(UserProfile user) {
     final l10n = AppLocalizations.of(context);
+    final canEditUserInfo = AppRoles.canEditUserInfo(
+      context.read<AuthProvider>().userProfile?.role ?? '',
+    );
     final roleColor = _roleColor(user.role);
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -1102,10 +1117,22 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
           ),
           trailing: PopupMenuButton<String>(
             onSelected: (action) {
+              if (action == 'edit') _handleEditUserInfo(user);
               if (action == 'role') _handleChangeRole(user);
               if (action == 'delete') _handleDeleteUser(user);
             },
             itemBuilder: (_) => [
+              if (canEditUserInfo)
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.edit_outlined, size: 18),
+                      const SizedBox(width: 8),
+                      Text(l10n.auserEditInfo),
+                    ],
+                  ),
+                ),
               PopupMenuItem(
                 value: 'role',
                 child: Row(
