@@ -1,12 +1,16 @@
 import 'dart:io';
-import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // DeviceOrientation (camera-frame gate)
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:camera/camera.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:face_detection_tflite/face_detection_tflite.dart';
+import 'package:flutter_litert/flutter_litert.dart';
 import 'package:guin_app/providers/auth_provider.dart';
+import 'package:guin_app/services/face_match_service.dart';
 import 'package:guin_app/services/ai_id_verifier.dart';
 import 'package:guin_app/services/captcha_service.dart';
 import 'package:guin_app/services/captcha_widget.dart';
@@ -58,6 +62,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   File? _validIdFront;
   File? _validIdBack;
   File? _selfiePhoto;
+  // Consumed by the submit step (_handleRegister); true only when the face
+  // gate auto-captured the selfie.
+  bool _selfieGatePassed = false;
 
   // ID details
   String? _selectedIdType;
@@ -184,14 +191,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     // Try camera first, fall back to gallery
     final cameraAvailable = await _isCameraAvailable();
     if (cameraAvailable && mounted) {
-      final result = await Navigator.push<File>(
+      final result = await Navigator.push<LivenessCaptureResult>(
         context,
         MaterialPageRoute(
           builder: (_) => const LivenessCaptureScreen(),
         ),
       );
       if (result != null) {
-        setState(() => _selfiePhoto = result);
+        setState(() {
+          _selfiePhoto = result.file;
+          _selfieGatePassed = result.gatePassed;
+        });
         return;
       }
     }
@@ -204,7 +214,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         imageQuality: 85,
       );
       if (pickedFile != null) {
-        setState(() => _selfiePhoto = File(pickedFile.path));
+        setState(() {
+          _selfiePhoto = File(pickedFile.path);
+          _selfieGatePassed = false;
+        });
         if (mounted) {
           final l10n = AppLocalizations.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -467,6 +480,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     }
 
+    // Advisory on-device face match (selfie vs ID portrait). Never blocks.
+    FaceMatchResult? faceMatch;
+    final selfie = _selfiePhoto;
+    final idFront = _validIdFront;
+    if (selfie != null && idFront != null) {
+      try {
+        faceMatch = await FaceMatchService().matchSelfieToId(
+          idImage: await idFront.readAsBytes(),
+          selfie: await selfie.readAsBytes(),
+        );
+      } catch (e) {
+        debugPrint('Face match failed: $e');
+      }
+    }
+
     final fullNameForAi = [_givenNameController.text.trim(), if (_middleNameController.text.trim().isNotEmpty) _middleNameController.text.trim(), _lastNameController.text.trim()].join(' ');
 
     final success = await authProvider.signUp(
@@ -490,8 +518,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       idNumber: _idNumberController.text.trim(),
       idIssuedAt: _idIssuedAt,
       idExpiryAt: _idExpiryAt,
-      livenessVerified: _selfiePhoto != null,
+      livenessVerified: _selfieGatePassed,
       kycAiResult: kycAiResult,
+      kycFaceMatchScore: faceMatch?.score,
       isIndigent: _isIndigent,
       indigencyReason: _isIndigent
           ? _indigencyReasonController.text.trim()
@@ -1882,6 +1911,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
 // ── Liveness Capture Screen ──────────────────────────────────────────────────
 
+class LivenessCaptureResult {
+  const LivenessCaptureResult({required this.file, required this.gatePassed});
+
+  final File file;
+
+  /// True when the face gate (auto-capture) took the photo; false for a manual
+  /// shutter tap or a gallery fallback — the submit step wires this into
+  /// `liveness_verified`.
+  final bool gatePassed;
+}
+
+/// Real face gate that runs over the camera image stream. Everything here is
+/// best-effort: on web/desktop or any stream/detector error we keep the manual
+/// shutter usable and never crash the screen.
 class LivenessCaptureScreen extends StatefulWidget {
   const LivenessCaptureScreen({super.key});
 
@@ -1889,33 +1932,34 @@ class LivenessCaptureScreen extends StatefulWidget {
   State<LivenessCaptureScreen> createState() => _LivenessCaptureScreenState();
 }
 
+enum _FaceGateStatus { moveCloser, lookStraight, holdStill }
+
 class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
   CameraController? _controller;
+  CameraDescription? _camera;
+  FaceDetector? _detector;
   bool _initialized = false;
   bool _capturing = false;
-  String _challenge = '';
-  final _random = Random();
 
-  static const _challenges = [
-    'Blink your eyes',
-    'Turn your head left',
-    'Turn your head right',
-    'Look up',
-    'Smile',
-  ];
+  // Frame-gate state
+  bool _streaming = false;
+  bool _busy = false;
+  int _qualifyingFrames = 0;
+  _FaceGateStatus _status = _FaceGateStatus.moveCloser;
 
-  static const _challengeIcons = [
-    Icons.visibility,
-    Icons.arrow_back,
-    Icons.arrow_forward,
-    Icons.keyboard_arrow_up,
-    Icons.sentiment_very_satisfied,
-  ];
+  static final bool _gateSupported =
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+
+  static const double _minFaceWidthFraction = 0.25;
+  static const double _maxHeadAngleDegrees = 15;
+  static const double _minEyeOpenProbability = 0.5;
+  static const int _requiredConsecutiveFrames = 3;
 
   @override
   void initState() {
     super.initState();
-    _challenge = _challenges[_random.nextInt(_challenges.length)];
     _initCamera();
   }
 
@@ -1940,13 +1984,29 @@ class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
         frontCamera,
         ResolutionPreset.medium,
         enableAudio: false,
+        imageFormatGroup: ImageFormatGroup.yuv420,
       );
       await controller.initialize();
-      if (mounted) {
-        setState(() {
-          _controller = controller;
-          _initialized = true;
-        });
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+      setState(() {
+        _controller = controller;
+        _camera = frontCamera;
+        _initialized = true;
+      });
+      // Gate is optional: if the detector or the stream fails, the manual
+      // shutter still works.
+      try {
+        if (_gateSupported) {
+          _detector = await FaceDetector.create(
+            model: FaceDetectionModel.frontCamera,
+          );
+          await _startStream();
+        }
+      } catch (e) {
+        debugPrint('Liveness face gate unavailable: $e');
       }
     } catch (e) {
       if (mounted) {
@@ -1959,19 +2019,132 @@ class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
     }
   }
 
+  Future<void> _startStream() async {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) return;
+    try {
+      await controller.startImageStream(_processFrame);
+      _streaming = true;
+    } catch (e) {
+      debugPrint('Liveness image stream unavailable: $e');
+    }
+  }
+
+  Future<void> _stopStream() async {
+    _streaming = false;
+    try {
+      await _controller?.stopImageStream();
+    } catch (e) {
+      debugPrint('Liveness image stream stop failed: $e');
+    }
+  }
+
+  Future<void> _processFrame(CameraImage image) async {
+    final detector = _detector;
+    if (!_streaming || _busy || detector == null) return;
+    _busy = true;
+    try {
+      final rotation = rotationForFrame(
+        width: image.width,
+        height: image.height,
+        sensorOrientation: _camera?.sensorOrientation ?? 90,
+        isFrontCamera:
+            _camera?.lensDirection == CameraLensDirection.front,
+        deviceOrientation:
+            _controller?.value.deviceOrientation ?? DeviceOrientation.portraitUp,
+      );
+      final faces = await detector.detectFacesFromCameraImage(
+        image,
+        mode: FaceDetectionMode.full,
+        maxDim: 640,
+        rotation: rotation,
+      );
+      if (mounted) _updateGate(faces);
+    } catch (e) {
+      debugPrint('Liveness gate frame error: $e');
+      await _stopStream();
+      // Gate is done for this run; the manual shutter stays available.
+    } finally {
+      _busy = false;
+    }
+  }
+
+  void _updateGate(List<Face> faces) {
+    var qualifying = 0;
+    var status = _FaceGateStatus.lookStraight;
+    if (faces.length > 1) {
+      // Someone else in the frame — refuse to count it.
+      status = _FaceGateStatus.lookStraight;
+    } else if (faces.isEmpty) {
+      status = _FaceGateStatus.moveCloser;
+    } else {
+      final face = faces.single;
+      final poseOk =
+          face.headEulerAngleY != null &&
+          face.headEulerAngleX != null &&
+          face.headEulerAngleY!.abs() <= _maxHeadAngleDegrees &&
+          face.headEulerAngleX!.abs() <= _maxHeadAngleDegrees;
+      final eyesOk =
+          face.leftEyeOpenProbability != null &&
+          face.rightEyeOpenProbability != null &&
+          face.leftEyeOpenProbability! > _minEyeOpenProbability &&
+          face.rightEyeOpenProbability! > _minEyeOpenProbability;
+      if (face.widthFraction < _minFaceWidthFraction) {
+        status = _FaceGateStatus.moveCloser;
+      } else if (poseOk && eyesOk) {
+        qualifying = _qualifyingFrames + 1;
+        status = _FaceGateStatus.holdStill;
+      }
+    }
+
+    if (qualifying >= _requiredConsecutiveFrames) {
+      _qualifyingFrames = qualifying;
+      // Stop extracting frames before takePicture — the camera plugin doesn't
+      // allow both to run at once.
+      () async {
+        await _stopStream();
+        await _capture(gatePassed: true);
+      }();
+      return;
+    }
+
+    if (qualifying != _qualifyingFrames || status != _status) {
+      setState(() {
+        _qualifyingFrames = qualifying;
+        _status = status;
+      });
+    }
+  }
+
   @override
   void dispose() {
-    _controller?.dispose();
+    _streaming = false;
+    final controller = _controller;
+    final detector = _detector;
+    _controller = null;
+    _detector = null;
+    () async {
+      try {
+        await controller?.stopImageStream();
+        await controller?.dispose();
+        await detector?.dispose();
+      } catch (e) {
+        debugPrint('Liveness camera teardown failed: $e');
+      }
+    }();
     super.dispose();
   }
 
-  Future<void> _capture() async {
+  Future<void> _capture({required bool gatePassed}) async {
     if (_controller == null || !_initialized || _capturing) return;
     setState(() => _capturing = true);
     try {
       final image = await _controller!.takePicture();
       if (mounted) {
-        Navigator.pop(context, File(image.path));
+        Navigator.pop(
+          context,
+          LivenessCaptureResult(file: File(image.path), gatePassed: gatePassed),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -1984,26 +2157,15 @@ class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
     }
   }
 
-  void _newChallenge() {
-    setState(() {
-      _challenge = _challenges[_random.nextInt(_challenges.length)];
-    });
-  }
-
-  String _localizedChallenge(String challenge, AppLocalizations l10n) {
-    switch (challenge) {
-      case 'Blink your eyes':
-        return l10n.authChallengeBlink;
-      case 'Turn your head left':
-        return l10n.authChallengeTurnLeft;
-      case 'Turn your head right':
-        return l10n.authChallengeTurnRight;
-      case 'Look up':
-        return l10n.authChallengeLookUp;
-      case 'Smile':
-        return l10n.authChallengeSmile;
+  String _statusText(AppLocalizations l10n) {
+    switch (_status) {
+      case _FaceGateStatus.moveCloser:
+        return l10n.authFaceMoveCloser;
+      case _FaceGateStatus.lookStraight:
+        return l10n.authFaceLookStraight;
+      case _FaceGateStatus.holdStill:
+        return l10n.authFaceHoldStill;
     }
-    return challenge;
   }
 
   @override
@@ -2051,80 +2213,67 @@ class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _challengeIcons[_challenges.indexOf(_challenge)],
-                          color: Colors.white,
-                          size: 28,
-                        ),
-                        const SizedBox(width: 12),
-                        Flexible(
-                          child: Text(
-                            _localizedChallenge(_challenge, l10n),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
+                  _detector == null
+                      ? Text(
+                          l10n.authFollowChallengeHint,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 15,
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.authFollowChallengeHint,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      TextButton.icon(
-                        onPressed: _newChallenge,
-                        icon: const Icon(Icons.refresh, color: Colors.white70),
-                        label: Text(
-                          l10n.authNewChallenge,
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-                      GestureDetector(
-                        onTap: _capture,
-                        child: Container(
-                          width: 72,
-                          height: 72,
+                          textAlign: TextAlign.center,
+                        )
+                      : Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 14,
+                          ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 4),
+                            color: Colors.white.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          child: _capturing
-                              ? const CircularProgressIndicator(
-                                  color: Color(0xFF1976D2),
-                                )
-                              : const Icon(
-                                  Icons.camera_alt,
-                                  color: Color(0xFF1976D2),
-                                  size: 32,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.face,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                              const SizedBox(width: 12),
+                              Flexible(
+                                child: Text(
+                                  _statusText(l10n),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
+                              ),
+                            ],
+                          ),
                         ),
+                  const SizedBox(height: 20),
+                  GestureDetector(
+                    onTap: () => _capture(gatePassed: false),
+                    child: Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 4),
                       ),
-                    ],
+                      child: _capturing
+                          ? const CircularProgressIndicator(
+                              color: Color(0xFF1976D2),
+                            )
+                          : const Icon(
+                              Icons.camera_alt,
+                              color: Color(0xFF1976D2),
+                              size: 32,
+                            ),
+                    ),
                   ),
                 ],
               ),
