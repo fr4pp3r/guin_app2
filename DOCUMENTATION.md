@@ -25,6 +25,8 @@
 11. [Creating the First Admin](#11-creating-the-first-admin)
 12. [Authentication Model and Security Warnings](#12-authentication-model-and-security-warnings)
 13. [Known Gaps and Discrepancies](#13-known-gaps-and-discrepancies)
+   - [9. Poblacion residency is advisory and manually confirmed](#139-poblacion-residency-is-advisory-and-manually-confirmed)
+   - [10. On-device face match is advisory and never gates anything](#1310-on-device-face-match-is-advisory-and-never-gates-anything)
 14. [Command Reference](#14-command-reference)
 15. [File Map](#15-file-map)
 16. [Project History](#16-project-history)
@@ -222,6 +224,14 @@ role-gated pipeline:
       ▼
   (also) deleteRequest() → [cancelled]
 ```
+
+> **Residency gate (added 2026-11-07).** Only citizens whose `users_profile.is_poblacion_resident`
+> is `true` may submit a document request. The citizen flow now asks "Residency Verification
+> Required" and routes to `/verify-residency` (`lib/screens/citizen/verify_residency_screen.dart`,
+> AI task `residency-verifier`) when the flag is null or false. The flag is set once, by the
+> captain/admin at registration approval, and every request inherits it — it is never re-checked
+> or cleared by the document pipeline. See [§11](#11-creating-the-first-admin) and
+> [§13.9](#139-poblacion-residency-is-advisory-and-manually-confirmed).
 
 ### Status reference
 
@@ -706,8 +716,10 @@ indigent bypass.
 Registration accepts **any valid government ID** (barangay ID, driver's license, passport,
 national ID, UMID, PRC, SSS, PhilHealth, postal ID, voter's ID, ...), and the AI pre-check is
 **advisory only**: it returns `looks_ok` or `needs_review` and **never** approves or rejects a
-registration — a captain/admin always reviews. It deliberately does **not** compare the selfie to
-the face printed on the ID.
+registration — a captain/admin always reviews. It does **not** compare the selfie to the face on
+the ID; that comparison is a separate **on-device** step (MobileFaceNet embeddings via
+`face_detection_tflite`, `lib/services/face_match_service.dart`) whose cosine similarity is stored
+as `kyc_face_match_score`. It is equally advisory: it never blocks and never auto-approves.
 
 **Branch 1 — With a valid government ID (default)**
 1. Register through the 4-step wizard: account → personal → address → documents.
@@ -718,12 +730,19 @@ the face printed on the ID.
    function (`lib/services/ai_id_verifier.dart`). It reports ID authenticity/plausibility
    for the **declared** ID type, the detected ID type (and whether it matches), the selfie
    capture quality, a passive anti-spoof signal on the selfie, and per-field consistency
-   against the submitted form fields. There is **no** sample-template comparison and **no**
-   selfie-vs-ID face match.
+   against the submitted form fields. There is **no** sample-template comparison; the
+   selfie-vs-ID match happens on the device instead (see step 4).
+
+   The selfie itself comes from a **face-gated auto-capture** screen: exactly one face, at
+   least 25% of the frame width, head within ±15° of frontal, both eyes open, held for three
+   consecutive frames — then the shutter fires without a tap. A manual tap and the gallery
+   picker remain as fallbacks; only a gate-captured selfie is recorded as `liveness_verified`.
 4. The account is created as **pending** (`is_approved = false`, `registration_status = 'pending'`).
    A PII-safe `kyc_ai_result` (authenticity, type guess/match, selfie quality, liveness signal,
    field checks, advisory recommendation, reasons, `prompt_version`) is stored for the reviewer;
-   the user is routed to `/pending-approval`.
+   `kyc_face_match_score` / `kyc_face_match_at` hold the on-device comparison, `NULL` meaning
+   "not evaluated" (unsupported platform, no usable face in either image, or detector error).
+   The user is routed to `/pending-approval`.
 5. Whether the pre-check is clean, unavailable (no AI call, quota/timeout/network), or
    returned an unusable payload, the registration **never blocks** and is **never auto-approved**:
    the captain/admin decides via **Admin → Manage Users → Pending** (`/admin/pending-users`).
@@ -746,6 +765,9 @@ the face printed on the ID.
   selfie quality, anti-spoof signal, name/birth-date/address/gender field checks, advisory
   recommendation, reasons, version) when `kyc_ai_result` exists. The summary carries the honest
   footnote: *"AI-assisted pre-check — final review by the barangay."*
+- A separate **face match** panel renders whenever `kyc_face_match_score` is non-null — even if
+  the AI pre-check failed — showing the band (same person ≥ 0.5, uncertain ≥ 0.3, else different)
+  and the raw score. It is advisory only and does not gate the approve/reject buttons.
 - Approving a pending user sets `registration_status = 'approved'`, `is_approved = true`,
   `kyc_verified_at = NOW()`, `kyc_reviewed_by` to the approving admin/captain, and
   **coalesces `kyc_method` to `'manual_verified'`** if it was null (so a user whose
@@ -958,6 +980,32 @@ reason: this app has no Supabase Auth, so a function deployed without it can lan
 non-booting state. Redeploy with the plain `supabase functions deploy ai` — never add
 `--no-verify-jwt`.
 
+### 13.9. Poblacion residency is advisory and manually confirmed — **watch for this**
+
+`is_poblacion_resident` on `users_profile` is a **nullable boolean**, and every consumer
+treats `null` as "not yet decided" — never as "not a resident":
+
+- `UserProfile.isResidentConfirmed` is `isPoblacionResident == true` only.
+- The citizen document-request screen shows the residency gate for `null` *and* `false`,
+  routing both to `/verify-residency`.
+- The captain/admin approval dialog offers three radio buttons: confirmed resident /
+  not a resident / unverified (skip). Approving with "skip" writes `NULL`, so the user
+  stays in the self-service flow instead of being permanently locked out.
+- The AI lanes (`id-verifier` `is_poblacion_resident`, `residency-verifier`) are advisory
+  verdicts only; they seed the radio default but never decide.
+
+The one place a value is **committed** is the approval button: `UserService.approveUser`
+writes whatever the officer picked. The document pipeline never writes or clears the flag.
+
+### 13.10. On-device face match is advisory and never gates anything
+
+`kyc_face_match_score` is a cosine similarity in [-1, 1] computed on the device by
+`FaceMatchService` (`face_detection_tflite` + `flutter_litert`, native-only — web/desktop
+degrade to null). It is stored for the reviewer and rendered as a band in the approval
+screen (`FaceMatchPolicy`: same person ≥ 0.5, uncertain ≥ 0.3, else different). It never
+blocks registration, never auto-approves, and is absent on platforms where the detector
+fails. The AI pre-check (`kyc_ai_result`) is a separate, equally advisory lane.
+
 ---
 
 ## 14. Command Reference
@@ -968,7 +1016,7 @@ flutter pub upgrade        # upgrade dependencies
 flutter run                # run on attached device
 flutter run -d chrome      # run on web
 flutter analyze            # static analysis (flutter_lints)
-flutter test               # 62 offline unit tests (no network, no fixtures)
+flutter test               # 126 offline unit tests (no network, no fixtures)
 flutter clean             # clear build artifacts
 flutter doctor             # verify toolchain
 flutter build apk          # Android release
@@ -997,7 +1045,7 @@ Build output lands in `build/`.
 
 `user_profile`, `document_request`, `notification`, `announcement`, `barangay_config`,
 `document_fee`, `payment_record`, `document_verification`, `document_print_copy`,
-`incident_report`, `guarantor`
+`incident_report`, `guarantor`, `residency_proof`
 
 ### Providers (`lib/providers/`)
 
@@ -1014,7 +1062,8 @@ Build output lands in `build/`.
 `audit_service` (25), `ai_service` (61), `ai_id_verifier` (250), `ai_document_processor` (71),
 `ai_receipt_parser` (77), `ai_incident_classifier` (63),
 `document_cache_service` (69), `incident_report_cache_service` (67),
-`guarantor_service` (125)
+`guarantor_service` (125), `face_match_service` (120), `ai_residency_verifier` (149),
+`residency_proof_service` (120)
 
 ### Utilities (`lib/utils/`)
 
@@ -1063,6 +1112,7 @@ English (default), Filipino, Cebuano — ARB files + generated localizations
 | `/admin/document-formats`       | PDF template preview         |
 | `/tanod/dashboard`              | Tanod incident dashboard     |
 | `/verify`                       | Public document verification |
+| `/verify-residency`             | Citizen self-service Poblacion residency proof |
 
 `/citizen/notifications` is shared by every role: it renders the signed-in user's own
 notifications, so the officials' dashboard bell pushes the same route.
