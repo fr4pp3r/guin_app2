@@ -229,13 +229,17 @@ class UserService {
   // identity: an indigent registrant is vouched for by an approved guarantor
   // (`guarantor_verified`), everything else is a plain officer check
   // (`manual_verified`).
-  Future<UserProfile> approveUser(String userId) async {
+  Future<UserProfile> approveUser(
+    String userId, {
+    bool? isResident,
+  }) async {
     try {
       final reviewerId = await SessionManager.getUserId();
       final updateData = <String, dynamic>{
         'registration_status': 'approved',
         'is_approved': true,
         'kyc_verified_at': Helpers.now().toIso8601String(),
+        'is_poblacion_resident': isResident,
       };
       if (reviewerId != null) {
         updateData['kyc_reviewed_by'] = reviewerId;

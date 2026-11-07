@@ -51,9 +51,12 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> approveUser(String userId) async {
+  Future<bool> approveUser(
+    String userId, {
+    bool? isResident,
+  }) async {
     try {
-      await _userService.approveUser(userId);
+      await _userService.approveUser(userId, isResident: isResident);
       // Reload lists
       await loadPendingUsers();
       return true;

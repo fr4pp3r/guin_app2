@@ -125,6 +125,7 @@ class AuthProvider extends ChangeNotifier {
     DateTime? idExpiryAt,
     bool livenessVerified = false,
     Map<String, dynamic>? kycAiResult,
+    double? kycFaceMatchScore,
     bool isIndigent = false,
     String? indigencyReason,
   }) async {
@@ -201,6 +202,7 @@ class AuthProvider extends ChangeNotifier {
         idExpiryAt: idExpiryAt,
         livenessVerified: livenessVerified,
         kycAiResult: kycAiResult,
+        kycFaceMatchScore: kycFaceMatchScore,
         isIndigent: isIndigent,
         indigencyReason: indigencyReason,
       );

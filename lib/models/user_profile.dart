@@ -43,6 +43,13 @@ class UserProfile {
   /// (see `IdVerificationSuggestion.toStoredJson`); never holds OCR text.
   /// Advisory only — a reviewer still has to look at the ID.
   final Map<String, dynamic>? kycAiResult;
+
+  /// On-device 1:1 face match (registration selfie vs. ID portrait), as a
+  /// cosine similarity in [-1, 1]. Null means "not evaluated" (unsupported
+  /// platform, no usable face, or any detector error); it is advisory only —
+  /// it never gates approval.
+  final double? kycFaceMatchScore;
+  final DateTime? kycFaceMatchAt;
   final bool isIndigent;
   final String? indigencyReason;
 
@@ -50,6 +57,11 @@ class UserProfile {
   final String? kycReviewedBy;
   final String? kycRejectionReason;
   final bool isApproved;
+  // Poblacion residency: null = unverified, true = confirmed resident,
+  // false = confirmed not a resident. Nullable so AI "unverifiable" verdicts
+  // leave the user in a self-service retry state instead of permanently
+  // blocking them.
+  final bool? isPoblacionResident;
   final String registrationStatus; // 'pending', 'approved', 'rejected'
   final String? rejectionReason;
   final String role; // 'admin', 'citizen'
@@ -85,12 +97,15 @@ class UserProfile {
     this.livenessVerified = false,
     this.livenessVerifiedAt,
     this.kycAiResult,
+    this.kycFaceMatchScore,
+    this.kycFaceMatchAt,
     this.isIndigent = false,
     this.indigencyReason,
     this.kycVerifiedAt,
     this.kycReviewedBy,
     this.kycRejectionReason,
     required this.isApproved,
+    this.isPoblacionResident,
     required this.registrationStatus,
     this.rejectionReason,
     required this.role,
@@ -154,12 +169,18 @@ class UserProfile {
       livenessVerified: json['liveness_verified'] as bool? ?? false,
       livenessVerifiedAt: _timestampFromDynamic(json['liveness_verified_at']),
       kycAiResult: _mapFromDynamic(json['kyc_ai_result']),
+      kycFaceMatchScore:
+          json['kyc_face_match_score'] is num
+              ? (json['kyc_face_match_score'] as num).toDouble()
+              : null,
+      kycFaceMatchAt: _timestampFromDynamic(json['kyc_face_match_at']),
       isIndigent: json['is_indigent'] as bool? ?? false,
       indigencyReason: json['indigency_reason'] as String?,
       kycVerifiedAt: _timestampFromDynamic(json['kyc_verified_at']),
       kycReviewedBy: json['kyc_reviewed_by'] as String?,
       kycRejectionReason: json['kyc_rejection_reason'] as String?,
       isApproved: json['is_approved'] as bool,
+      isPoblacionResident: json['is_poblacion_resident'] as bool?,
       registrationStatus: json['registration_status'] as String,
       rejectionReason: json['rejection_reason'] as String?,
       role: json['role'] as String,
@@ -195,12 +216,15 @@ class UserProfile {
       'liveness_verified': livenessVerified,
       'liveness_verified_at': livenessVerifiedAt?.toIso8601String(),
       'kyc_ai_result': kycAiResult,
+      'kyc_face_match_score': kycFaceMatchScore,
+      'kyc_face_match_at': kycFaceMatchAt?.toIso8601String(),
       'is_indigent': isIndigent,
       'indigency_reason': indigencyReason,
       'kyc_verified_at': kycVerifiedAt?.toIso8601String(),
       'kyc_reviewed_by': kycReviewedBy,
       'kyc_rejection_reason': kycRejectionReason,
       'is_approved': isApproved,
+      'is_poblacion_resident': isPoblacionResident,
       'registration_status': registrationStatus,
       'rejection_reason': rejectionReason,
       'role': role,
@@ -234,12 +258,15 @@ class UserProfile {
     bool? livenessVerified,
     DateTime? livenessVerifiedAt,
     Map<String, dynamic>? kycAiResult,
+    double? kycFaceMatchScore,
+    DateTime? kycFaceMatchAt,
     bool? isIndigent,
     String? indigencyReason,
     DateTime? kycVerifiedAt,
     String? kycReviewedBy,
     String? kycRejectionReason,
     bool? isApproved,
+    bool? isPoblacionResident,
     String? registrationStatus,
     String? rejectionReason,
     String? role,
@@ -271,12 +298,15 @@ class UserProfile {
       livenessVerified: livenessVerified ?? this.livenessVerified,
       livenessVerifiedAt: livenessVerifiedAt ?? this.livenessVerifiedAt,
       kycAiResult: kycAiResult ?? this.kycAiResult,
+      kycFaceMatchScore: kycFaceMatchScore ?? this.kycFaceMatchScore,
+      kycFaceMatchAt: kycFaceMatchAt ?? this.kycFaceMatchAt,
       isIndigent: isIndigent ?? this.isIndigent,
       indigencyReason: indigencyReason ?? this.indigencyReason,
       kycVerifiedAt: kycVerifiedAt ?? this.kycVerifiedAt,
       kycReviewedBy: kycReviewedBy ?? this.kycReviewedBy,
       kycRejectionReason: kycRejectionReason ?? this.kycRejectionReason,
       isApproved: isApproved ?? this.isApproved,
+      isPoblacionResident: isPoblacionResident ?? this.isPoblacionResident,
       registrationStatus: registrationStatus ?? this.registrationStatus,
       rejectionReason: rejectionReason ?? this.rejectionReason,
       role: role ?? this.role,
@@ -288,6 +318,11 @@ class UserProfile {
   bool get isPending => registrationStatus == 'pending';
   bool get isRejected => registrationStatus == 'rejected';
   bool get isKycVerified => kycVerifiedAt != null;
+
+  /// True once an officer or the AI lane has committed this user to being a
+  /// Poblacion resident. Null (unverified) and false both return false here —
+  /// only an explicit `true` opens the document-request gate.
+  bool get isResidentConfirmed => isPoblacionResident == true;
 
   /// True when the registrant presented an ID of their own (the indigent /
   /// guarantor path leaves `kycIdType` null).

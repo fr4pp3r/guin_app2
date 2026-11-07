@@ -83,6 +83,10 @@ class DocumentRequest {
   // Optional join fields
   final String? userName;
   final String? userFullName;
+  // AI verification result captured at submission (advisory; null when AI
+  // was unavailable). Shape: {issues: [String], suggestions: {String:String},
+  // normalizedPurpose: String}.
+  final Map<String, dynamic>? aiReview;
 
   DocumentRequest({
     required this.id,
@@ -140,6 +144,7 @@ class DocumentRequest {
     this.receiptParse,
     this.userName,
     this.userFullName,
+    this.aiReview,
   });
 
   factory DocumentRequest.fromJson(Map<String, dynamic> json) {
@@ -217,6 +222,7 @@ class DocumentRequest {
           : null,
       userName: json['username'] as String?,
       userFullName: json['full_name'] as String?,
+      aiReview: _mapFromDynamic(json['ai_review']),
     );
   }
 
@@ -260,6 +266,7 @@ class DocumentRequest {
       'max_uses': maxUses,
       'use_count': useCount,
       'used_at': usedAt?.toIso8601String(),
+      'ai_review': aiReview,
     };
   }
 
@@ -303,6 +310,7 @@ class DocumentRequest {
     DateTime? usedAt,
     String? userName,
     String? userFullName,
+    Map<String, dynamic>? aiReview,
   }) {
     return DocumentRequest(
       id: id ?? this.id,
@@ -350,6 +358,7 @@ class DocumentRequest {
       receiptParse: receiptParse ?? this.receiptParse,
       userName: userName ?? this.userName,
       userFullName: userFullName ?? this.userFullName,
+      aiReview: aiReview ?? this.aiReview,
     );
   }
 
@@ -489,4 +498,19 @@ class DocumentRequest {
         return 'grey';
     }
   }
+}
+
+/// Defensive JSONB reader: PostgREST hands back `Map<String, dynamic>` for a
+/// jsonb column, but a json-text column or an unexpected shape must not crash
+/// the whole parse.
+Map<String, dynamic>? _mapFromDynamic(Object? value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) {
+    final copy = <String, dynamic>{};
+    value.forEach((dynamic key, dynamic item) {
+      copy[key.toString()] = item;
+    });
+    return copy;
+  }
+  return null;
 }

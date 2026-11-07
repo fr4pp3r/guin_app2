@@ -24,6 +24,7 @@ class IdVerificationSuggestion {
     this.recommendation,
     this.reasons,
     this.promptVersion,
+    this.isPoblacionResident,
   });
 
   /// 'authentic' | 'suspicious' | 'unreadable' | 'uncertain' — whether the
@@ -64,9 +65,18 @@ class IdVerificationSuggestion {
   /// Prompt template version, so a suspicious verdict can be traced back.
   final String? promptVersion;
 
+  /// Poblacion residency verdict from the ID address: 'confirmed' |
+  /// 'not_confirmed' | 'unverifiable'. Null when the model did not return a
+  /// usable value — same "AI didn't help" semantics as every other field.
+  final String? isPoblacionResident;
+
   /// True only when the edge function said the capture looks clean. Advisory:
   /// the caller still has to route the registration to a human.
   bool get looksOkay => recommendation == 'looks_ok';
+
+  /// Convenience: the ID-address lane committed this registrant to being a
+  /// Poblacion resident. 'unverifiable' and null both return false.
+  bool get isPoblacionConfirmed => isPoblacionResident == 'confirmed';
 
   static const Set<String> _authenticities = {
     'authentic',
@@ -86,6 +96,11 @@ class IdVerificationSuggestion {
     'uncertain',
   };
   static const Set<String> _recommendations = {'looks_ok', 'needs_review'};
+  static const Set<String> _residencyVerdicts = {
+    'confirmed',
+    'not_confirmed',
+    'unverifiable',
+  };
   static const Set<String> _idTypeGuesses = {
     'barangay_id',
     'drivers_license',
@@ -142,6 +157,10 @@ class IdVerificationSuggestion {
       promptVersion: _identifier(
         result['prompt_version'] ?? result['promptVersion'],
       ),
+      isPoblacionResident: _knownValue(
+        result['is_poblacion_resident'] ?? result['isPoblacionResident'],
+        _residencyVerdicts,
+      ),
     );
   }
 
@@ -163,6 +182,7 @@ class IdVerificationSuggestion {
       'recommendation': recommendation,
       'reasons': reasons,
       'prompt_version': promptVersion,
+      'is_poblacion_resident': isPoblacionResident,
     };
   }
 

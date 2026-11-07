@@ -47,6 +47,7 @@ class AuthService {
     DateTime? idExpiryAt,
     bool livenessVerified = false,
     Map<String, dynamic>? kycAiResult,
+    double? kycFaceMatchScore,
     bool isIndigent = false,
     String? indigencyReason,
   }) async {
@@ -115,6 +116,10 @@ class AuthService {
               'liveness_verified_at': Helpers.now().toIso8601String(),
             // Advisory only — kyc_method stays null until a human approves.
             'kyc_ai_result': kycAiResult,
+            // On-device face match (selfie vs ID portrait). Advisory only.
+            'kyc_face_match_score': kycFaceMatchScore,
+            if (kycFaceMatchScore != null)
+              'kyc_face_match_at': Helpers.now().toIso8601String(),
             'is_indigent': isIndigent,
             'indigency_reason': indigencyReason,
           })
