@@ -97,6 +97,14 @@ const RESPONSE_SCHEMA: Record<string, unknown> = {
       },
       required: [...FORM_FIELD_KEYS],
     },
+    // Whether the address on the ID indicates Barangay Poblacion residency.
+    // "confirmed" = address on ID explicitly mentions Poblacion/Barangay Poblacion
+    // "not_confirmed" = address is readable but does not indicate Poblacion
+    // "unverifiable" = address on ID is illegible, missing, or unreadable
+    is_poblacion_resident: {
+      type: "string",
+      enum: ["confirmed", "not_confirmed", "unverifiable"],
+    },
     // 2-4 short plain-language notes for the human reviewer.
     reasons: { type: "array", items: { type: "string" } },
   },
@@ -106,6 +114,7 @@ const RESPONSE_SCHEMA: Record<string, unknown> = {
     "selfie_quality",
     "liveness",
     "field_checks",
+    "is_poblacion_resident",
     "reasons",
   ],
 };
@@ -186,6 +195,7 @@ export async function idVerifier(
     "- date_of_birth: equivalent date formats are fine; either value missing or the dates clearly differ => \"mismatch\"; not legible on the ID => \"unverifiable\".",
     "- address: compare for the reviewer's information only. A current residential address may legitimately differ from the address printed on an ID, so a differing address is \"match\" unless it is plainly a different person's address.",
     "- gender: \"match\" when consistent (an ID may abbreviate, e.g. M / Male); \"mismatch\" when it clearly differs; \"unverifiable\" when the ID does not state it or it is not legible.",
+    "6. POBLACION RESIDENCY: determine whether the registrant's address indicates residence in Barangay Poblacion. Look at BOTH the address field in the registration form below AND the address printed on the ID (if legible). Report \"confirmed\" when at least one address explicitly mentions Poblacion (e.g. \"Brgy. Poblacion\", \"Barangay Poblacion\", \"Poblacion, Guion\"). Report \"not_confirmed\" when the addresses are clearly legible and mention a different barangay. Report \"unverifiable\" when no address is provided or legible enough to decide.",
     "",
     "Rules:",
     "- Prefer an honest \"uncertain\" or \"unverifiable\" over a confident wrong answer.",
@@ -247,6 +257,11 @@ export async function idVerifier(
   const liveness = coerceLiveness(obj.liveness);
   const fieldChecks = coerceFieldChecks(obj.field_checks);
   const reasons = coerceStringList(obj.reasons);
+  const isPoblacionResident = coerceEnum(
+    obj.is_poblacion_resident,
+    ["confirmed", "not_confirmed", "unverifiable"] as const,
+    "unverifiable",
+  );
 
   // Deterministic, never model-decided: the detected type has to agree with the
   // declared one for the capture to be a clean read. This is a hint for the
@@ -273,6 +288,7 @@ export async function idVerifier(
         ...(liveness.notes ? { notes: liveness.notes } : {}),
       },
       field_checks: fieldChecks,
+      is_poblacion_resident: isPoblacionResident,
       recommendation,
       reasons,
       prompt_version: PROMPT_VERSION,

@@ -23,6 +23,7 @@ import incidentReviewer from "./handlers/incident_reviewer.ts";
 import idVerifier from "./handlers/id_verifier.ts";
 import receiptParser from "./handlers/receipt_parser.ts";
 import chatbot from "./handlers/chatbot.ts";
+import residencyVerifier from "./handlers/residency_verifier.ts";
 
 // Redeploy note: `supabase functions deploy ai` (no --no-verify-jwt) is the
 // correct command. It ships `config.json` alongside this file, which is what
@@ -68,6 +69,7 @@ const routes: Record<string, TaskHandler> = {
   "id-verifier": idVerifier,
   "receipt-parser": receiptParser,
   chatbot,
+  "residency-verifier": residencyVerifier,
   ping: () => Promise.resolve(jsonResponse(200, { ok: true })),
 };
 
