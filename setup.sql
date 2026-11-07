@@ -187,6 +187,9 @@ CREATE TABLE public.users_profile (
   role                user_role NOT NULL DEFAULT 'citizen',
   registration_status registration_status NOT NULL DEFAULT 'pending',
   is_approved         BOOLEAN NOT NULL DEFAULT FALSE,
+  -- Poblacion residency is confirmed once, by the captain/admin at
+  -- registration approval. Every document request inherits the flag.
+  is_poblacion_resident BOOLEAN,
   rejection_reason    TEXT,
   profile_photo_url   TEXT,
   valid_id_url        TEXT,
@@ -209,6 +212,9 @@ CREATE TABLE public.users_profile (
                           'ai_verified','manual_verified','indigent_bypass',
                           'guarantor_verified')),
   kyc_ai_result       JSONB,
+  -- KYC face match: null = not evaluated; advisory only, never gates approval.
+  kyc_face_match_score DOUBLE PRECISION,
+  kyc_face_match_at   TIMESTAMPTZ,
   is_indigent         BOOLEAN DEFAULT FALSE,
   indigency_reason    TEXT,
   kyc_verified_at     TIMESTAMPTZ,
@@ -344,6 +350,8 @@ CREATE TABLE public.document_requests (
   reviewed_at      TIMESTAMPTZ,
   reviewed_by      UUID REFERENCES public.users_profile(id),
   rejection_reason TEXT,
+  -- AI verification result captured at submission (advisory; may be null).
+  ai_review        JSONB,
 
   -- lifecycle
   requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
