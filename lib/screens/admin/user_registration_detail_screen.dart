@@ -5,6 +5,7 @@ import 'package:guin_app/models/user_profile.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/user_provider.dart';
 import 'package:guin_app/screens/admin/edit_user_screen.dart';
+import 'package:guin_app/services/face_match_service.dart';
 import 'package:guin_app/services/user_service.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
@@ -38,6 +39,11 @@ class _UserRegistrationDetailScreenState
   /// realtime refresh" apart from "the list simply isn't loaded".
   bool _wasInPendingList = false;
   bool _syncing = false;
+  /// Last residency choice confirmed for this review — seeds the next
+  /// approval dialog so an officer approving several registrations in a row
+  /// doesn't re-tick the same box. `null` = unverified, `true` = confirmed,
+  /// `false` = not a resident.
+  bool? _isResident;
 
   bool get _canDecide => _user.registrationStatus == 'pending';
 
@@ -71,16 +77,86 @@ class _UserRegistrationDetailScreenState
 
   Future<void> _handleApprove() async {
     final l10n = AppLocalizations.of(context);
-    final confirm = await Helpers.showConfirmDialog(
-      context,
-      title: l10n.auserApproveUserTitle,
-      message: l10n.auserApproveConfirm(_user.fullName),
+    final aiVerdict = _user.kycAiResult?['is_poblacion_resident'] as String?;
+    String selected = _isResident == true
+        ? 'true'
+        : _isResident == false
+            ? 'false'
+            : aiVerdict == 'confirmed'
+                ? 'true'
+                : 'null';
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text(l10n.auserApproveUserTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.auserApproveConfirm(_user.fullName)),
+              const SizedBox(height: 16),
+              Text(
+                l10n.adocdetResidencyStatus,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              RadioGroup<String>(
+                groupValue: selected,
+                onChanged: (val) => setState(() {
+                  selected = val ?? 'null';
+                  _isResident = val == 'true'
+                      ? true
+                      : val == 'false'
+                          ? false
+                          : null;
+                }),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const RadioListTile<String>(
+                      value: 'true',
+                      title: Text('Confirmed Resident'),
+                    ),
+                    const RadioListTile<String>(
+                      value: 'false',
+                      title: Text('Not a Resident'),
+                    ),
+                    const RadioListTile<String>(
+                      value: 'null',
+                      title: Text('Unverified — skip for now'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.commonCancel),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.commonApprove),
+            ),
+          ],
+        ),
+      ),
     );
-    if (!confirm || !mounted) return;
+    if (confirm != true || !mounted) return;
 
     final userProvider = context.read<UserProvider>();
     Helpers.showLoadingDialog(context, l10n.auserApproving);
-    final ok = await userProvider.approveUser(_user.id);
+    final residency = selected == 'true'
+        ? true
+        : selected == 'false'
+            ? false
+            : null;
+    final ok = await userProvider.approveUser(_user.id, isResident: residency);
     if (!mounted) return;
     Helpers.dismissDialog(context);
     if (ok) {
@@ -230,6 +306,7 @@ class _UserRegistrationDetailScreenState
           _buildIdentitySection(),
           _buildDocumentsSection(),
           if (_user.kycAiResult != null) _buildAiSection(),
+          if (_user.kycFaceMatchScore != null) _buildFaceMatchRow(),
           const SizedBox(height: 4),
         ],
       ),
@@ -308,6 +385,12 @@ class _UserRegistrationDetailScreenState
                 if (badge != null) _kycBadge(badge),
                 _statusChip(_user.registrationStatus),
                 _roleChip(),
+                if (_user.isPoblacionResident == true)
+                  _pill(
+                    color: Colors.teal[700]!,
+                    icon: Icons.home,
+                    label: 'Poblacion Resident',
+                  ),
               ],
             ),
           ],
@@ -705,6 +788,92 @@ class _UserRegistrationDetailScreenState
           ),
           children: [
             ..._kycSummaryRows(_user.kycAiResult!),
+            const SizedBox(height: 4),
+            Text(
+              l10n.auserAiAdvisoryNote,
+              style: const TextStyle(
+                fontSize: 10.5,
+                fontStyle: FontStyle.italic,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Advisory 1:1 face-match panel (selfie vs ID portrait). Shown whenever a
+  /// score was recorded, even when the AI pre-check returned nothing.
+  Widget _buildFaceMatchRow() {
+    final l10n = AppLocalizations.of(context);
+    final score = _user.kycFaceMatchScore!;
+    final String value;
+    final Color color;
+    switch (FaceMatchPolicy.decide(score)) {
+      case FaceMatchBand.match:
+        value = l10n.auserKycFaceMatchSame;
+        color = const Color(0xFF00796B);
+      case FaceMatchBand.uncertain:
+        value = l10n.auserKycFaceMatchUncertain;
+        color = Colors.orange[800]!;
+      case FaceMatchBand.mismatch:
+        value = l10n.auserKycFaceMatchDifferent;
+        color = Colors.red[700]!;
+    }
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      elevation: 2,
+      shadowColor: Colors.black.withValues(alpha: 0.07),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          iconColor: AppColors.textSecondary,
+          collapsedIconColor: AppColors.textSecondary,
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1976D2).withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.face_retouching_natural,
+              size: 18,
+              color: Color(0xFF1976D2),
+            ),
+          ),
+          title: Text(
+            l10n.auserKycFaceMatchLabel,
+            style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 118,
+                    child: Text(
+                      l10n.auserKycFaceMatchLabel,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      '$value · ${score.toStringAsFixed(2)}',
+                      style: TextStyle(fontSize: 11.5, color: color),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 4),
             Text(
               l10n.auserAiAdvisoryNote,

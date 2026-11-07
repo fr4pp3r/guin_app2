@@ -172,6 +172,7 @@ class _DocumentRequestDetailScreenState
           _buildHeaderCard(r),
           _buildRequestorCard(r),
           _buildRequestDetailsCard(r),
+          if (r.aiReview != null) _buildAiReviewCard(r),
           if (r.paymentRequired) _buildPaymentCard(r),
           _buildTrailCard(r),
           const SizedBox(height: 4),
@@ -261,6 +262,18 @@ class _DocumentRequestDetailScreenState
                     label: l10n.adocdetPaymentStatus(
                       _capitalize(r.paymentStatus),
                     ),
+                  ),
+                if (_profile != null)
+                  _pill(
+                    color: _profile!.isPoblacionResident == true
+                        ? Colors.teal[700]!
+                        : Colors.orange[700]!,
+                    icon: _profile!.isPoblacionResident == true
+                        ? Icons.home
+                        : Icons.home_outlined,
+                    label: _profile!.isPoblacionResident == true
+                        ? l10n.adocdetConfirmedResident
+                        : l10n.adocdetNotAResident,
                   ),
               ],
             ),
@@ -569,6 +582,138 @@ class _DocumentRequestDetailScreenState
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildAiReviewCard(DocumentRequest r) {
+    final l10n = AppLocalizations.of(context);
+    final ai = r.aiReview!;
+    final issues = (ai['issues'] as List?)?.cast<String>() ?? const [];
+    final suggestions =
+        (ai['suggestions'] as List?)?.cast<String>() ?? const [];
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F1FF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF1976D2).withValues(alpha: 0.20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 2,
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1976D2).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome,
+                    size: 18,
+                    color: Color(0xFF1976D2),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  l10n.adocdetAiFindings,
+                  style: const TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            if (issues.isNotEmpty) ...[
+              Text(
+                l10n.adocdetAiIssues,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              ...issues.map(
+                (i) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_outlined,
+                        size: 14,
+                        color: Colors.orange,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          i,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            if (suggestions.isNotEmpty) ...[
+              Text(
+                l10n.adocdetAiSuggestions,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              ...suggestions.map(
+                (s) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.lightbulb_outline,
+                        size: 14,
+                        color: Color(0xFF1976D2),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          s,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+            if (issues.isEmpty && suggestions.isEmpty)
+              Text(
+                l10n.adocdetNoAdditionalDetails,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
