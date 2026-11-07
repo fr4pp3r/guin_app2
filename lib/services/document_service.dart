@@ -670,6 +670,27 @@ class DocumentService {
     }
   }
 
+  /// Persist the AI verification result captured at submission. Advisory
+  /// only — the automation caller swallows errors so a failed write never
+  /// blocks the request.
+  Future<DocumentRequest> updateAiReview({
+    required String requestId,
+    required Map<String, dynamic> aiReview,
+  }) async {
+    try {
+      final response = await _supabase
+          .from('document_requests')
+          .update({'ai_review': aiReview})
+          .eq('id', requestId)
+          .select()
+          .single();
+
+      return DocumentRequest.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<Map<String, int>> getStatistics() async {
     try {
       // Buckets mirror the live queue queries (getPendingPayments /

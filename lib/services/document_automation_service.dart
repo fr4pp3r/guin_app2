@@ -15,6 +15,7 @@ import 'package:guin_app/services/document_service.dart';
 import 'package:guin_app/services/notification_service.dart';
 import 'package:guin_app/services/pdf_service.dart';
 import 'package:guin_app/services/user_service.dart';
+import 'package:guin_app/services/ai_document_processor.dart';
 import 'package:guin_app/utils/helpers.dart';
 
 /// Outcome of an automated pipeline step.
@@ -49,15 +50,18 @@ class DocumentAutomationService {
     NotificationService? notificationService,
     BarangayService? barangayService,
     UserService? userService,
+    AiDocumentProcessor? aiProcessor,
   }) : _documentService = documentService ?? DocumentService(),
        _notificationService = notificationService ?? NotificationService(),
        _barangayService = barangayService ?? BarangayService(),
-       _userService = userService ?? UserService();
+       _userService = userService ?? UserService(),
+       _aiProcessor = aiProcessor ?? AiDocumentProcessor();
 
   final DocumentService _documentService;
   final NotificationService _notificationService;
   final BarangayService _barangayService;
   final UserService _userService;
+  final AiDocumentProcessor _aiProcessor;
 
   /// Validate intake data using pure rules (no backend).
   static ValidationResult validateIntake({
@@ -143,6 +147,30 @@ class DocumentAutomationService {
         errors: validation.errors,
       );
     }
+
+    // Fire-and-forget AI verification (advisory, non-blocking). Not awaited:
+    // a slow or failed AI call must never delay the citizen's submission or
+    // the draft that follows it. Errors are swallowed in the .catchError so
+    // the request always proceeds without AI findings.
+    _aiProcessor
+        .process(
+          documentType: request.documentType,
+          purpose: request.purpose,
+          documentData: request.documentData,
+        )
+        .then((aiSuggestion) async {
+          if (aiSuggestion == null) return;
+          final aiReview = <String, dynamic>{
+            'issues': aiSuggestion.issues,
+            'suggestions': aiSuggestion.suggestions,
+            'normalizedPurpose': aiSuggestion.normalizedPurpose,
+          };
+          await _documentService.updateAiReview(
+            requestId: request.id,
+            aiReview: aiReview,
+          );
+        })
+        .catchError((_) {});
 
     if (!allowAutoDraft) {
       return AutomationOutcome(

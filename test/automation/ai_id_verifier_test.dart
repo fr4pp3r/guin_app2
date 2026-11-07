@@ -269,6 +269,7 @@ void main() {
         'recommendation',
         'reasons',
         'prompt_version',
+        'is_poblacion_resident',
       });
       expect(stored['id_authenticity'], 'authentic');
       expect(stored['id_type_guess'], 'passport');
@@ -334,6 +335,7 @@ void main() {
         'recommendation',
         'reasons',
         'prompt_version',
+        'is_poblacion_resident',
       });
       expect(
         stored['liveness'],

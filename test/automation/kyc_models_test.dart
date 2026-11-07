@@ -216,6 +216,9 @@ void main() {
       expect(profile.isApproved, isFalse);
       expect(profile.registrationStatus, 'pending');
       expect(profile.hasOwnId, isFalse);
+      // Tri-state: a row without the column is unverified, not "not a resident".
+      expect(profile.isPoblacionResident, isNull);
+      expect(profile.isResidentConfirmed, isFalse);
     });
 
     test('an indigent registration (no own ID) round-trips', () {

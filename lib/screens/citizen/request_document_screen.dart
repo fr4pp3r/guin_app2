@@ -12,6 +12,7 @@ import 'package:guin_app/services/ai_document_processor.dart';
 import 'package:guin_app/services/captcha_service.dart';
 import 'package:guin_app/services/captcha_widget.dart';
 import 'package:guin_app/utils/helpers.dart';
+import 'package:guin_app/config/routes.dart';
 
 /// Which shared fill-up form a document type uses.
 enum _FormFamily { cedula, indigency, barangayId }
@@ -510,6 +511,24 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
 
   Future<void> _submitRequest() async {
     final l10n = AppLocalizations.of(context);
+
+    // Residency check: only verified Poblacion residents may request documents.
+    final authProvider = context.read<AuthProvider>();
+    if (authProvider.userProfile!.isResidentConfirmed != true) {
+      Helpers.showConfirmDialog(
+        context,
+        title: l10n.verifyResidencyRequired,
+        message: l10n.verifyResidencyRequiredMessage,
+        confirmText: l10n.commonVerify,
+        cancelText: l10n.commonCancel,
+      ).then((confirmed) {
+        if (confirmed) {
+          Navigator.pushNamed(context, AppRoutes.verifyResidency);
+        }
+      });
+      return;
+    }
+
     final isValid = _formKey.currentState!.validate();
     if (!isValid) {
       _detailsController.expand();
@@ -551,7 +570,6 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
       return;
     }
 
-    final authProvider = context.read<AuthProvider>();
     final documentProvider = context.read<DocumentProvider>();
     final barangayProvider = context.read<BarangayProvider>();
 
