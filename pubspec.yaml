@@ -1,7 +1,7 @@
 name: guin_app
 description: "A new Flutter project."
 publish_to: 'none'
-version: 0.8.2+9
+version: 0.8.3+10
 environment:
   sdk: ^3.10.1
 
@@ -115,6 +115,7 @@ flutter:
     - assets/icons/
     - assets/fonts/
     - assets/captcha.html
+    
 
   fonts:
     - family: Roboto
