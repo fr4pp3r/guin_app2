@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -115,6 +116,8 @@ class RequestDocumentScreen extends StatefulWidget {
 class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
   final _formKey = GlobalKey<FormState>();
   final _detailsController = ExpansibleController();
+  final _scrollController = ScrollController();
+  final _detailsKey = GlobalObjectKey('details_tile');
   final _purposeController = TextEditingController();
 
   // Barangay ID form controllers (only used by the barangay_id type).
@@ -186,6 +189,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
   @override
   void dispose() {
     _detailsController.dispose();
+    _scrollController.dispose();
     _purposeController.dispose();
     _idFullNameController.dispose();
     _idAddressController.dispose();
@@ -665,6 +669,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         backgroundColor: Colors.blue,
       ),
       body: SingleChildScrollView(
+        controller: _scrollController,
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
@@ -836,6 +841,19 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
           }
           _aiSuggestionApplied = false;
           _aiSuggestion = null;
+          _detailsController.expand();
+        });
+        // Scroll just far enough that the Details tile comes into view —
+        // the submit button below it stays on screen instead of getting
+        // pushed off.
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          final ctx = _detailsKey.currentContext;
+          if (ctx == null) return;
+          Scrollable.ensureVisible(
+            ctx,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+          );
         });
       },
       child: Container(
@@ -968,6 +986,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
           const SizedBox(height: 16),
         ],
         ExpansionTile(
+          key: _detailsKey,
           controller: _detailsController,
           title: Text(l10n.reqDocDocumentDetails(selected.title)),
           subtitle: Text(l10n.reqDocPrefilledFromProfile),
