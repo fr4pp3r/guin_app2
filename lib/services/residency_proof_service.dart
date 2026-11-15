@@ -62,6 +62,22 @@ class ResidencyProofService {
         .toList();
   }
 
+  /// Every pending proof across all users, newest first.
+  ///
+  /// The citizen flow only ever reads its own rows, so the review screen
+  /// needs a cross-user query. Errors propagate so the UI can surface them.
+  Future<List<ResidencyProof>> getPendingProofs() async {
+    final response = await _supabase
+        .from(_table)
+        .select()
+        .eq('status', ResidencyProof.pending)
+        .order('created_at', ascending: false);
+
+    return (response as List)
+        .map((json) => ResidencyProof.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
   /// Officer confirms: status → 'confirmed', verified_at = now, and
   /// `users_profile.is_poblacion_resident = true`.
   Future<ResidencyProof> confirmProof({

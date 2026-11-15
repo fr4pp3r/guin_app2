@@ -39,6 +39,11 @@ class AppRoles {
   static bool canManageHotlines(String role) =>
       role == captain || role == secretary || role == legacyAdmin;
 
+  // Residency proof review: captain / secretary / admin may confirm or reject
+  // a pending proof and flip users_profile.is_poblacion_resident.
+  static bool canReviewResidency(String role) =>
+      role == captain || role == secretary || role == legacyAdmin;
+
   // ── Workflow-specific permissions ────────────────────────────────────
   // Secretary: draft generation, revision requests, verified-for-payment
   static bool canGenerateDrafts(String role) =>

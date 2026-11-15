@@ -28,6 +28,7 @@ import 'package:guin_app/screens/admin/incident_reports_screen.dart';
 import 'package:guin_app/screens/citizen/submit_report_screen.dart';
 import 'package:guin_app/screens/citizen/profile_screen.dart';
 import 'package:guin_app/screens/citizen/chatbot_screen.dart';
+import 'package:guin_app/screens/admin/residency_proofs_screen.dart';
 import 'package:guin_app/screens/citizen/verify_residency_screen.dart';
 import 'package:guin_app/screens/admin/profile_screen.dart';
 import 'package:guin_app/screens/hotlines/hotlines_screen.dart';
@@ -58,6 +59,7 @@ class AppRoutes {
   static const String incidentReports = '/admin/incident-reports';
   static const String verifyDocument = '/verify';
   static const String verifyResidency = '/verify-residency';
+  static const String residencyProofs = '/admin/residency-proofs';
 
   // Admin Routes
   static const String adminDashboard = '/admin/dashboard';
@@ -96,6 +98,7 @@ class AppRoutes {
       incidentReports: (context) => const IncidentReportsScreen(),
       verifyDocument: (context) => const VerifyDocumentScreen(),
       verifyResidency: (context) => const VerifyResidencyScreen(),
+      residencyProofs: (context) => const ResidencyProofsScreen(),
       adminDashboard: (context) => const admin.AdminDashboardScreen(),
       tanodDashboard: (context) => const tanod.TanodDashboardScreen(),
       pendingUsers: (context) => const ManageUsersScreen(),
@@ -188,6 +191,10 @@ class AppRoutes {
         );
       case AppRoutes.verifyResidency:
         return MaterialPageRoute(builder: (_) => const VerifyResidencyScreen());
+      case AppRoutes.residencyProofs:
+        return MaterialPageRoute(
+          builder: (context) => const ResidencyProofsScreen(),
+        );
       case adminDashboard:
         return MaterialPageRoute(
           builder: (context) => const admin.AdminDashboardScreen(),

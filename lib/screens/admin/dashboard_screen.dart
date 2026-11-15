@@ -145,6 +145,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final canApproveDocuments = AppRoles.canApproveDocuments(role);
     final canManageReports = AppRoles.canManageReports(role);
     final canManageFees = AppRoles.canManageFees(role);
+    final canReviewResidency = AppRoles.canReviewResidency(role);
     final canManageSettings =
         role == AppRoles.captain || role == AppRoles.legacyAdmin;
 
@@ -574,6 +575,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 () =>
                     Navigator.of(context).pushNamed(AppRoutes.captainApproval),
                 badgeCount: documentProvider.forApproval.length,
+              ),
+              const SizedBox(height: 8),
+            ],
+            // Residency proof review: captain / secretary / admin may confirm
+            // or reject pending proofs and flip users_profile.is_poblacion_resident.
+            if (canReviewResidency) ...[
+              _buildActionButton(
+                l10n.verifyResidencyReviewTitle,
+                Icons.badge_outlined,
+                () => Navigator.of(context)
+                    .pushNamed(AppRoutes.residencyProofs),
               ),
               const SizedBox(height: 8),
             ],
