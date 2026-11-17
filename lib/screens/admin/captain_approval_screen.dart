@@ -20,13 +20,18 @@ import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/utils/role_access.dart';
 
 class CaptainApprovalScreen extends StatefulWidget {
-  const CaptainApprovalScreen({super.key});
+  const CaptainApprovalScreen({super.key, this.focusId});
+
+  /// ID of one document to auto-open the review detail immediately after load.
+  final String? focusId;
 
   @override
   State<CaptainApprovalScreen> createState() => _CaptainApprovalScreenState();
 }
 
 class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
+  bool _focusHandled = false;
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +41,18 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
   Future<void> _load() async {
     if (!mounted) return;
     await context.read<DocumentProvider>().loadForApproval();
+    _tryOpenFocus(widget.focusId);
+  }
+
+  Future<void> _tryOpenFocus(String? id) async {
+    if (id == null || _focusHandled || !mounted) return;
+    final dp = context.read<DocumentProvider>();
+    final match = dp.forApproval.firstWhere(
+      (r) => r.id == id,
+      orElse: () => throw StateError('not found'),
+    );
+    setState(() => _focusHandled = true);
+    _openRequestReview(match);
   }
 
   // ── Approve + Release with e-signature ──────────────────────────────

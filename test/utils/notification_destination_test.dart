@@ -148,9 +148,8 @@ void main() {
 
   group('routeName', () {
     test('non-none values map to AppRoutes constants', () {
-      // documentViewer / announcements constants are added by Task 4, so the
-      // getter defers them to null until then.
-      expect(NotificationDestination.documentViewer.routeName, isNull);
+      expect(NotificationDestination.documentViewer.routeName,
+          AppRoutes.documentViewer);
       expect(NotificationDestination.pendingRequests.routeName,
           AppRoutes.pendingRequests);
       expect(NotificationDestination.pendingPayments.routeName,
@@ -159,7 +158,8 @@ void main() {
           AppRoutes.captainApproval);
       expect(NotificationDestination.incidentReports.routeName,
           AppRoutes.incidentReports);
-      expect(NotificationDestination.announcements.routeName, isNull);
+      expect(NotificationDestination.announcements.routeName,
+          AppRoutes.announcements);
       expect(NotificationDestination.pendingUsers.routeName,
           AppRoutes.pendingUsers);
       expect(NotificationDestination.myRequests.routeName, AppRoutes.myRequests);

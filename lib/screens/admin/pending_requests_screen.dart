@@ -17,13 +17,18 @@ import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:intl/intl.dart';
 
 class PendingRequestsScreen extends StatefulWidget {
-  const PendingRequestsScreen({super.key});
+  const PendingRequestsScreen({super.key, this.focusId});
+
+  /// ID of one request to auto-open the review detail immediately after load.
+  final String? focusId;
 
   @override
   State<PendingRequestsScreen> createState() => _PendingRequestsScreenState();
 }
 
 class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
+  bool _focusHandled = false;
+
   @override
   void initState() {
     super.initState();
@@ -35,6 +40,18 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   Future<void> _loadPendingRequests() async {
     if (!mounted) return;
     await context.read<DocumentProvider>().loadPendingReviews();
+    _tryOpenFocus(widget.focusId);
+  }
+
+  Future<void> _tryOpenFocus(String? id) async {
+    if (id == null || _focusHandled || !mounted) return;
+    final dp = context.read<DocumentProvider>();
+    final match = dp.pendingReviews.firstWhere(
+      (r) => r.id == id,
+      orElse: () => throw StateError('not found'),
+    );
+    setState(() => _focusHandled = true);
+    _openRequestReview(match);
   }
 
   // ── Generate DRAFT PDF ───────────────────────────────────────────────

@@ -9,7 +9,10 @@ import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/screens/admin/confirm_payment_dialog.dart';
 
 class PendingPaymentsScreen extends StatefulWidget {
-  const PendingPaymentsScreen({super.key});
+  const PendingPaymentsScreen({super.key, this.focusId});
+
+  /// ID of one request to highlight / open after load (none currently).
+  final String? focusId;
 
   @override
   State<PendingPaymentsScreen> createState() => _PendingPaymentsScreenState();

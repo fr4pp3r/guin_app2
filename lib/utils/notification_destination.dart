@@ -6,9 +6,7 @@ import 'package:guin_app/utils/role_access.dart';
 ///
 /// Pure: no BuildContext, no I/O, no navigation. The enum exists so the
 /// resolver can return a stable value that the navigator (Task 5) maps to a
-/// route. `routeName` is `null` for values whose AppRoutes constant is added
-/// by a later task (documentViewer, announcements) — the navigator treats
-/// null as "no route yet".
+/// route. `routeName` is `null` only for [NotificationDestination.none].
 enum NotificationDestination {
   documentViewer,
   pendingRequests,
@@ -24,7 +22,7 @@ enum NotificationDestination {
   String? get routeName {
     switch (this) {
       case NotificationDestination.documentViewer:
-        return null; // AppRoutes.documentViewer added in Task 4
+        return AppRoutes.documentViewer;
       case NotificationDestination.pendingRequests:
         return AppRoutes.pendingRequests;
       case NotificationDestination.pendingPayments:
@@ -34,7 +32,7 @@ enum NotificationDestination {
       case NotificationDestination.incidentReports:
         return AppRoutes.incidentReports;
       case NotificationDestination.announcements:
-        return null; // AppRoutes.announcements added in Task 4
+        return AppRoutes.announcements;
       case NotificationDestination.pendingUsers:
         return AppRoutes.pendingUsers;
       case NotificationDestination.myRequests:

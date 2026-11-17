@@ -10,7 +10,10 @@ import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/widgets/incident_location_map.dart';
 
 class IncidentReportsScreen extends StatefulWidget {
-  const IncidentReportsScreen({super.key});
+  const IncidentReportsScreen({super.key, this.focusId});
+
+  /// ID of one report to scroll-to/highlight after load (none currently).
+  final String? focusId;
 
   @override
   State<IncidentReportsScreen> createState() => _IncidentReportsScreenState();
