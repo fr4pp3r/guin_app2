@@ -6,6 +6,7 @@ import 'package:guin_app/models/user_profile.dart';
 import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/services/notification_service.dart';
 import 'package:guin_app/utils/password_hash.dart';
+import 'package:guin_app/utils/notification_refs.dart';
 import 'package:guin_app/utils/session_manager.dart';
 
 class UserService {
@@ -18,14 +19,18 @@ class UserService {
     String userId,
     String title,
     String message,
-    String type,
-  ) async {
+    String type, {
+    String? referenceType,
+    String? referenceId,
+  }) async {
     try {
       await _notificationService.createNotification(
         userId: userId,
         title: title,
         message: message,
         type: type,
+        referenceType: referenceType,
+        referenceId: referenceId,
       );
     } catch (e) {
       debugPrint('Registration notification to $userId failed: $e');
@@ -263,6 +268,8 @@ class UserService {
         'Your barangay registration has been approved. You can now sign in '
             'and use the app.',
         'registration_approved',
+        referenceType: NotificationRefs.userRegistration,
+        referenceId: userId,
       );
 
       return approved;
@@ -333,6 +340,8 @@ class UserService {
             : 'Your barangay registration was not approved. '
                   'Reason: $trimmedReason',
         'registration_rejected',
+        referenceType: NotificationRefs.userRegistration,
+        referenceId: userId,
       );
 
       return rejected;

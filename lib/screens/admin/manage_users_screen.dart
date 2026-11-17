@@ -22,11 +22,15 @@ class ManageUsersScreen extends StatefulWidget {
   /// When true, only the all-users list is shown (no tabs).
   final bool allUsersOnly;
 
+  /// ID of one pending user to auto-open the review detail immediately after load.
+  final String? focusId;
+
   const ManageUsersScreen({
     super.key,
     this.initialTab = 0,
     this.pendingOnly = false,
     this.allUsersOnly = false,
+    this.focusId,
   });
 
   @override
@@ -39,6 +43,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
   final _searchController = TextEditingController();
   String _searchQuery = '';
   String _roleFilter = 'all';
+  bool _focusHandled = false;
 
   bool get _showPending => !widget.allUsersOnly;
   bool get _showAllUsers => !widget.pendingOnly;
@@ -52,10 +57,26 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
       vsync: this,
       initialIndex: _initialTabIndex(),
     );
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_showPending) context.read<UserProvider>().loadPendingUsers();
-      if (_showAllUsers) context.read<UserProvider>().loadAllUsers();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initLoad());
+  }
+
+  Future<void> _initLoad() async {
+    if (!mounted) return;
+    if (_showPending) await context.read<UserProvider>().loadPendingUsers();
+    if (_showAllUsers) await context.read<UserProvider>().loadAllUsers();
+    _tryOpenFocus(widget.focusId);
+  }
+
+  Future<void> _tryOpenFocus(String? id) async {
+    if (id == null || _focusHandled || !mounted) return;
+    // Focus only targets the pending-users queue (registration approvals).
+    if (!_showPending) return;
+    final up = context.read<UserProvider>();
+    final matches = up.pendingUsers.where((u) => u.id == id).toList();
+    // Stale reference (registration already reviewed): stay on the list.
+    if (matches.isEmpty || !mounted) return;
+    setState(() => _focusHandled = true);
+    _openRegistrationDetail(matches.first);
   }
 
   int _initialTabIndex() {

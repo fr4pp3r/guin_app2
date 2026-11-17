@@ -32,6 +32,8 @@ import 'package:guin_app/screens/admin/residency_proofs_screen.dart';
 import 'package:guin_app/screens/citizen/verify_residency_screen.dart';
 import 'package:guin_app/screens/admin/profile_screen.dart';
 import 'package:guin_app/screens/hotlines/hotlines_screen.dart';
+import 'package:guin_app/screens/citizen/document_viewer_screen.dart';
+import 'package:guin_app/screens/announcements/announcements_screen.dart';
 
 class AppRoutes {
   // Splash
@@ -55,6 +57,7 @@ class AppRoutes {
   static const String submitReport = '/citizen/submit-report';
   static const String profile = '/citizen/profile';
   static const String eReceipt = '/citizen/e-receipt';
+  static const String documentViewer = '/citizen/document-viewer';
   static const String chatbot = '/citizen/assistant';
   static const String incidentReports = '/admin/incident-reports';
   static const String verifyDocument = '/verify';
@@ -80,6 +83,9 @@ class AppRoutes {
   /// Emergency hotline directory — every signed-in user reads the list;
   /// captain / secretary / admin may edit.
   static const String hotlines = '/hotlines';
+
+  /// Global announcement feed — every signed-in user reads the same rows.
+  static const String announcements = '/announcements';
 
   static Map<String, WidgetBuilder> get routes {
     return {
@@ -111,6 +117,7 @@ class AppRoutes {
       captainApproval: (context) => const CaptainApprovalScreen(),
       adminProfile: (context) => const AdminProfileScreen(),
       hotlines: (context) => const HotlinesScreen(),
+      announcements: (context) => const AnnouncementsScreen(),
     };
   }
 
@@ -181,9 +188,38 @@ class AppRoutes {
         return MaterialPageRoute(
           builder: (context) => EReceiptViewerScreen(request: args!),
         );
+      case documentViewer:
+        // Opened with `arguments: DocumentRequest`. Anything else (a stray
+        // deep link, say) degrades to a plain error page instead of crashing.
+        final detailRequest = settings.arguments;
+        return MaterialPageRoute(
+          builder: (context) {
+            if (detailRequest is DocumentRequest) {
+              return DocumentViewerScreen(request: detailRequest);
+            }
+            final l10n = AppLocalizations.of(context);
+            return Scaffold(
+              appBar: AppBar(title: Text(l10n.tdetTitle)),
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    l10n.citizenLoadReportsError,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      case announcements:
+        return MaterialPageRoute(
+          builder: (context) => const AnnouncementsScreen(),
+        );
       case incidentReports:
         return MaterialPageRoute(
-          builder: (context) => const IncidentReportsScreen(),
+          builder: (context) =>
+              IncidentReportsScreen(focusId: settings.arguments as String?),
         );
       case verifyDocument:
         return MaterialPageRoute(
@@ -205,15 +241,22 @@ class AppRoutes {
         );
       case pendingUsers:
         return MaterialPageRoute(
-          builder: (context) => const ManageUsersScreen(),
+          builder: (context) =>
+              ManageUsersScreen(focusId: settings.arguments as String?),
         );
       case pendingRequests:
         return MaterialPageRoute(
-          builder: (context) => const PendingRequestsScreen(),
+          builder: (context) =>
+              PendingRequestsScreen(focusId: settings.arguments as String?),
         );
       case pendingPayments:
         return MaterialPageRoute(
-          builder: (context) => const PendingPaymentsScreen(),
+          builder: (context) =>
+              PendingPaymentsScreen(focusId: settings.arguments as String?),
+        );
+      case captainApproval:
+        return MaterialPageRoute(
+          builder: (context) => CaptainApprovalScreen(focusId: settings.arguments as String?),
         );
       case pendingReviews:
         return MaterialPageRoute(

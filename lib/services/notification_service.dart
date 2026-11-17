@@ -142,6 +142,8 @@ class NotificationService {
     required String title,
     required String message,
     required String type,
+    String? referenceType,
+    String? referenceId,
   }) async {
     try {
       final response = await _supabase
@@ -151,6 +153,8 @@ class NotificationService {
             'title': title,
             'message': message,
             'type': type,
+            'reference_type': ?referenceType,
+            'reference_id': ?referenceId,
           })
           .select()
           .single();
@@ -170,6 +174,8 @@ class NotificationService {
         title: title,
         message: message,
         type: type,
+        referenceType: referenceType,
+        referenceId: referenceId,
       );
     }
   }
@@ -186,6 +192,8 @@ class NotificationService {
     required String title,
     required String message,
     required String type,
+    String? referenceType,
+    String? referenceId,
   }) {
     unawaited(
       _supabase.functions
@@ -194,6 +202,8 @@ class NotificationService {
             'title': title,
             'message': message,
             'type': type,
+            'reference_type': ?referenceType,
+            'reference_id': ?referenceId,
           })
           .timeout(const Duration(seconds: 10))
           .then(
@@ -214,6 +224,8 @@ class NotificationService {
     required String title,
     required String message,
     required String type,
+    String? referenceType,
+    String? referenceId,
   }) async {
     if (roles.isEmpty) return;
     try {
@@ -232,6 +244,8 @@ class NotificationService {
             title: title,
             message: message,
             type: type,
+            referenceType: referenceType,
+            referenceId: referenceId,
           );
         } catch (_) {
           // One recipient failing must not stop the rest.
@@ -255,6 +269,8 @@ class NotificationService {
     required String title,
     required String message,
     required String type,
+    String? referenceType,
+    String? referenceId,
   }) async {
     try {
       final users = await _supabase
@@ -273,6 +289,8 @@ class NotificationService {
         title: title,
         message: message,
         type: type,
+        referenceType: referenceType,
+        referenceId: referenceId,
       );
     } catch (_) {
       // Fan-out is best-effort; callers never see a throw.
@@ -289,6 +307,8 @@ class NotificationService {
     required String title,
     required String message,
     required String type,
+    String? referenceType,
+    String? referenceId,
     int batchSize = 200,
   }) async {
     for (var start = 0; start < userIds.length; start += batchSize) {
@@ -304,10 +324,19 @@ class NotificationService {
               'title': title,
               'message': message,
               'type': type,
+              'reference_type': ?referenceType,
+              'reference_id': ?referenceId,
             },
         ]);
         // Hand the batch to the push function once, rather than once per row.
-        await _pushFanOut(batch, title: title, message: message, type: type);
+        await _pushFanOut(
+          batch,
+          title: title,
+          message: message,
+          type: type,
+          referenceType: referenceType,
+          referenceId: referenceId,
+        );
       } catch (e) {
         debugPrint('Batched notification insert failed, falling back: $e');
         for (final id in batch) {
@@ -317,6 +346,8 @@ class NotificationService {
               title: title,
               message: message,
               type: type,
+              referenceType: referenceType,
+              referenceId: referenceId,
             );
           } catch (_) {
             // One recipient failing must not stop the rest.
@@ -338,6 +369,8 @@ class NotificationService {
     required String title,
     required String message,
     required String type,
+    String? referenceType,
+    String? referenceId,
   }) async {
     if (userIds.isEmpty) return;
     try {
@@ -347,6 +380,8 @@ class NotificationService {
             'title': title,
             'message': message,
             'type': type,
+            'reference_type': ?referenceType,
+            'reference_id': ?referenceId,
           })
           .timeout(const Duration(seconds: 20));
     } catch (e) {

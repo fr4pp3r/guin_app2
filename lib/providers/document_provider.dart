@@ -8,6 +8,7 @@ import 'package:guin_app/services/document_service.dart';
 import 'package:guin_app/services/ai_receipt_parser.dart';
 import 'package:guin_app/services/notification_service.dart';
 import 'package:guin_app/utils/role_access.dart';
+import 'package:guin_app/utils/notification_refs.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:guin_app/config/supabase_config.dart';
 
@@ -54,14 +55,18 @@ class DocumentProvider with ChangeNotifier {
     String userId,
     String title,
     String message,
-    String type,
-  ) async {
+    String type, {
+    String? referenceType,
+    String? referenceId,
+  }) async {
     try {
       await _notificationService.createNotification(
         userId: userId,
         title: title,
         message: message,
         type: type,
+        referenceType: referenceType,
+        referenceId: referenceId,
       );
     } catch (e) {
       debugPrint('Notification to $userId failed: $e');
@@ -73,14 +78,18 @@ class DocumentProvider with ChangeNotifier {
     List<String> roles,
     String title,
     String message,
-    String type,
-  ) async {
+    String type, {
+    String? referenceType,
+    String? referenceId,
+  }) async {
     try {
       await _notificationService.notifyRoles(
         roles: roles,
         title: title,
         message: message,
         type: type,
+        referenceType: referenceType,
+        referenceId: referenceId,
       );
     } catch (e) {
       debugPrint('Role notification fan-out failed: $e');
@@ -229,6 +238,8 @@ class DocumentProvider with ChangeNotifier {
         'A new ${created.documentTypeDisplay} request is waiting for review '
             '(purpose: ${created.purpose}).',
         'system',
+        referenceType: NotificationRefs.documentRequest,
+        referenceId: created.id,
       );
 
       // Reload user's requests
@@ -318,6 +329,8 @@ class DocumentProvider with ChangeNotifier {
         'Payment receipt submitted',
         'A citizen submitted a payment receipt that needs verification.',
         'system',
+        referenceType: NotificationRefs.documentRequest,
+        referenceId: requestId,
       );
 
       // Reload user's requests
@@ -507,6 +520,8 @@ class DocumentProvider with ChangeNotifier {
           'Your ${rejected.documentTypeDisplay} request was rejected. '
               'Reason: $reason',
           'request_rejected',
+          referenceType: NotificationRefs.documentRequest,
+          referenceId: requestId,
         );
       }
 
@@ -629,6 +644,8 @@ class DocumentProvider with ChangeNotifier {
           'Payment to verify',
           'A $label is verified and awaiting payment verification.',
           'payment_verified',
+          referenceType: NotificationRefs.documentRequest,
+          referenceId: requestId,
         );
       } else {
         await _safeNotifyRoles(
@@ -641,6 +658,8 @@ class DocumentProvider with ChangeNotifier {
           'A $label passed review and awaits final approval (no payment '
               'required).',
           'system',
+          referenceType: NotificationRefs.documentRequest,
+          referenceId: requestId,
         );
       }
 
@@ -659,6 +678,8 @@ class DocumentProvider with ChangeNotifier {
               : 'Your ${verified.documentTypeDisplay} request passed review and '
                   'was forwarded for final approval.',
           'system',
+          referenceType: NotificationRefs.documentRequest,
+          referenceId: requestId,
         );
       }
 
@@ -721,6 +742,8 @@ class DocumentProvider with ChangeNotifier {
             '${confirmed?.documentTypeDisplay ?? 'document request'} — '
             'it is now in the approval queue.',
         'system',
+        referenceType: NotificationRefs.documentRequest,
+        referenceId: requestId,
       );
 
       await loadPendingPayments();
@@ -806,6 +829,8 @@ class DocumentProvider with ChangeNotifier {
           'Your ${released.documentTypeDisplay} has been approved, signed, '
               'and released. You can now claim your copy.',
           'request_released',
+          referenceType: NotificationRefs.documentRequest,
+          referenceId: requestId,
         );
       }
 
@@ -846,6 +871,8 @@ class DocumentProvider with ChangeNotifier {
           'Your ${refused.documentTypeDisplay} request was rejected by the '
               'Barangay Captain. Reason: $reason',
           'request_rejected',
+          referenceType: NotificationRefs.documentRequest,
+          referenceId: requestId,
         );
       }
 

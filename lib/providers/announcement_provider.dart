@@ -6,6 +6,7 @@ import 'package:guin_app/services/announcement_service.dart';
 import 'package:guin_app/services/notification_service.dart';
 import 'package:guin_app/services/user_service.dart';
 import 'package:guin_app/utils/session_manager.dart';
+import 'package:guin_app/utils/notification_refs.dart';
 
 /// Barangay announcement board state.
 ///
@@ -98,7 +99,7 @@ class AnnouncementProvider extends ChangeNotifier {
       final authorId = await SessionManager.getUserId();
       final authorName = await _resolveAuthorName(authorId);
 
-      await _announcementService.createAnnouncement(
+      final created = await _announcementService.createAnnouncement(
         title: title.trim(),
         body: body.trim(),
         isPinned: isPinned,
@@ -114,6 +115,8 @@ class AnnouncementProvider extends ChangeNotifier {
           title: 'New announcement: ${title.trim()}',
           message: body.trim(),
           type: 'system',
+          referenceType: NotificationRefs.announcement,
+          referenceId: created.id,
         );
       } catch (e) {
         debugPrint('Announcement notification fan-out failed: $e');
