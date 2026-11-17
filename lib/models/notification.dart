@@ -7,6 +7,8 @@ class AppNotification {
   type; // 'registration_approved', 'registration_rejected', 'request_approved', 'request_rejected', 'request_submitted'
   final bool isRead;
   final DateTime createdAt;
+  final String? referenceType;
+  final String? referenceId;
 
   AppNotification({
     required this.id,
@@ -16,6 +18,8 @@ class AppNotification {
     required this.type,
     required this.isRead,
     required this.createdAt,
+    this.referenceType,
+    this.referenceId,
   });
 
   factory AppNotification.fromJson(Map<String, dynamic> json) {
@@ -27,6 +31,8 @@ class AppNotification {
       type: json['type'] as String,
       isRead: json['is_read'] as bool,
       createdAt: DateTime.parse(json['created_at'] as String),
+      referenceType: json['reference_type'] as String?,
+      referenceId: json['reference_id'] as String?,
     );
   }
 
@@ -39,6 +45,8 @@ class AppNotification {
       'type': type,
       'is_read': isRead,
       'created_at': createdAt.toIso8601String(),
+      'reference_type': referenceType,
+      'reference_id': referenceId,
     };
   }
 
@@ -50,6 +58,8 @@ class AppNotification {
     String? type,
     bool? isRead,
     DateTime? createdAt,
+    String? referenceType,
+    String? referenceId,
   }) {
     return AppNotification(
       id: id ?? this.id,
@@ -59,6 +69,8 @@ class AppNotification {
       type: type ?? this.type,
       isRead: isRead ?? this.isRead,
       createdAt: createdAt ?? this.createdAt,
+      referenceType: referenceType ?? this.referenceType,
+      referenceId: referenceId ?? this.referenceId,
     );
   }
 

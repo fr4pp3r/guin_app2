@@ -404,6 +404,8 @@ CREATE TABLE public.notifications (
   title      TEXT NOT NULL,
   message    TEXT NOT NULL,
   type       notification_type NOT NULL DEFAULT 'system',
+  reference_type TEXT,
+  reference_id   TEXT,
   is_read    BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
