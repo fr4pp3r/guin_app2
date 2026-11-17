@@ -257,6 +257,7 @@
   "myReportsTitle": "Aking mga Ulat",
   "myRequestsSubtitle": "Subaybayan ang iyong mga kahilingan ng dokumento",
   "myRequestsTitle": "Aking mga Kahilingan",
+  "notificationUnavailable": "This item is no longer available.",
   "notificationsEmpty": "Wala pang abiso",
   "notificationsEmptyHint": "Lalabas dito ang mga abiso kapag may aktibidad ka",
   "notificationsLoadError": "Hindi ma-load ang mga abiso",

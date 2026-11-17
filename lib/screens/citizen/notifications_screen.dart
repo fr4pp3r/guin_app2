@@ -3,8 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/providers/notification_provider.dart';
 import 'package:guin_app/models/notification.dart';
+import 'package:guin_app/services/document_service.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
+import 'package:guin_app/utils/role_access.dart';
+import 'package:guin_app/utils/notification_destination.dart';
+import 'package:guin_app/config/routes.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -38,6 +42,88 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final user = context.read<AuthProvider>().userProfile;
     if (user == null) return;
     await context.read<NotificationProvider>().markAsRead(n.id, user.id);
+  }
+
+  /// Handles the tap on a notification card: marks it read, then navigates
+  /// to the item it refers to (or a list fallback when no reference is set).
+  Future<void> _onNotificationTap(AppNotification notification) async {
+    await _markRead(notification);
+    if (!mounted) return;
+    final role =
+        context.read<AuthProvider>().userProfile?.role ?? AppRoles.citizen;
+    final destination = resolveDestination(notification, role);
+    await _navigateTo(notification, destination);
+  }
+
+  Future<void> _navigateTo(
+    AppNotification notification,
+    NotificationDestination destination,
+  ) async {
+    if (destination == NotificationDestination.none) return;
+
+    final l10n = AppLocalizations.of(context);
+
+    void showUnavailable() {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.notificationUnavailable)),
+      );
+    }
+
+    // Destinations that need a reference id to open the exact item.
+    // If the notification predates reference tracking (NULL reference), we
+    // cannot deep-link; the user sees a snackbar instead of a broken screen.
+    final needsReference = <NotificationDestination>{
+      NotificationDestination.documentViewer,
+      NotificationDestination.pendingRequests,
+      NotificationDestination.pendingPayments,
+      NotificationDestination.captainApproval,
+      NotificationDestination.incidentReports,
+      NotificationDestination.pendingUsers,
+    };
+    final refId = notification.referenceId;
+    if (needsReference.contains(destination) && refId == null) {
+      showUnavailable();
+      return;
+    }
+
+    switch (destination) {
+      case NotificationDestination.documentViewer:
+        final request = await DocumentService().getRequestById(refId!);
+        if (request == null) {
+          showUnavailable();
+          return;
+        }
+        if (!mounted) return;
+        await Navigator.pushNamed(
+          context,
+          AppRoutes.documentViewer,
+          arguments: request,
+        );
+        break;
+      case NotificationDestination.pendingRequests:
+      case NotificationDestination.pendingPayments:
+      case NotificationDestination.captainApproval:
+      case NotificationDestination.incidentReports:
+      case NotificationDestination.pendingUsers:
+        if (!mounted) return;
+        // A focus id that no longer exists is a quiet no-op on the queue
+        // screen (it stays on the list) — documented fallback, no snackbar.
+        await Navigator.pushNamed(
+          context,
+          destination.routeName!,
+          arguments: refId,
+        );
+        break;
+      case NotificationDestination.announcements:
+      case NotificationDestination.myRequests:
+      case NotificationDestination.myReports:
+        if (!mounted) return;
+        await Navigator.pushNamed(context, destination.routeName!);
+        break;
+      case NotificationDestination.none:
+        break;
+    }
   }
 
   Color _typeColor(String type) {
@@ -378,7 +464,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }) {
     final color = _typeColor(notification.type);
     return GestureDetector(
-      onTap: () => _markRead(notification),
+      onTap: () => _onNotificationTap(notification),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(

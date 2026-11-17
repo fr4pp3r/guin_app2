@@ -434,6 +434,7 @@
   "myReportsTitle": "My Reports",
   "myRequestsSubtitle": "Track your document requests",
   "myRequestsTitle": "My Requests",
+  "notificationUnavailable": "This item is no longer available.",
   "notificationsEmpty": "No notifications yet",
   "notificationsEmptyHint": "Notifications will appear here when you have activity",
   "notificationsLoadError": "Couldn't load notifications",

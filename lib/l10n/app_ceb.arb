@@ -257,6 +257,7 @@
   "myReportsTitle": "Akong mga Report",
   "myRequestsSubtitle": "Subaya ang imong mga hangyo sa dokumento",
   "myRequestsTitle": "Akong mga Hangyo",
+  "notificationUnavailable": "This item is no longer available.",
   "notificationsEmpty": "Wala pa'y pahibalo",
   "notificationsEmptyHint": "Makita dinhi ang mga pahibalo kung naa kay kalihokan",
   "notificationsLoadError": "Wala ma-load ang mga pahibalo",
