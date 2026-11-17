@@ -17,6 +17,7 @@ import 'package:guin_app/services/pdf_service.dart';
 import 'package:guin_app/services/user_service.dart';
 import 'package:guin_app/services/ai_document_processor.dart';
 import 'package:guin_app/utils/helpers.dart';
+import 'package:guin_app/utils/notification_refs.dart';
 
 /// Outcome of an automated pipeline step.
 class AutomationOutcome {
@@ -139,6 +140,8 @@ class DocumentAutomationService {
         message:
             'Your ${AutomationConstants.labelFor(request.documentType)} request is missing required information: ${validation.summary}',
         type: 'system',
+        referenceType: NotificationRefs.documentRequest,
+        referenceId: request.id,
       );
       return AutomationOutcome(
         processed: false,
@@ -229,6 +232,8 @@ class DocumentAutomationService {
         message:
             'Your ${AutomationConstants.labelFor(request.documentType)} request is awaiting barangay review. You will receive an invoice with payment instructions once it is verified.',
         type: 'system',
+        referenceType: NotificationRefs.documentRequest,
+        referenceId: request.id,
       );
 
       // Generate initial e-receipt (fire-and-forget, never blocks)
@@ -261,6 +266,8 @@ class DocumentAutomationService {
       message:
           'Your ${AutomationConstants.labelFor(request.documentType)} request was verified and forwarded for final approval.',
       type: 'request_approved',
+      referenceType: NotificationRefs.documentRequest,
+      referenceId: request.id,
     );
 
     // Generate initial e-receipt (fire-and-forget, never blocks)
@@ -311,6 +318,8 @@ class DocumentAutomationService {
       message:
           'Your payment receipt for ${AutomationConstants.labelFor(request.documentType)} is awaiting treasurer verification.',
       type: 'system',
+      referenceType: NotificationRefs.documentRequest,
+      referenceId: request.id,
     );
 
     // Update e-receipt with payment info (fire-and-forget, never blocks)
@@ -350,6 +359,8 @@ class DocumentAutomationService {
           'Payment for your ${AutomationConstants.labelFor(request.documentType)} was verified and forwarded for final approval.'
           '${officialReceiptUrl != null ? ' Your official receipt is ready to view and download in My Requests.' : ''}',
       type: 'payment_verified',
+      referenceType: NotificationRefs.documentRequest,
+      referenceId: request.id,
     );
   }
 
@@ -370,6 +381,8 @@ class DocumentAutomationService {
       message:
           'Payment for your ${AutomationConstants.labelFor(request.documentType)} was rejected: $reason',
       type: 'payment_rejected',
+      referenceType: NotificationRefs.documentRequest,
+      referenceId: request.id,
     );
   }
 
@@ -428,6 +441,8 @@ class DocumentAutomationService {
         message:
             'Your ${AutomationConstants.labelFor(request.documentType)} is ready. You can download it and verify it online.',
         type: 'request_released',
+        referenceType: NotificationRefs.documentRequest,
+        referenceId: request.id,
       );
 
       // Generate final e-receipt with release info (fire-and-forget, never blocks)
@@ -478,6 +493,8 @@ class DocumentAutomationService {
       message:
           'Your ${AutomationConstants.labelFor(request.documentType)} was rejected: $reason',
       type: 'request_rejected',
+      referenceType: NotificationRefs.documentRequest,
+      referenceId: request.id,
     );
   }
 
@@ -506,6 +523,8 @@ class DocumentAutomationService {
         message:
             'Invoice for your ${AutomationConstants.labelFor(request.documentType)} is past due. Please complete payment to continue processing.',
         type: 'system',
+        referenceType: NotificationRefs.documentRequest,
+        referenceId: request.id,
       );
     }
   }
@@ -844,6 +863,8 @@ class DocumentAutomationService {
     required String title,
     required String message,
     required String type,
+    String? referenceType,
+    String? referenceId,
   }) async {
     try {
       await _notificationService.createNotification(
@@ -851,6 +872,8 @@ class DocumentAutomationService {
         title: title,
         message: message,
         type: type,
+        referenceType: referenceType,
+        referenceId: referenceId,
       );
     } catch (_) {
       // Notifications must never block the pipeline.

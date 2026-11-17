@@ -4,6 +4,7 @@ import 'package:guin_app/services/incident_report_cache_service.dart';
 import 'package:guin_app/services/incident_report_service.dart';
 import 'package:guin_app/services/notification_service.dart';
 import 'package:guin_app/utils/role_access.dart';
+import 'package:guin_app/utils/notification_refs.dart';
 
 class IncidentReportProvider with ChangeNotifier {
   final IncidentReportService _service = IncidentReportService();
@@ -90,7 +91,7 @@ class IncidentReportProvider with ChangeNotifier {
     double? latitude,
     double? longitude,
   }) async {
-    await _service.submitReport(
+    final report = await _service.submitReport(
       submittedBy: submittedBy,
       reportType: reportType,
       title: title,
@@ -116,6 +117,8 @@ class IncidentReportProvider with ChangeNotifier {
         title: 'New incident report',
         message: '$title ($reportType) was reported at $location.',
         type: 'incident_submitted',
+        referenceType: NotificationRefs.incidentReport,
+        referenceId: report.id,
       );
     } catch (e) {
       debugPrint('Incident fan-out notification failed: $e');

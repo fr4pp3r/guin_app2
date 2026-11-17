@@ -7,6 +7,7 @@ import 'package:guin_app/services/notification_service.dart';
 import 'package:guin_app/services/push_service.dart';
 import 'package:guin_app/models/user_profile.dart';
 import 'package:guin_app/utils/role_access.dart';
+import 'package:guin_app/utils/notification_refs.dart';
 import 'package:guin_app/utils/helpers.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -217,6 +218,8 @@ class AuthProvider extends ChangeNotifier {
               '${_userProfile?.fullName ?? 'A new citizen'} just registered '
               'and is awaiting approval.',
           type: 'system',
+          referenceType: NotificationRefs.userRegistration,
+          referenceId: _userProfile?.id,
         );
       } catch (e) {
         debugPrint('Registration fan-out notification failed: $e');
