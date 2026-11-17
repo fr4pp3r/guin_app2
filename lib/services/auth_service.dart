@@ -107,6 +107,8 @@ class AuthService {
             // captain/secretary review.
             'is_approved': false,
             'registration_status': 'pending',
+            // Never set email_verified here — the DB trigger derives it from
+            // verified_emails, so client input cannot forge a verified email.
             'kyc_id_type': idType,
             'kyc_id_number': idNumber,
             'id_issued_at': _dateOnly(idIssuedAt),

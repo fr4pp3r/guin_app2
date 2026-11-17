@@ -15,6 +15,7 @@ import 'package:guin_app/services/ai_id_verifier.dart';
 import 'package:guin_app/services/captcha_service.dart';
 import 'package:guin_app/services/captcha_widget.dart';
 import 'package:guin_app/services/user_service.dart';
+import 'package:guin_app/services/email_otp_service.dart';
 import 'package:guin_app/models/user_profile.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/image_compressor.dart';
@@ -86,6 +87,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   // reCAPTCHA
   String? _captchaToken;
 
+  // Email OTP verification (step 0)
+  final _otpController = TextEditingController();
+  bool _emailVerified = false;
+  bool _otpSending = false;
+  bool _otpVerifying = false;
+  bool _otpSent = false;
+
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   final _imagePicker = ImagePicker();
@@ -105,6 +113,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _addressController.dispose();
     _idNumberController.dispose();
     _indigencyReasonController.dispose();
+    _otpController.dispose();
     _guarantorRelationshipController.dispose();
     super.dispose();
   }
@@ -282,6 +291,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           );
           return;
         }
+        if (isValid && !_emailVerified) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.authEmailOtpRequired)),
+          );
+          return;
+        }
         break;
       case 1:
         isValid = _personalFormKey.currentState?.validate() ?? false;
@@ -389,6 +404,63 @@ class _RegisterScreenState extends State<RegisterScreen> {
         curve: Curves.easeInOut,
       );
     }
+  }
+
+  Future<void> _sendOtp() async {
+    final l10n = AppLocalizations.of(context);
+    final email = _emailController.text.trim();
+    if (!email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.authEmailInvalid)),
+      );
+      return;
+    }
+    setState(() => _otpSending = true);
+    final result = await EmailOtpService().sendCode(email);
+    if (!mounted) return;
+    setState(() {
+      _otpSending = false;
+      if (result.status == EmailOtpStatus.success) {
+        _otpSent = true;
+        _otpController.clear();
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          result.status == EmailOtpStatus.success
+              ? l10n.authEmailOtpSent
+              : l10n.authEmailOtpUnavailable,
+        ),
+        backgroundColor:
+            result.status == EmailOtpStatus.success ? null : Colors.red,
+      ),
+    );
+  }
+
+  Future<void> _verifyOtp() async {
+    final l10n = AppLocalizations.of(context);
+    final code = _otpController.text.trim();
+    if (code.length != 6) return;
+    setState(() => _otpVerifying = true);
+    final result =
+        await EmailOtpService().verifyCode(_emailController.text.trim(), code);
+    if (!mounted) return;
+    setState(() => _otpVerifying = false);
+    if (result.status == EmailOtpStatus.success) {
+      setState(() => _emailVerified = true);
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          result.status == EmailOtpStatus.success
+              ? l10n.authEmailOtpVerified
+              : l10n.authEmailOtpInvalid,
+        ),
+        backgroundColor:
+            result.status == EmailOtpStatus.success ? Colors.green : Colors.red,
+      ),
+    );
   }
 
   Future<IdVerificationSuggestion?> _runIdPreCheck() async {
@@ -841,6 +913,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
+              enabled: !_emailVerified,
               decoration: InputDecoration(
                 labelText: l10n.commonEmail,
                 prefixIcon: Icon(Icons.email_outlined),
@@ -851,6 +924,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 return null;
               },
             ),
+            _emailOtpSection(),
             const SizedBox(height: 16),
             TextFormField(
               controller: _usernameController,
@@ -915,6 +989,95 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _emailOtpSection() {
+    final l10n = AppLocalizations.of(context);
+    if (_emailVerified) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.green, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              l10n.authEmailOtpVerified,
+              style: const TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    if (!_otpSent) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: OutlinedButton.icon(
+          onPressed: _otpSending ? null : _sendOtp,
+          icon: _otpSending
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.mark_email_unread_outlined, size: 18),
+          label: Text(l10n.authEmailOtpSend),
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _otpController,
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(6),
+          ],
+          maxLength: 6,
+          onChanged: (_) => setState(() {}),
+          decoration: InputDecoration(
+            labelText: l10n.authEmailOtpCodeLabel,
+            prefixIcon: const Icon(Icons.shield_outlined),
+            counterText: '',
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed:
+                    (_otpVerifying || _otpController.text.trim().length != 6)
+                        ? null
+                        : _verifyOtp,
+                icon: _otpVerifying
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.verified_outlined, size: 18),
+                label: Text(l10n.authEmailOtpVerify),
+              ),
+            ),
+            const SizedBox(width: 12),
+            TextButton(
+              onPressed: _otpSending ? null : _sendOtp,
+              child: Text(l10n.authEmailOtpResend),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
