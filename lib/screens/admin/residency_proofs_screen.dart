@@ -411,32 +411,26 @@ class _ProofCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            Row(
+            Column(
               children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: onViewProof,
-                    icon: const Icon(Icons.visibility, size: 18),
-                    label: Text(l10n.verifyResidencyReviewViewProof),
-                  ),
+                OutlinedButton.icon(
+                  onPressed: onViewProof,
+                  icon: const Icon(Icons.visibility, size: 18),
+                  label: Text(l10n.verifyResidencyReviewViewProof),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: onConfirm,
-                    icon: const Icon(Icons.check_circle_outline, size: 18),
-                    label: Text(l10n.verifyResidencyReviewConfirm),
-                  ),
+                const SizedBox(height: 8),
+                FilledButton.icon(
+                  onPressed: onConfirm,
+                  icon: const Icon(Icons.check_circle_outline, size: 18),
+                  label: Text(l10n.verifyResidencyReviewConfirm),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: onReject,
-                    icon: const Icon(Icons.cancel_outlined, size: 18),
-                    label: Text(l10n.verifyResidencyReviewReject),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                    ),
+                const SizedBox(height: 8),
+                FilledButton.icon(
+                  onPressed: onReject,
+                  icon: const Icon(Icons.cancel_outlined, size: 18),
+                  label: Text(l10n.verifyResidencyReviewReject),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.error,
                   ),
                 ),
               ],
