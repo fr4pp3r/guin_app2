@@ -8,9 +8,10 @@ import 'package:guin_app/config/supabase_config.dart';
 enum EmailOtpStatus { success, failure }
 
 class EmailOtpResult {
-  const EmailOtpResult({required this.status, this.message});
+  const EmailOtpResult({required this.status, this.code, this.message});
 
   final EmailOtpStatus status;
+  final String? code;
   final String? message;
 }
 
@@ -21,8 +22,9 @@ typedef EmailOtpInvoke = Future<Object?> Function(
 });
 
 /// Thin client for the `email-otp` Edge Function. Any exception or a response
-/// without `ok == true` is a [EmailOtpStatus.failure]. [EmailOtpResult.message]
-/// is debug context only — the UI must show a localized string, never this.
+/// without `ok == true` is a [EmailOtpStatus.failure]. [EmailOtpResult.code]
+/// is the machine error code (e.g. `rate_limited`) the UI may branch on;
+/// [EmailOtpResult.message] stays debug-only.
 class EmailOtpService {
   EmailOtpService({EmailOtpInvoke? invoke}) : _invoke = invoke ?? _defaultInvoke;
 
@@ -38,7 +40,10 @@ class EmailOtpService {
     String task, {
     Map<String, dynamic>? body,
   }) async =>
-      (await SupabaseConfig.client.functions.invoke(task, body: body)).data;
+      (await SupabaseConfig.client.functions
+              .invoke(task, body: body)
+              .timeout(const Duration(seconds: 25)))
+          .data;
 
   Future<EmailOtpResult> _run(Map<String, dynamic> body) async {
     try {
@@ -46,15 +51,19 @@ class EmailOtpService {
       if (data is Map && data['ok'] == true) {
         return const EmailOtpResult(status: EmailOtpStatus.success);
       }
+      final error = _errorFrom(data);
       return EmailOtpResult(
         status: EmailOtpStatus.failure,
-        message: _messageFrom(data) ?? _unavailable,
+        code: error.code,
+        message: error.message ?? _unavailable,
       );
     } on FunctionException catch (e) {
       debugPrint('EmailOtpService: ${body['action']} failed status=${e.status}');
+      final error = _errorFrom(e.details);
       return EmailOtpResult(
         status: EmailOtpStatus.failure,
-        message: _messageFrom(e.details) ?? _unavailable,
+        code: error.code,
+        message: error.message ?? _unavailable,
       );
     } catch (e) {
       debugPrint('EmailOtpService: ${body['action']} failed: $e');
@@ -67,25 +76,29 @@ class EmailOtpService {
 
   static const _unavailable = 'Email verification is unavailable';
 
-  /// Pulls `error.message` out of the function's error envelope, which arrives
-  /// as a decoded map (JSON content type) or a raw JSON string depending on
-  /// the transport path.
-  static String? _messageFrom(Object? data) {
+  /// Pulls the `{ error: { code, message } }` envelope out of the function's
+  /// error response, which arrives as a decoded map (JSON content type) or a
+  /// raw JSON string depending on the transport path.
+  static ({String? code, String? message}) _errorFrom(Object? data) {
     Object? decoded = data;
     if (decoded is String) {
       try {
         decoded = jsonDecode(decoded);
       } catch (_) {
-        return null;
+        return (code: null, message: null);
       }
     }
     if (decoded is Map) {
       final error = decoded['error'];
       if (error is Map) {
+        final code = error['code'];
         final message = error['message'];
-        if (message is String && message.isNotEmpty) return message;
+        return (
+          code: code is String && code.isNotEmpty ? code : null,
+          message: message is String && message.isNotEmpty ? message : null,
+        );
       }
     }
-    return null;
+    return (code: null, message: null);
   }
 }

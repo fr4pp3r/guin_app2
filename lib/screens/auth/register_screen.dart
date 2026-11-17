@@ -430,7 +430,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         content: Text(
           result.status == EmailOtpStatus.success
               ? l10n.authEmailOtpSent
-              : l10n.authEmailOtpUnavailable,
+              : result.code == 'rate_limited'
+                  ? l10n.authEmailOtpRateLimited
+                  : l10n.authEmailOtpUnavailable,
         ),
         backgroundColor:
             result.status == EmailOtpStatus.success ? null : Colors.red,
@@ -455,7 +457,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         content: Text(
           result.status == EmailOtpStatus.success
               ? l10n.authEmailOtpVerified
-              : l10n.authEmailOtpInvalid,
+              : result.code == 'too_many_attempts'
+                  ? l10n.authEmailOtpTooManyAttempts
+                  : l10n.authEmailOtpInvalid,
         ),
         backgroundColor:
             result.status == EmailOtpStatus.success ? Colors.green : Colors.red,

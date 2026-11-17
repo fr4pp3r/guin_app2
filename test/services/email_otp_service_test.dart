@@ -99,5 +99,18 @@ void main() {
       expect(result.status, EmailOtpStatus.failure);
       expect(result.message, 'Please wait a minute');
     });
+
+    test('a non-ok error envelope surfaces the server error code', () async {
+      final service = EmailOtpService(
+        invoke: (task, {body}) async => <String, dynamic>{
+          'error': {'code': 'too_many_attempts', 'message': 'Too many attempts'},
+        },
+      );
+
+      final result = await service.sendCode('resident@example.com');
+
+      expect(result.status, EmailOtpStatus.failure);
+      expect(result.code, 'too_many_attempts');
+    });
   });
 }
