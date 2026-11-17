@@ -72,12 +72,11 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
     // Focus only targets the pending-users queue (registration approvals).
     if (!_showPending) return;
     final up = context.read<UserProvider>();
-    final match = up.pendingUsers.firstWhere(
-      (u) => u.id == id,
-      orElse: () => throw StateError('not found'),
-    );
+    final matches = up.pendingUsers.where((u) => u.id == id).toList();
+    // Stale reference (registration already reviewed): stay on the list.
+    if (matches.isEmpty || !mounted) return;
     setState(() => _focusHandled = true);
-    _openRegistrationDetail(match);
+    _openRegistrationDetail(matches.first);
   }
 
   int _initialTabIndex() {

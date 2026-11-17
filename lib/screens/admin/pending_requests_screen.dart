@@ -46,12 +46,11 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   Future<void> _tryOpenFocus(String? id) async {
     if (id == null || _focusHandled || !mounted) return;
     final dp = context.read<DocumentProvider>();
-    final match = dp.pendingReviews.firstWhere(
-      (r) => r.id == id,
-      orElse: () => throw StateError('not found'),
-    );
+    final matches = dp.pendingReviews.where((r) => r.id == id).toList();
+    // Stale reference (row no longer pending review): stay on the list.
+    if (matches.isEmpty || !mounted) return;
     setState(() => _focusHandled = true);
-    _openRequestReview(match);
+    _openRequestReview(matches.first);
   }
 
   // ── Generate DRAFT PDF ───────────────────────────────────────────────

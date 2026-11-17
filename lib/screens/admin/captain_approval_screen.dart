@@ -47,12 +47,11 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
   Future<void> _tryOpenFocus(String? id) async {
     if (id == null || _focusHandled || !mounted) return;
     final dp = context.read<DocumentProvider>();
-    final match = dp.forApproval.firstWhere(
-      (r) => r.id == id,
-      orElse: () => throw StateError('not found'),
-    );
+    final matches = dp.forApproval.where((r) => r.id == id).toList();
+    // Stale reference (row already released/deleted): stay on the list.
+    if (matches.isEmpty || !mounted) return;
     setState(() => _focusHandled = true);
-    _openRequestReview(match);
+    _openRequestReview(matches.first);
   }
 
   // ── Approve + Release with e-signature ──────────────────────────────
