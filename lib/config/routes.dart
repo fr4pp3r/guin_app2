@@ -219,7 +219,7 @@ class AppRoutes {
       case incidentReports:
         return MaterialPageRoute(
           builder: (context) =>
-              IncidentReportsScreen(focusId: settings.arguments as String?),
+              IncidentReportsScreen(focusId: settings.arguments?.toString()),
         );
       case verifyDocument:
         return MaterialPageRoute(
@@ -242,21 +242,21 @@ class AppRoutes {
       case pendingUsers:
         return MaterialPageRoute(
           builder: (context) =>
-              ManageUsersScreen(focusId: settings.arguments as String?),
+              ManageUsersScreen(focusId: settings.arguments?.toString()),
         );
       case pendingRequests:
         return MaterialPageRoute(
           builder: (context) =>
-              PendingRequestsScreen(focusId: settings.arguments as String?),
+              PendingRequestsScreen(focusId: settings.arguments?.toString()),
         );
       case pendingPayments:
         return MaterialPageRoute(
           builder: (context) =>
-              PendingPaymentsScreen(focusId: settings.arguments as String?),
+              PendingPaymentsScreen(focusId: settings.arguments?.toString()),
         );
       case captainApproval:
         return MaterialPageRoute(
-          builder: (context) => CaptainApprovalScreen(focusId: settings.arguments as String?),
+          builder: (context) => CaptainApprovalScreen(focusId: settings.arguments?.toString()),
         );
       case pendingReviews:
         return MaterialPageRoute(

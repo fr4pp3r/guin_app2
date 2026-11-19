@@ -32,7 +32,7 @@ class AppNotification {
       isRead: json['is_read'] as bool,
       createdAt: DateTime.parse(json['created_at'] as String),
       referenceType: json['reference_type'] as String?,
-      referenceId: json['reference_id'] as String?,
+      referenceId: json['reference_id']?.toString(),
     );
   }
 

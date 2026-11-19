@@ -47,12 +47,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   /// Handles the tap on a notification card: marks it read, then navigates
   /// to the item it refers to (or a list fallback when no reference is set).
   Future<void> _onNotificationTap(AppNotification notification) async {
-    await _markRead(notification);
-    if (!mounted) return;
-    final role =
-        context.read<AuthProvider>().userProfile?.role ?? AppRoles.citizen;
-    final destination = resolveDestination(notification, role);
-    await _navigateTo(notification, destination);
+    try {
+      await _markRead(notification);
+      if (!mounted) return;
+      final role =
+          context.read<AuthProvider>().userProfile?.role ?? AppRoles.citizen;
+      final destination = resolveDestination(notification, role);
+      await _navigateTo(notification, destination);
+    } catch (e) {
+      debugPrint('Notification tap failed: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).notificationUnavailable)),
+      );
+    }
   }
 
   Future<void> _navigateTo(
