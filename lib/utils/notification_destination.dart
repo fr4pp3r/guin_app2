@@ -47,12 +47,11 @@ enum NotificationDestination {
 
 /// Maps a notification + the viewer's role to a destination.
 ///
-/// Discrimination rules (see plan):
-/// - `announcement` / `incident_report` references are role-agnostic.
-/// - `user_registration` to an official → pendingUsers; to a citizen → none.
-/// - `document_request` to a citizen → documentViewer; to an official the
-///   queue is picked from the notification `type` and message substring.
-/// - null referenceType falls back to the `type` prefix.
+/// Deep-linking is intentionally limited to `document_request` notifications
+/// for now. Every other reference type (announcement, incident_report,
+/// user_registration) and the type-prefix fallbacks below return
+/// [NotificationDestination.none] — the tap handler shows the "unavailable"
+/// snackbar instead of opening a screen that isn't wired yet.
 NotificationDestination resolveDestination(
   AppNotification notification,
   String role,
@@ -61,17 +60,6 @@ NotificationDestination resolveDestination(
   final message = notification.message;
   final type = notification.type;
 
-  if (refType == 'announcement') {
-    return NotificationDestination.announcements;
-  }
-  if (refType == 'incident_report') {
-    return NotificationDestination.incidentReports;
-  }
-  if (refType == 'user_registration') {
-    return AppRoles.isOfficial(role)
-        ? NotificationDestination.pendingUsers
-        : NotificationDestination.none;
-  }
   if (refType == 'document_request') {
     if (!AppRoles.isOfficial(role)) {
       return NotificationDestination.documentViewer;
@@ -88,17 +76,6 @@ NotificationDestination resolveDestination(
     return NotificationDestination.pendingRequests;
   }
 
-  // Null or unknown referenceType: fall back to the notification type prefix.
-  if (type.startsWith('request_') ||
-      type.startsWith('payment_') ||
-      type == 'system') {
-    return NotificationDestination.myRequests;
-  }
-  if (type.startsWith('incident_')) {
-    return NotificationDestination.myReports;
-  }
-  if (type.startsWith('registration_')) {
-    return NotificationDestination.none;
-  }
+  // Announcement / incident / registration / unknown refs: no redirect yet.
   return NotificationDestination.none;
 }

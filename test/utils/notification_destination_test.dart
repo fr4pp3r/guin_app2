@@ -72,17 +72,17 @@ void main() {
       );
     });
 
-    test('tanod + incident_report -> incidentReports', () {
+    test('tanod + incident_report -> none (gated: document_request only)', () {
       expect(
         resolveDestination(
           n('incident_submitted', 'incident_report', 'i1'),
           AppRoles.barangayTanod,
         ),
-        NotificationDestination.incidentReports,
+        NotificationDestination.none,
       );
     });
 
-    test('any role + announcement -> announcements', () {
+    test('any role + announcement -> none (gated: document_request only)', () {
       for (final role in [
         AppRoles.citizen,
         AppRoles.captain,
@@ -93,18 +93,18 @@ void main() {
             n('system', 'announcement', 'a1'),
             role,
           ),
-          NotificationDestination.announcements,
+          NotificationDestination.none,
         );
       }
     });
 
-    test('captain + user_registration -> pendingUsers', () {
+    test('captain + user_registration -> none (gated: document_request only)', () {
       expect(
         resolveDestination(
           n('registration_approved', 'user_registration', 'u1'),
           AppRoles.captain,
         ),
-        NotificationDestination.pendingUsers,
+        NotificationDestination.none,
       );
     });
 
@@ -118,20 +118,20 @@ void main() {
       );
     });
 
-    test('null refType + request_*/payment_*/system -> myRequests', () {
+    test('null refType + request_*/payment_*/system -> none (gated)', () {
       for (final type in ['request_submitted', 'request_approved', 'payment_verified', 'system']) {
         expect(
           resolveDestination(n(type, null, null), AppRoles.citizen),
-          NotificationDestination.myRequests,
+          NotificationDestination.none,
         );
       }
     });
 
-    test('null refType + incident_* -> myReports', () {
+    test('null refType + incident_* -> none (gated)', () {
       for (final type in ['incident_submitted', 'incident_updated']) {
         expect(
           resolveDestination(n(type, null, null), AppRoles.citizen),
-          NotificationDestination.myReports,
+          NotificationDestination.none,
         );
       }
     });
