@@ -19,12 +19,12 @@
   <script>
     function onCaptchaSolved(token) {
       if (window.flutterChannel) {
-        window.flutterChannel.postJSON({type: 'captcha_solved', token: token});
+        window.flutterChannel.postMessage(JSON.stringify({type: 'captcha_solved', token: token}));
       }
     }
     function onCaptchaExpired() {
       if (window.flutterChannel) {
-        window.flutterChannel.postJSON({type: 'captcha_error', msg: 'expired'});
+        window.flutterChannel.postMessage(JSON.stringify({type: 'captcha_error', msg: 'expired'}));
       }
     }
   </script>
