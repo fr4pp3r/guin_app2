@@ -694,6 +694,62 @@ class DocumentProvider with ChangeNotifier {
     }
   }
 
+  /// Secretary requests changes. The row stays in the secretary queue
+  /// (`needs_revision` is queried by `getPendingReviews`), so the citizen
+  /// sees the note and can resubmit without the secretary losing track of it.
+  Future<void> requestRevision({
+    required String requestId,
+    required String secretaryId,
+    required String notes,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await _documentService.markNeedsRevision(
+        requestId: requestId,
+        secretaryId: secretaryId,
+        notes: notes,
+      );
+
+      // Official-side fan-out: the request is back with the citizen.
+      final revised = await _requestForNotify(requestId);
+      await _safeNotifyRoles(
+        [
+          AppRoles.legacyAdmin,
+        ],
+        'Request needs revision',
+        'A ${revised?.documentTypeDisplay ?? 'document request'} was sent '
+            'back for revision.',
+        'system',
+        referenceType: NotificationRefs.documentRequest,
+        referenceId: requestId,
+      );
+
+      // Citizen-side notify: tell them what to fix.
+      if (revised != null) {
+        await _safeNotifyUser(
+          revised.userId,
+          'Revision requested',
+          'Your ${revised.documentTypeDisplay} request needs changes: '
+              '$notes',
+          'system',
+          referenceType: NotificationRefs.documentRequest,
+          referenceId: requestId,
+        );
+      }
+
+      await loadPendingReviews();
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   // ── Treasurer workflow actions ─────────────────────────────────────────
 
   Future<void> treasurerConfirmPayment({

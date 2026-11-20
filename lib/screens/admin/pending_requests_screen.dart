@@ -272,6 +272,85 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
     }
   }
 
+  // ── Request revision (send back to citizen) ──────────────────────────
+
+  Future<void> _handleRequestRevision(DocumentRequest request) async {
+    final l10n = AppLocalizations.of(context);
+    final reasonCtrl = TextEditingController();
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.asecRequestRevision),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.asecRevisionNotesForCitizen),
+            const SizedBox(height: 12),
+            TextField(
+              controller: reasonCtrl,
+              maxLines: 4,
+              decoration: InputDecoration(
+                labelText: l10n.asecRevisionNotes,
+                hintText: l10n.asecRevisionNotesHint,
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.commonCancel),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (reasonCtrl.text.trim().isEmpty) {
+                Helpers.showErrorSnackBar(ctx, l10n.commonPleaseProvideReason);
+                return;
+              }
+              Navigator.pop(ctx, true);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            child: Text(l10n.asecSendRevision),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) {
+      reasonCtrl.dispose();
+      return;
+    }
+
+    final documentProvider = context.read<DocumentProvider>();
+    final authProvider = context.read<AuthProvider>();
+    Helpers.showLoadingDialog(context, l10n.asecRequestingRevision);
+    try {
+      await documentProvider.requestRevision(
+        requestId: request.id,
+        secretaryId: authProvider.userProfile!.id,
+        notes: reasonCtrl.text.trim(),
+      );
+      reasonCtrl.dispose();
+      if (!mounted) return;
+      Helpers.dismissDialog(context);
+      Helpers.showSuccessSnackBar(context, l10n.asecRevisionRequestedNotified);
+    } catch (e) {
+      reasonCtrl.dispose();
+      if (!mounted) return;
+      Helpers.dismissDialog(context);
+      Helpers.showErrorSnackBar(
+        context,
+        Helpers.parseSupabaseError(e.toString()),
+      );
+    }
+  }
+
   // ── Reject outright ──────────────────────────────────────────────────
 
   Future<void> _handleReject(DocumentRequest request) async {
@@ -352,8 +431,18 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   List<RequestAction> _actionsFor(DocumentRequest r) {
     final l10n = AppLocalizations.of(context);
     final status = r.requestStatus;
-    if (status == DocStatus.submitted || status == DocStatus.pendingReview) {
+    // needs_revision is treated like submitted: the citizen has no resubmit
+    // screen, so the secretary moves it forward (draft) or rejects it here.
+    if (status == DocStatus.submitted ||
+        status == DocStatus.pendingReview ||
+        status == DocStatus.needsRevision) {
       return [
+        RequestAction(
+          label: l10n.asecRequestRevision,
+          icon: Icons.edit_note,
+          color: Colors.orange,
+          onPressed: () => _handleRequestRevision(r),
+        ),
         RequestAction(
           label: l10n.commonReject,
           icon: Icons.cancel_outlined,
@@ -372,6 +461,12 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
     if (status == DocStatus.draftGenerated) {
       return [
         RequestAction(
+          label: l10n.asecRequestRevision,
+          icon: Icons.edit_note,
+          color: Colors.orange,
+          onPressed: () => _handleRequestRevision(r),
+        ),
+        RequestAction(
           label: r.paymentRequired
               ? l10n.asecSendInvoice
               : l10n.asecForwardToCaptain,
@@ -382,7 +477,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
         ),
       ];
     }
-    // e.g. needs_revision — the card showed a waiting banner, no actions.
+    // Any other status — no actions (should not reach the secretary queue).
     return const [];
   }
 

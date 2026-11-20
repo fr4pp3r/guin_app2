@@ -104,6 +104,38 @@ class DocumentService {
     return DocumentRequest.fromJson(response);
   }
 
+  /// Secretary requests changes: records the note and sends the request back
+  /// to the citizen. `needs_revision` is the only status that routes the row
+  /// back into the secretary queue (see `getPendingReviews`), so the citizen
+  /// sees it as "needs revision" and can resubmit.
+  Future<DocumentRequest> markNeedsRevision({
+    required String requestId,
+    required String? secretaryId,
+    required String notes,
+  }) async {
+    final response = await _supabase
+        .from('document_requests')
+        .update({
+          'request_status': DocStatus.needsRevision,
+          'secretary_notes': notes,
+          'reviewed_by_secretary': secretaryId,
+          'reviewed_at': Helpers.now().toIso8601String(),
+        })
+        .eq('id', requestId)
+        .select()
+        .single();
+    await _audit(
+      requestId,
+      secretaryId ?? 'system',
+      secretaryId != null ? 'secretary' : 'system',
+      'request_revision',
+      null,
+      DocStatus.needsRevision,
+      notes: notes,
+    );
+    return DocumentRequest.fromJson(response);
+  }
+
   // ── Treasurer actions ────────────────────────────────────────────────────
 
   Future<DocumentRequest> treasurerConfirmPayment({
