@@ -588,9 +588,22 @@ class _DocumentRequestDetailScreenState
   Widget _buildAiReviewCard(DocumentRequest r) {
     final l10n = AppLocalizations.of(context);
     final ai = r.aiReview!;
-    final issues = (ai['issues'] as List?)?.cast<String>() ?? const [];
-    final suggestions =
-        (ai['suggestions'] as List?)?.cast<String>() ?? const [];
+    // The edge function writes issues as an array and suggestions as an
+    // object {field: corrected value}; older/other writers may deviate, so
+    // both parse defensively (a List cast here crashes the whole page).
+    final rawIssues = ai['issues'];
+    final issues = rawIssues is List
+        ? rawIssues.whereType<String>().toList()
+        : const <String>[];
+    final rawSuggestions = ai['suggestions'];
+    final suggestions = rawSuggestions is Map
+        ? [
+            for (final e in rawSuggestions.entries)
+              '${_humanizeKey(e.key.toString())}: ${e.value}',
+          ]
+        : rawSuggestions is List
+        ? rawSuggestions.whereType<String>().toList()
+        : const <String>[];
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
