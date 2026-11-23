@@ -364,7 +364,7 @@
   "reqDocNormalizedPurpose": "Inayos na layunin: {purpose}",
   "reqDocOathUndertakingDesc": "Para sa mga unang pagkakataong naghahanap ng trabaho",
   "reqDocOccupation": "Pinagkakakitaan (Trabaho/Negosyo)",
-  "reqDocPrefilledFromProfile": "Mula sa iyong profile — pindutin upang i-edit",
+  "reqDocPrefilledFromProfile": "Mga detalye mula sa iyong profile",
   "reqDocPaymentAmount": "   Halaga: ₱{amount}",
   "reqDocPaymentInstructions": "Mga Tagubilin sa Pagbabayad",
   "reqDocPaymentName": "   Pangalan: {name}",

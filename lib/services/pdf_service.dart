@@ -536,19 +536,19 @@ class PdfService {
               ),
               _buildInfoRow(
                 'Profession/Occupation:',
-                data['profession_occupation']?.toString() ?? 'N/A',
+                data['occupation']?.toString() ?? 'N/A',
               ),
               _buildInfoRow(
                 'Height:',
-                data['height_cm'] != null ? '${data['height_cm']} cm' : 'N/A',
+                data['height'] != null ? '${data['height']} cm' : 'N/A',
               ),
               _buildInfoRow(
                 'Weight:',
-                data['weight_kg'] != null ? '${data['weight_kg']} kg' : 'N/A',
+                data['weight'] != null ? '${data['weight']} kg' : 'N/A',
               ),
               _buildInfoRow(
                 'TIN Number:',
-                data['tin_number']?.toString() ?? 'N/A',
+                data['tin']?.toString() ?? 'N/A',
               ),
               pw.SizedBox(height: 20),
 

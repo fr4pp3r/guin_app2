@@ -43,6 +43,8 @@ citizens use once).
    that map. Clamp `gender`/`civil_status` to the dropdown values (`Other`
    gender from admin-created users falls back to `Male`). `_cedulaBirthDate`
    comes from `dateOfBirth`, so the existing birth-date guard passes.
+   Follow-up (user request): every seeded field is **read-only**; only cedula
+   height and weight stay editable (they have no profile source).
 3. **Single purpose field** for every family: delete
    `_indigencyPurposeController`, `_effectivePurpose`, and the conditional that
    hid the top-level purpose for indigency; the indigency data map writes the

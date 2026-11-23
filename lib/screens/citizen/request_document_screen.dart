@@ -1021,6 +1021,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
       children: [
         TextFormField(
           controller: _idFullNameController,
+          readOnly: true,
           decoration: InputDecoration(
             labelText: l10n.commonFullName,
             border: const OutlineInputBorder(),
@@ -1031,6 +1032,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _idAddressController,
+          readOnly: true,
           decoration: InputDecoration(
             labelText: l10n.commonAddress,
             border: const OutlineInputBorder(),
@@ -1041,6 +1043,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _idContactController,
+          readOnly: true,
           keyboardType: TextInputType.phone,
           decoration: InputDecoration(
             labelText: l10n.commonPhoneNumber,
@@ -1060,6 +1063,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
       children: [
         TextFormField(
           controller: _indigencyFullNameController,
+          readOnly: true,
           decoration: InputDecoration(
             labelText: l10n.commonFullName,
             border: const OutlineInputBorder(),
@@ -1070,6 +1074,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _indigencyAddressController,
+          readOnly: true,
           decoration: InputDecoration(
             labelText: l10n.commonAddress,
             border: const OutlineInputBorder(),
@@ -1081,6 +1086,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
             Expanded(
               child: TextFormField(
                 controller: _indigencyAgeController,
+                readOnly: true,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: l10n.commonAge,
@@ -1092,6 +1098,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
             Expanded(
               child: TextFormField(
                 controller: _indigencyCivilStatusController,
+                readOnly: true,
                 decoration: InputDecoration(
                   labelText: l10n.commonCivilStatus,
                   border: const OutlineInputBorder(),
@@ -1103,6 +1110,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _indigencyRequesterController,
+          readOnly: true,
           decoration: InputDecoration(
             labelText: l10n.reqDocRequester,
             border: const OutlineInputBorder(),
@@ -1111,6 +1119,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _indigencyRequesterAddressController,
+          readOnly: true,
           decoration: InputDecoration(
             labelText: l10n.reqDocRequesterAddress,
             border: const OutlineInputBorder(),
@@ -1130,6 +1139,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
             Expanded(
               child: TextFormField(
                 controller: _cedulaLastNameController,
+                readOnly: true,
                 decoration: InputDecoration(
                   labelText: l10n.reqDocLastName,
                   border: const OutlineInputBorder(),
@@ -1142,6 +1152,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
             Expanded(
               child: TextFormField(
                 controller: _cedulaFirstNameController,
+                readOnly: true,
                 decoration: InputDecoration(
                   labelText: l10n.reqDocFirstName,
                   border: const OutlineInputBorder(),
@@ -1155,6 +1166,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _cedulaMiddleNameController,
+          readOnly: true,
           decoration: InputDecoration(
             labelText: l10n.reqDocMiddleName,
             border: const OutlineInputBorder(),
@@ -1163,6 +1175,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _cedulaAddressController,
+          readOnly: true,
           decoration: InputDecoration(
             labelText: l10n.commonAddress,
             border: const OutlineInputBorder(),
@@ -1188,12 +1201,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                           ),
                         ))
                     .toList(),
-                onChanged: (value) {
-                  if (value == null) return;
-                  setState(() {
-                    _cedulaGender = value;
-                  });
-                },
+                onChanged: null,
               ),
             ),
             const SizedBox(width: 16),
@@ -1218,12 +1226,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                           ),
                         ))
                     .toList(),
-                onChanged: (value) {
-                  if (value == null) return;
-                  setState(() {
-                    _cedulaCivilStatus = value;
-                  });
-                },
+                onChanged: null,
               ),
             ),
           ],
@@ -1231,6 +1234,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _cedulaBirthPlaceController,
+          readOnly: true,
           decoration: InputDecoration(
             labelText: l10n.commonPlaceOfBirth,
             border: const OutlineInputBorder(),
@@ -1240,19 +1244,6 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         ),
         const SizedBox(height: 16),
         InkWell(
-          onTap: () async {
-            final date = await showDatePicker(
-              context: context,
-              initialDate: _cedulaBirthDate ?? DateTime(2000),
-              firstDate: DateTime(1900),
-              lastDate: DateTime.now(),
-            );
-            if (date != null) {
-              setState(() {
-                _cedulaBirthDate = date;
-              });
-            }
-          },
           borderRadius: BorderRadius.circular(4),
           child: InputDecorator(
             decoration: InputDecoration(
@@ -1268,6 +1259,8 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
           ),
         ),
         const SizedBox(height: 16),
+        // Height and weight are the only fields the citizen may edit here;
+        // everything else is locked to the profile.
         Row(
           children: [
             Expanded(
@@ -1296,6 +1289,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _cedulaTinController,
+          readOnly: true,
           keyboardType: TextInputType.number,
           decoration: const InputDecoration(
             labelText: 'TIN',
@@ -1305,6 +1299,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _cedulaOccupationController,
+          readOnly: true,
           decoration: InputDecoration(
             labelText: l10n.reqDocOccupation,
             border: const OutlineInputBorder(),
@@ -1313,6 +1308,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _cedulaAnnualIncomeController,
+          readOnly: true,
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
             labelText: l10n.reqDocAnnualIncome,
@@ -1322,6 +1318,7 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _cedulaCitizenshipController,
+          readOnly: true,
           decoration: InputDecoration(
             labelText: l10n.reqDocCitizenship,
             border: const OutlineInputBorder(),

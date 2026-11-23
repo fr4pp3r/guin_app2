@@ -364,7 +364,7 @@
   "reqDocNormalizedPurpose": "Gihapsay nga katuyoan: {purpose}",
   "reqDocOathUndertakingDesc": "Alang sa mga unang higayon nga nangita og trabaho",
   "reqDocOccupation": "Pinagkakakitaan (Trabaho/Negosyo)",
-  "reqDocPrefilledFromProfile": "Gikan sa imong profile — pindota aron ma-edit",
+  "reqDocPrefilledFromProfile": "Mga detalye gikan sa imong profile",
   "reqDocPaymentAmount": "   Kantidad: ₱{amount}",
   "reqDocPaymentInstructions": "Mga Instruksyon sa Pagbayad",
   "reqDocPaymentName": "   Ngalan: {name}",
