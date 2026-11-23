@@ -9,6 +9,7 @@ import 'package:guin_app/models/user_profile.dart';
 import 'package:guin_app/utils/role_access.dart';
 import 'package:guin_app/utils/notification_refs.dart';
 import 'package:guin_app/utils/helpers.dart';
+import 'package:guin_app/utils/session_manager.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -129,6 +130,7 @@ class AuthProvider extends ChangeNotifier {
     double? kycFaceMatchScore,
     bool isIndigent = false,
     String? indigencyReason,
+    double? autoApproveFaceScore,
   }) async {
     _isLoading = true;
     _error = null;
@@ -208,21 +210,42 @@ class AuthProvider extends ChangeNotifier {
         indigencyReason: indigencyReason,
       );
 
-      // Official-side fan-out: a new registration is waiting for review.
-      // Best-effort — a notification failure must never fail registration.
-      try {
-        await _notificationService.notifyRoles(
-          roles: [AppRoles.captain, AppRoles.legacyAdmin],
-          title: 'New registration to review',
-          message:
-              '${_userProfile?.fullName ?? 'A new citizen'} just registered '
-              'and is awaiting approval.',
-          type: 'system',
-          referenceType: NotificationRefs.userRegistration,
-          referenceId: _userProfile?.id,
-        );
-      } catch (e) {
-        debugPrint('Registration fan-out notification failed: $e');
+      // Face-matched auto-approval (mobile signup gate): a real verify call
+      // returned matched — approve immediately. Any failure here must never
+      // fail the signup; the account stays pending for manual review.
+      var autoApproved = false;
+      if (autoApproveFaceScore != null) {
+        try {
+          final updated = await _userService.autoApproveFaceMatch(
+            _userProfile!.id,
+            score: autoApproveFaceScore,
+          );
+          _userProfile = updated;
+          await SessionManager.saveProfileSnapshot(updated);
+          autoApproved = true;
+        } catch (e) {
+          debugPrint('Face auto-approval failed — continuing as pending: $e');
+        }
+      }
+
+      if (!autoApproved) {
+        // Official-side fan-out: a new registration is waiting for review.
+        // Best-effort — a notification failure must never fail registration.
+        // Skipped when the face gate auto-approved (nothing to review).
+        try {
+          await _notificationService.notifyRoles(
+            roles: [AppRoles.captain, AppRoles.legacyAdmin],
+            title: 'New registration to review',
+            message:
+                '${_userProfile?.fullName ?? 'A new citizen'} just registered '
+                'and is awaiting approval.',
+            type: 'system',
+            referenceType: NotificationRefs.userRegistration,
+            referenceId: _userProfile?.id,
+          );
+        } catch (e) {
+          debugPrint('Registration fan-out notification failed: $e');
+        }
       }
 
       _isLoading = false;

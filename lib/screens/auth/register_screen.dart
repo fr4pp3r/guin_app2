@@ -15,6 +15,8 @@ import 'package:guin_app/services/ai_id_verifier.dart';
 import 'package:guin_app/services/captcha_service.dart';
 import 'package:guin_app/services/captcha_widget.dart';
 import 'package:guin_app/services/user_service.dart';
+import 'package:guin_app/models/face_gate.dart';
+import 'package:guin_app/services/face_gate_service.dart';
 import 'package:guin_app/services/email_otp_service.dart';
 import 'package:guin_app/models/user_profile.dart';
 import 'package:guin_app/utils/constants.dart';
@@ -66,6 +68,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   // Consumed by the submit step (_handleRegister); true only when the face
   // gate auto-captured the selfie.
   bool _selfieGatePassed = false;
+  // Face gate (auto-approval): verified a selfie against official enrollments.
+  FaceGateResult? _faceGateResult;
+  bool _faceGateChecking = false;
 
   // ID details
   String? _selectedIdType;
@@ -210,6 +215,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         setState(() {
           _selfiePhoto = result.file;
           _selfieGatePassed = result.gatePassed;
+          _faceGateResult = null;
         });
         return;
       }
@@ -226,6 +232,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         setState(() {
           _selfiePhoto = File(pickedFile.path);
           _selfieGatePassed = false;
+          _faceGateResult = null;
         });
         if (mounted) {
           final l10n = AppLocalizations.of(context);
@@ -534,6 +541,73 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    // Face gate (mobile only): verify the selfie against the official
+    // enrollment store before submitting. Null/!matched = block — the one
+    // deliberate violation of the "AI never blocks" rule.
+    final gateSupported =
+        !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS);
+    if (gateSupported) {
+      if (_selfiePhoto == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.faceGateSelfieRequired)),
+          );
+        }
+        return;
+      }
+      try {
+        setState(() => _faceGateChecking = true);
+        final embedding = await FaceGateService().embedFromFile(_selfiePhoto!);
+        if (embedding == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(l10n.faceGateScanFailed), backgroundColor: Colors.red),
+            );
+          }
+          return;
+        }
+        final result = await FaceGateService().verify(
+          fullName: FaceGateService.normalizeName(
+            _givenNameController.text,
+            _middleNameController.text,
+            _lastNameController.text,
+          ),
+          embedding: embedding,
+        );
+        if (result == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(l10n.faceGateScanFailed), backgroundColor: Colors.red),
+            );
+          }
+          return;
+        }
+        if (!result.matched) {
+          if (mounted) {
+            await showDialog<void>(
+              context: context,
+              builder: (dialogContext) => AlertDialog(
+                title: Text(l10n.faceGateBlockedTitle),
+                content: Text(l10n.faceGateBlockedBody),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: Text(l10n.commonClose),
+                  ),
+                ],
+              ),
+            );
+          }
+          return;
+        }
+        _faceGateResult = result;
+      } finally {
+        if (mounted) setState(() => _faceGateChecking = false);
+      }
+    }
+
     final now = DateTime.now();
     final age =
         now.year -
@@ -571,7 +645,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     }
 
-    final fullNameForAi = [_givenNameController.text.trim(), if (_middleNameController.text.trim().isNotEmpty) _middleNameController.text.trim(), _lastNameController.text.trim()].join(' ');
+    // Extract face gate result for auto-approval (if gate ran and matched).
+    final autoApproveFaceScore =
+        (_faceGateResult?.matched ?? false) ? _faceGateResult!.score : null;
 
     final success = await authProvider.signUp(
       email: _emailController.text.trim(),
@@ -601,22 +677,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
       indigencyReason: _isIndigent
           ? _indigencyReasonController.text.trim()
           : null,
+      autoApproveFaceScore: autoApproveFaceScore,
     );
 
     if (!mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            preCheckUnavailable
-                ? l10n.authAiPrecheckUnavailable
-                : l10n.authRegistrationSuccessful,
+      if (autoApproveFaceScore != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.faceGateApproved),
+            backgroundColor: Colors.green,
           ),
-          backgroundColor: preCheckUnavailable ? null : Colors.green,
-        ),
-      );
-      Navigator.of(context).pushReplacementNamed(AppRoutes.pendingApproval);
+        );
+        Navigator.of(context).pushReplacementNamed(AppRoutes.citizenDashboard);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              preCheckUnavailable
+                  ? l10n.authAiPrecheckUnavailable
+                  : l10n.authRegistrationSuccessful,
+            ),
+            backgroundColor: preCheckUnavailable ? null : Colors.green,
+          ),
+        );
+        Navigator.of(context).pushReplacementNamed(AppRoutes.pendingApproval);
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -837,7 +924,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Consumer<AuthProvider>(
                     builder: (context, authProvider, _) => ElevatedButton(
                       onPressed:
-                          (authProvider.isLoading || _idPreCheckRunning)
+                          (authProvider.isLoading || _idPreCheckRunning || _faceGateChecking)
                               ? null
                               : _nextStep,
                       style: ElevatedButton.styleFrom(
@@ -849,7 +936,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         elevation: 2,
                       ),
-                      child: authProvider.isLoading
+                      child: authProvider.isLoading || _faceGateChecking
                           ? const SizedBox(
                               width: 22,
                               height: 22,
@@ -1322,6 +1409,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             const SizedBox(height: 16),
             _selfieCard(),
+            const SizedBox(height: 8),
+            Text(
+              l10n.faceGateConsent,
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
+            ),
             const SizedBox(height: 16),
             if (!_isIndigent) ...[
               _idTypeDropdown(),
