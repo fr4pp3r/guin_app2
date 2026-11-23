@@ -43,7 +43,8 @@ CREATE INDEX IF NOT EXISTS face_enrollments_name_idx
 ALTER TABLE public.face_enrollments ENABLE ROW LEVEL SECURITY;
 
 -- Private bucket: no public URLs and no storage policy — uploads and reads
--- happen only through the service-role face-match function.
+-- happen only through the service-role face-match function. DO UPDATE (not
+-- DO NOTHING) so a pre-existing public bucket with this id is forced private.
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
   'face-samples',
@@ -52,4 +53,7 @@ VALUES (
   5242880,
   ARRAY['image/jpeg','image/jpg','image/png']
 )
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE
+  SET public             = EXCLUDED.public,
+      file_size_limit    = EXCLUDED.file_size_limit,
+      allowed_mime_types = EXCLUDED.allowed_mime_types;

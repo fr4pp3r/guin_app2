@@ -19,6 +19,7 @@
 5. [Document Request Workflow](#5-document-request-workflow)
 6. [Incident Reports](#6-incident-reports)
 7. [Document Verification](#7-document-verification)
+   - [7.5 Face-Matched Auto-Approval (Signup Gate)](#75-face-matched-auto-approval-signup-gate)
 8. [Setup — Step by Step](#8-setup--step-by-step)
 9. [Database Schema](#9-database-schema)
 10. [Storage Buckets](#10-storage-buckets)
@@ -292,6 +293,9 @@ callers degrade gracefully.
 | `ai_chatbot.dart` | `chatbot` | Barangay Assistant chatbot for citizen information queries (documents, fees, statuses, incidents, announcements, verification). Localized FAQ content (`lib/utils/faqs.dart`) follows the app locale; falls back to an offline keyword match when the AI is unavailable. |
 
 All AI features are **advisory only** — final decisions always rest with human reviewers.
+The one exception is the face gate (§7.5), which is not an `AiService` task: it is the
+`FaceGateService` (`lib/services/face_gate_service.dart`) calling the dedicated
+`face-match` edge function, and its `matched` verdict gates mobile signup by design.
 
 ### Automation pipeline
 
@@ -452,6 +456,58 @@ gracefully (print cap reached, web/desktop unsupported).
 > Release/consume writes fail with "column … does not exist" until the policy-column
 > migration is applied; the print-copies table is a separate prerequisite for
 > "Request printable copy".
+
+---
+
+## 7.5 Face-Matched Auto-Approval (Signup Gate)
+
+New residents can sign up only if their face is already on file. Officials pre-enroll
+residents; at signup the app compares the liveness selfie against the sample enrolled
+under the name the user typed. Match → the account is approved instantly. No match (or
+the name is not enrolled at all) → signup is blocked with "visit the barangay office".
+Manual officer review disappears from the normal mobile signup path.
+
+**Enrollment (officials):** `ManageUsersScreen` → the face icon opens
+`face_enrollment_screen.dart` (captain / admin / other `canManageUsers` roles). Enter the
+resident's given/middle/last name + DOB, attach one clear front-facing photo, tap
+*Enroll face*. The app detects exactly one face on-device (`FaceGateService.embedFromFile`,
+same `face_detection_tflite` model the KYC selfie-vs-ID check uses), sends the embedding +
+a compressed PNG to the edge function, and stores the row. The enrolled list below shows
+every sample (1-hour signed URL thumbnail) with delete.
+
+**Signup (mobile):** the existing liveness-captured selfie is embedded on-device and sent
+to `face-match` `verify` with `normalizeName(given, middle, last)`. The function looks up
+all rows with that normalized name and returns the best cosine similarity; ≥ 0.5
+(`MATCH_THRESHOLD`, lives only server-side) ⇒ `matched`. The client treats any failure
+(function unreachable, garbage response) as a block — mobile signup never silently
+continues to the old pending flow. On match, the inserted row is immediately updated:
+`registration_status='approved'`, `is_approved=true`, `kyc_method='ai_verified'`,
+`kyc_reviewed_by` NULL (system decision, no human), plus the score in
+`kyc_enrolled_face_score`. The "New registration to review" fan-out to officials is
+skipped for auto-approved signups. The selfie-vs-ID advisory score keeps landing in the
+separate `kyc_face_match_score` column.
+
+**Web / desktop:** TFLite embeddings are native-only, so web signups cannot face-match —
+they keep the old pending → manual-review flow unchanged. Enrollment likewise requires
+the mobile app.
+
+**Same name, two residents** (father/son): verification scores against ALL rows with that
+normalized name and the best score wins — identity is decided by the face, not the text.
+DOB is recorded for audit, not as a lookup key (a DOB typo must not lock a resident out).
+
+**Privacy:** `face_enrollments` (embeddings) and the `face-samples` bucket (reference
+photos) hold biometric data — sensitive personal information under the PH Data Privacy
+Act of 2012. Unlike every other app table/bucket, RLS is enabled with **zero policies**
+and the bucket is private: nothing is readable with the anon key; only the `face-match`
+edge function (service-role key) reads or writes. A one-line consent notice is shown at
+the face-capture step. Known limits: the liveness gate is a still-photo liveness check
+(a printed photo held up can defeat simple checks), and — as everywhere in this app —
+permission enforcement is client-side; a tampered client could already self-approve rows
+before this feature existed.
+
+**Deploy / live DBs:** apply `supabase/migrations/20261124_face_auto_approval.sql`, then
+`supabase functions deploy face-match`. No new secrets (the function uses the built-in
+service-role env).
 
 ---
 
@@ -619,6 +675,14 @@ and services — not a copy of any single legacy script.
 `incident_reports`, `incident_updates`, `incident_attachments`,
 `identity_access_logs`, `audit_logs`.
 
+### Biometric enrollment tables
+
+`face_enrollments` — one row per enrolled resident face sample (normalized full name,
+DOB, embedding, private-bucket photo path). RLS is enabled with **zero policies**:
+deliberately different from every other app table, because biometric data must not be
+readable with the anon key. Only the `face-match` edge function touches it, via the
+service-role key (see [§7.5](#75-face-matched-auto-approval-signup-gate)).
+
 ### Enums
 
 | Enum                  | Values                                                                                          |
@@ -645,16 +709,18 @@ the app the single source of truth, which is what
 
 ## 10. Storage Buckets
 
-Five buckets, all created by `setup.sql` §7. Upload path convention is user- or
-request-scoped, e.g. `profile-photos/<user_id>/<timestamp>.jpg`.
+Six buckets. Five are public, created by `setup.sql` §7. Upload path convention is
+user- or request-scoped, e.g. `profile-photos/<user_id>/<timestamp>.jpg`. The sixth
+(`face-samples`) is **private** and holds biometric reference photos — see §7.5.
 
-| Bucket                | Written by                          | Read by                                |
-| --------------------- | ----------------------------------- | -------------------------------------- |
-| `profile-photos`      | Registration, admin user creation   | Dashboards, PDF generation             |
-| `valid-ids`           | Registration, admin user creation   | Pending-user review                    |
-| `payment-receipts`    | Citizen (GCash screenshot, `DocumentProvider.uploadReceipt()`); Treasurer (official receipt photo at confirm, path `<request_id>/official_*.jpg`) | Treasurer (`pending_payments_screen`); Citizen (My Requests — View Official Receipt) |
-| `announcement-images` | Officials posting an announcement (`AnnouncementProvider.createAnnouncement`) | Announcement feed / detail (everyone) |
-| `documents`           | PDF generation and release          | Citizen download, verification         |
+| Bucket                | Public | Written by                          | Read by                                |
+| --------------------- | ------ | ----------------------------------- | -------------------------------------- |
+| `profile-photos`      | yes    | Registration, admin user creation   | Dashboards, PDF generation             |
+| `valid-ids`           | yes    | Registration, admin user creation   | Pending-user review                    |
+| `payment-receipts`    | yes    | Citizen (GCash screenshot, `DocumentProvider.uploadReceipt()`); Treasurer (official receipt photo at confirm, path `<request_id>/official_*.jpg`) | Treasurer (`pending_payments_screen`); Citizen (My Requests — View Official Receipt) |
+| `announcement-images` | yes    | Officials posting an announcement (`AnnouncementProvider.createAnnouncement`) | Announcement feed / detail (everyone) |
+| `documents`           | yes    | PDF generation and release          | Citizen download, verification         |
+| `face-samples`        | **no** | `face-match` edge function (service role only) | Officials' enrollment list (1-hour signed URLs) |
 
 **Common error:** `StorageException: Bucket not found (404)`. This means `setup.sql`
 has not been run against the current Supabase project — or, on a database upgraded in
@@ -1006,6 +1072,13 @@ screen (`FaceMatchPolicy`: same person ≥ 0.5, uncertain ≥ 0.3, else differen
 blocks registration, never auto-approves, and is absent on platforms where the detector
 fails. The AI pre-check (`kyc_ai_result`) is a separate, equally advisory lane.
 
+> **Update (2026-11):** this is still true for the selfie-vs-ID score, but the NEW
+> enrolled-face gate now DOES gate mobile signup — see
+> [§7.5](#75-face-matched-auto-approval-signup-gate). The enrolled match
+> (`kyc_enrolled_face_score`) is compared server-side against pre-enrolled samples and
+> auto-approves at ≥ 0.5; every failure mode blocks. The two scores live in separate
+> columns.
+
 ---
 
 ## 14. Command Reference
@@ -1127,6 +1200,7 @@ These screens are reached with `Navigator.push(MaterialPageRoute(...))` and deli
 | `announcements/create_announcement_screen` | Feed FAB (posting roles only)                 |
 | `admin/user_registration_detail_screen` | Pending registration cards (manage users)       |
 | `admin/document_request_detail_screen` | Secretary review queue + captain/kagawad queue cards |
+| `admin/face_enrollment_screen`      | Manage users AppBar face icon (officials only)      |
 | `tanod/incident_detail_screen` | Tanod dashboard incident cards (open + recently handled) |
 
 ---
@@ -1138,6 +1212,7 @@ consolidated into this document. Listed newest-first by their own stated dates.
 
 | Date        | Milestone                                                                 |
 | ----------- | ------------------------------------------------------------------------- |
+| 2026-11-24  | Face-matched auto-approval at signup (§7.5): officials enroll resident face samples, the liveness selfie is verified server-side against the enrolled sample for the typed name, mobile signup auto-approves on match and blocks otherwise; private `face-samples` bucket + zero-policy `face_enrollments` table |
 | 2026-10-20  | Treasurer-uploaded official receipt: required photo step in Confirm Payment, citizen view + download/share from My Requests |
 | 2026-10-16  | Tanod incident dashboard (`/tanod/dashboard`): open-incident counts, priority-filterable urgent-first feed, status transitions via the existing `updateStatus`; tanods now land here from login and splash |
 | 2026-10-15  | Approval review pages (full registration / request + requestor detail before approve/refuse), notifications for every role with in-app queue badges, and the announcement board |

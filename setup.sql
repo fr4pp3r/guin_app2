@@ -1030,23 +1030,23 @@ ON CONFLICT (username) DO NOTHING;
 
 SELECT id, name, public, file_size_limit, allowed_mime_types
 FROM storage.buckets
-WHERE id IN ('profile-photos','valid-ids','payment-receipts','announcement-images','documents')
+WHERE id IN ('profile-photos','valid-ids','payment-receipts','announcement-images','documents','face-samples')
 ORDER BY id;
 
 SELECT username, role, registration_status, is_approved
 FROM public.users_profile
 ORDER BY created_at;
 
--- Expected: 20 tables
+-- Expected: 23 tables
 SELECT COUNT(*) AS table_count
 FROM information_schema.tables
 WHERE table_schema = 'public'
   AND table_type = 'BASE TABLE';
 
--- Expected: 5 buckets
+-- Expected: 6 buckets
 SELECT COUNT(*) AS bucket_count
 FROM storage.buckets
-WHERE id IN ('profile-photos','valid-ids','payment-receipts','announcement-images','documents');
+WHERE id IN ('profile-photos','valid-ids','payment-receipts','announcement-images','documents','face-samples');
 
 
 -- ============================================================================

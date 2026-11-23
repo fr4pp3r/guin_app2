@@ -34,14 +34,13 @@ service calling `AiService.invoke(task, payload)`
 (`lib/services/ai_service.dart`, returns `null` on any failure), and land the feature UI
 with the same graceful-degradation rule.
 
-- **Deploy** (see `supabase/functions/ai/README.md`): `supabase functions deploy ai`,
-  `supabase secrets set GEMINI_API_KEY=... AI_MODEL=gemini-2.5-flash`. The AI key lives
+- **Deploy** (see `supabase/functions/ai/README.md`): `supabase functions deploy ai`, `supabase functions deploy face-match`, `supabase secrets set GEMINI_API_KEY=... AI_MODEL=gemini-2.5-flash`. The AI key lives
   ONLY in Supabase secrets — never in `.env` or client code. Deploy with the plain
   command: `config.json` pins `verify_jwt: false`, which is what keeps the function
   bootable and reachable (this app has no Supabase Auth). Do NOT add `--no-verify-jwt`.
   A function that fails to boot answers **every** task with `503 BOOT_ERROR` — including
   `ping` — and the chatbot just shows its offline FAQ fallback, so always smoke-test
-  `ping` first. `npx --yes deno@latest check supabase/functions/ai/index.ts` must exit 0.
+  `ping` first. `npx --yes deno@latest check supabase/functions/ai/index.ts` and `npx --yes deno@latest check supabase/functions/face-match/index.ts` must both exit 0.
 - **Free tier reality**: Flash models only (~5–15 RPM, few hundred RPD), so AI features
   must never block the core workflow; callers treat null as "AI unavailable".
 - Feature status: incident classifier + document processor wired into citizen screens
@@ -77,8 +76,8 @@ with the same graceful-degradation rule.
   `assets:`.
 - Database: `setup.sql` is the single source of schema and is **destructive**
   (`DROP ... CASCADE`) — run only against a fresh Supabase project via the SQL Editor.
-  Never run `sql-legacy/` (archived, historically wrong). It now defines 22 tables
-  (`device_push_tokens` is the newest).
+  Never run `sql-legacy/` (archived, historically wrong). It now defines 23 tables
+  (`face_enrollments` is the newest; adds face-matched auto-approval for signup).
 - `request_status` / `payment_status` are `TEXT` + CHECK (16 statuses), **not** Postgres
   enums. `DOCUMENTATION.md` §13.5 says legacy 4-status code lingers in
   `document_service.dart`; new code must use the full status set from
@@ -133,6 +132,16 @@ with the same graceful-degradation rule.
   live DBs need `supabase/migrations/20261022_incident_report_geo.sql`. Rendering uses
   `flutter_map` + OSM tiles (no API key). The pin is optional, so reporting is never blocked
   when GPS is unavailable.
+- Face-matched auto-approval (signup gate): new `face_enrollments` table + private
+  `face-samples` bucket (biometric data — RLS enabled, zero policies; service-role only via
+  `supabase/functions/face-match/`). Officials enroll residents' face samples in-app
+  (`ManageUsersScreen` → face icon). Mobile signup runs the existing liveness selfie through
+  the on-device embedding model, verifies against the enrolled sample for the typed name,
+  and auto-approves on match (`kyc_method='ai_verified'`, `kyc_reviewed_by` NULL). No match
+  (or not enrolled) → signup blocked with "visit the barangay office". Web/desktop keep the
+  old manual-review flow. `npx --yes deno@latest check supabase/functions/face-match/index.ts`
+  must exit 0. Live DBs need migration `supabase/migrations/20261124_face_auto_approval.sql`
+  applied and `supabase functions deploy face-match`.
 - Document security: policy (`expires_at`, `single_use`, `max_uses`, `use_count`) lives on
   the released row in `document_verifications` (parent). Each printable copy is a row in
   `document_print_copies` with its OWN random token + serial (cap 5, `PrintCopyRules`), but
@@ -153,9 +162,10 @@ with the same graceful-degradation rule.
 
 ## Testing
 
-- Tests are offline and dependency-free (62 total, no fixtures/services/snapshots). They cover
+- Tests are offline and dependency-free (69 total, no fixtures/services/snapshots). They cover
   the KYC / ID-verifier models (`test/automation/`), the offline document and incident caches,
   session-snapshot persistence, `Helpers.parseSupabaseError`, `ConnectivityProvider.isOfflineFrom`,
-  and the connectivity banner widget. Screens and Supabase-bound services are untested, and the
-  document workflow rules in `lib/automation/` have **no** tests: verify manually against the
-  workflows in `DOCUMENTATION.md` §5.
+  the connectivity banner widget, and the face gate model (`test/models/face_gate_test.dart`).
+  Screens and Supabase-bound services are untested, and the document workflow rules in
+  `lib/automation/` have **no** tests: verify manually against the workflows in
+  `DOCUMENTATION.md` §5.
