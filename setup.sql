@@ -1037,7 +1037,7 @@ SELECT username, role, registration_status, is_approved
 FROM public.users_profile
 ORDER BY created_at;
 
--- Expected: 23 tables
+-- Expected: 25 tables
 SELECT COUNT(*) AS table_count
 FROM information_schema.tables
 WHERE table_schema = 'public'

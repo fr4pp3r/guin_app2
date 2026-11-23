@@ -2069,6 +2069,7 @@
   "faceGateScanFailed": "Face scan failed. Please try again.",
   "faceGateSelfieRequired": "A live face scan is required to sign up.",
   "faceGateConsent": "Your face scan is compared against barangay records to verify your identity.",
+  "faceGateWebNotice": "Instant approval is available on the mobile app. On web, an official will review your registration first.",
   "faceGateApproved": "Registration approved. Welcome!",
   "verifyResidencyReviewNoNotes": "No notes",
   "verifyResidencyReviewConfirmed": "Proof confirmed — user marked as Poblacion resident",

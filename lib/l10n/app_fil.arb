@@ -1153,6 +1153,7 @@
   "faceGateScanFailed": "Nabigo ang face scan. Pakisubukan muli.",
   "faceGateSelfieRequired": "Kailangan ng live na face scan para makapag-sign up.",
   "faceGateConsent": "Ang iyong face scan ay ikukumpara sa mga rekord ng barangay para makumpirma ang iyong pagkakakilanlan.",
+  "faceGateWebNotice": "Ang agarang awtomatikong pag-approve ay available lang sa mobile app. Sa web, una munang susuriin ng opisyal ang iyong rehistrasyon.",
   "faceGateApproved": "Aprubado ang pagparehistro. Maligayang pagdating!",
   "verifyResidencyReviewNoNotes": "Walang nota",
   "verifyResidencyReviewConfirmed": "Nakumpirma ang patunay — itinalaga ang user bilang Poblacion residente",

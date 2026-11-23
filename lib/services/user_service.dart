@@ -314,36 +314,32 @@ class UserService {
     String userId, {
     required double score,
   }) async {
-    try {
-      final response = await _supabase
-          .from('users_profile')
-          .update({
-            'registration_status': 'approved',
-            'is_approved': true,
-            'kyc_method': 'ai_verified',
-            'kyc_verified_at': Helpers.now().toIso8601String(),
-            'kyc_enrolled_face_score': score,
-            'kyc_enrolled_face_at': Helpers.now().toIso8601String(),
-          })
-          .eq('id', userId)
-          .select()
-          .single();
+    final response = await _supabase
+        .from('users_profile')
+        .update({
+          'registration_status': 'approved',
+          'is_approved': true,
+          'kyc_method': 'ai_verified',
+          'kyc_verified_at': Helpers.now().toIso8601String(),
+          'kyc_enrolled_face_score': score,
+          'kyc_enrolled_face_at': Helpers.now().toIso8601String(),
+        })
+        .eq('id', userId)
+        .select()
+        .single();
 
-      final approved = UserProfile.fromJson(response);
-      await _safeNotify(
-        userId,
-        'Registration approved',
-        'Your barangay registration has been approved. You can now sign in '
-            'and use the app.',
-        'registration_approved',
-        referenceType: NotificationRefs.userRegistration,
-        referenceId: userId,
-      );
+    final approved = UserProfile.fromJson(response);
+    await _safeNotify(
+      userId,
+      'Registration approved',
+      'Your barangay registration has been approved. You can now sign in '
+          'and use the app.',
+      'registration_approved',
+      referenceType: NotificationRefs.userRegistration,
+      referenceId: userId,
+    );
 
-      return approved;
-    } catch (e) {
-      rethrow;
-    }
+    return approved;
   }
 
   // Reject user registration (Admin only)

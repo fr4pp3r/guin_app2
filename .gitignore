@@ -75,3 +75,8 @@ app.*.map.json
 /android/app/google-services.json
 /ios/Runner/GoogleService-Info.plist
 /macos/Runner/GoogleService-Info.plist
+
+# build artifacts + scratch (never commit)
+/*.apk
+analyze_out.txt
+.superpowers/

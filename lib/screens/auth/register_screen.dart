@@ -1417,6 +1417,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 color: AppColors.textSecondary,
               ),
             ),
+            // Face embedding is native-only: web signups keep the old
+            // pending → manual-review flow (spec: show a static notice).
+            if (kIsWeb) ...[
+              const SizedBox(height: 4),
+              Text(
+                l10n.faceGateWebNotice,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             if (!_isIndigent) ...[
               _idTypeDropdown(),

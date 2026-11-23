@@ -3,9 +3,11 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/models/face_gate.dart';
+import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/services/face_gate_service.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
@@ -143,6 +145,7 @@ class _FaceEnrollmentScreenState extends State<FaceEnrollmentScreen> {
       dob: dob,
       photo: photo,
       embedding: embedding,
+      enrolledBy: context.read<AuthProvider>().currentUserId,
     );
     if (!mounted) return;
     setState(() {

@@ -551,7 +551,7 @@ see the follow-up in [Known Gaps #1](#13-known-gaps-and-discrepancies).
 
 Paste the whole of **`setup.sql`** into the Supabase Dashboard **SQL Editor** and
 run it. That single file does everything: drops and rebuilds the schema, creates
-the 5 storage buckets, and seeds fees, barangay config, role permissions, and the
+the 6 storage buckets, and seeds fees, barangay config, role permissions, and the
 first admin.
 
 > ⚠️ `setup.sql` is **destructive** — it issues `DROP TABLE ... CASCADE` before
@@ -564,8 +564,9 @@ The eight earlier scripts still exist under [`sql-legacy/`](sql-legacy/) but are
 archived and must not be run — see that folder's README for what each one got wrong.
 
 After running, the verification queries at the end of `setup.sql` should report
-**20 tables** (`document_print_copies` is the per-print copy table,
-`announcements` is the barangay bulletin board) and **5 buckets**.
+**25 tables** (`document_print_copies` is the per-print copy table,
+`announcements` is the barangay bulletin board, `face_enrollments` holds the
+face-gate samples) and **6 buckets**.
 
 #### Upgrading a database that already holds data
 
@@ -586,6 +587,7 @@ Editor. The ones that matter to current features:
 | `20261022_incident_report_geo.sql`           | `incident_reports.latitude` / `longitude` (optional map pin) |
 | `20261023_document_fees_is_free.sql`         | `document_fees.is_free` (explicit free-document tag; backfills zero-fee rows) |
 | `20261024_official_receipt_url.sql`          | `document_requests.official_receipt_url` (treasurer's official receipt image) |
+| `20261124_face_auto_approval.sql`            | `face_enrollments` + private `face-samples` bucket + `kyc_enrolled_face_*` columns (face-gate signup auto-approval, [§7.5](#75-face-matched-auto-approval-signup-gate)) |
 
 Each file is idempotent and non-destructive. Skipping `20261020_announcements.sql` leaves
 the announcement feed empty and its realtime channel silent — with no error shown in the
@@ -594,6 +596,8 @@ image* failing: the upload hits a missing bucket and surfaces as **"Record not f
 (Supabase Storage reports a missing bucket as a 404). Skipping
 `20261024_official_receipt_url.sql` is louder: **Confirm Payment fails** on the
 treasurer side with a "column ... does not exist" error until it is applied.
+Skipping `20261124_face_auto_approval.sql` leaves mobile signup **fully blocked**
+(every face verify answers "not_enrolled") while web signups still work.
 
 The **only** case that still needs the commented-out **Incremental repair** block at the
 bottom of `setup.sql` is a database created by the pre-`setup.sql` legacy scripts, where

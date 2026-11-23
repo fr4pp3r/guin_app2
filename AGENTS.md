@@ -76,7 +76,7 @@ with the same graceful-degradation rule.
   `assets:`.
 - Database: `setup.sql` is the single source of schema and is **destructive**
   (`DROP ... CASCADE`) — run only against a fresh Supabase project via the SQL Editor.
-  Never run `sql-legacy/` (archived, historically wrong). It now defines 23 tables
+  Never run `sql-legacy/` (archived, historically wrong). It now defines 25 tables
   (`face_enrollments` is the newest; adds face-matched auto-approval for signup).
 - `request_status` / `payment_status` are `TEXT` + CHECK (16 statuses), **not** Postgres
   enums. `DOCUMENTATION.md` §13.5 says legacy 4-status code lingers in
@@ -150,7 +150,7 @@ with the same graceful-degradation rule.
   path is the viewer's "Request printable copy" → `VerificationService.issuePrintCopy` →
   `DocumentAutomationService.generatePrintableCopyPdf` (`printing` package, native-only —
   PDF gen uses `dart:io`, so web/desktop degrade gracefully). Live-DB migration:
-  `supabase/migrations/20261007_document_print_copies.sql` (additive); `setup.sql` is 21 tables now.
+  `supabase/migrations/20261007_document_print_copies.sql` (additive).
   Live DBs from before the security work also need
   `supabase/migrations/20261007_document_policy_columns.sql` (additive;
   `expires_at`/`single_use`/`max_uses`/`use_count`/`used_at` on both

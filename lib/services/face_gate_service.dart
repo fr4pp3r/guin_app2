@@ -20,8 +20,8 @@ class FaceGateService {
   FaceGateService();
 
   /// Canonical enrollment key: `[given, middle, last]` trimmed, empty parts
-  /// dropped, lowercased. Must match what the edge function re-normalizes
-  /// defensively.
+  /// dropped, lowercased. The edge function normalizes the same way
+  /// (trim + lowercase), so both sides agree on the lookup key.
   static String normalizeName(
     String givenName,
     String middleName,
@@ -32,6 +32,19 @@ class FaceGateService {
           .where((s) => s.isNotEmpty)
           .join(' ')
           .toLowerCase();
+
+  /// Display-cased name (same as [normalizeName] without lowercasing) for
+  /// the `full_name` column shown in the officials' enrollment list; the
+  /// server derives `full_name_normalized` from it.
+  static String displayName(
+    String givenName,
+    String middleName,
+    String lastName,
+  ) =>
+      [givenName, middleName, lastName]
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .join(' ');
 
   /// Embeds the single face in [imageFile]. Null on web/desktop, when the
   /// image does not contain exactly one face, or on any detector error.
@@ -124,7 +137,7 @@ class FaceGateService {
             'face-match',
             body: {
               'action': 'enroll',
-              'fullName': normalizeName(givenName, middleName, lastName),
+              'fullName': displayName(givenName, middleName, lastName),
               'dob': dob.toIso8601String().split('T').first,
               'embedding': embedding,
               'photoBase64': photoBase64,

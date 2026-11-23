@@ -185,7 +185,9 @@ async function handleEnroll(body: Record<string, unknown>): Promise<Response> {
   }
 
   const photoPath = `enrollments/${crypto.randomUUID()}.png`;
-  const upload = await storageFetch(`face-samples/${photoPath}`, {
+  // Storage upload endpoint is /storage/v1/object/{bucket}/{path} (same
+  // object/ prefix the sign and delete calls below use).
+  const upload = await storageFetch(`object/face-samples/${photoPath}`, {
     method: "POST",
     headers: { "Content-Type": "image/png" },
     body: new Blob([photoBytes]),
@@ -199,7 +201,8 @@ async function handleEnroll(body: Record<string, unknown>): Promise<Response> {
   }
 
   // Client already normalizes the name; the server re-normalizes defensively.
-  const inserted = (await rest("face_enrollments", {
+  // PostgREST with `Prefer: return=representation` returns a ROW ARRAY.
+  const res = await rest("face_enrollments", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -213,15 +216,17 @@ async function handleEnroll(body: Record<string, unknown>): Promise<Response> {
       photo_path: photoPath,
       enrolled_by: enrolledBy,
     }),
-  })).json() as { id?: string };
-  if (!inserted.id) {
+  });
+  const inserted = (await res.json()) as Array<{ id?: string }>;
+  const newId = inserted[0]?.id;
+  if (!newId) {
     throw Object.assign(new Error("Enrollment insert returned no id"), {
       status: 502,
       code: "upstream_failure",
     });
   }
   console.log(`face-match action=enroll name=${fullName}`);
-  return jsonResponse(200, { ok: true, enrollmentId: inserted.id });
+  return jsonResponse(200, { ok: true, enrollmentId: newId });
 }
 
 async function handleVerify(body: Record<string, unknown>): Promise<Response> {
@@ -305,22 +310,17 @@ async function handleList(): Promise<Response> {
     )
   ).json()) as EnrollmentRow[];
 
-  const enrollments: Array<{
-    id: string;
-    fullName: string;
-    dob: string;
-    createdAt: string;
-    photoUrl: string | null;
-  }> = [];
-  for (const row of rows) {
-    enrollments.push({
+  // Sign all photo URLs concurrently — serial round-trips multiply the
+  // function's wall time on the enrollment screen.
+  const enrollments = await Promise.all(
+    rows.map(async (row) => ({
       id: row.id,
       fullName: row.full_name,
       dob: row.dob,
       createdAt: row.created_at,
       photoUrl: await signedPhotoUrl(row.photo_path),
-    });
-  }
+    })),
+  );
   return jsonResponse(200, { ok: true, enrollments });
 }
 
