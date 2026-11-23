@@ -8,6 +8,7 @@ import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/utils/role_access.dart';
 import 'package:guin_app/screens/admin/create_user_screen.dart';
 import 'package:guin_app/screens/admin/edit_user_screen.dart';
+import 'package:guin_app/screens/admin/face_enrollment_screen.dart';
 import 'package:guin_app/screens/admin/user_registration_detail_screen.dart';
 import 'package:guin_app/l10n/app_l10n.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
@@ -244,6 +245,15 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
     }
   }
 
+  // ── Face enrollment ─────────────────────────────────────────────────────
+
+  Future<void> _openFaceEnrollment() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const FaceEnrollmentScreen()),
+    );
+  }
+
   // ── Build ───────────────────────────────────────────────────────────────
 
   @override
@@ -259,6 +269,13 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
           l10n.auserTitle,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.face_retouching_natural),
+            tooltip: l10n.faceEnrollTitle,
+            onPressed: _openFaceEnrollment,
+          ),
+        ],
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
