@@ -216,6 +216,9 @@ CREATE TABLE public.users_profile (
   -- KYC face match: null = not evaluated; advisory only, never gates approval.
   kyc_face_match_score DOUBLE PRECISION,
   kyc_face_match_at   TIMESTAMPTZ,
+  -- Enrolled-sample match; gates ai_verified auto-approval.
+  kyc_enrolled_face_score DOUBLE PRECISION,
+  kyc_enrolled_face_at    TIMESTAMPTZ,
   is_indigent         BOOLEAN DEFAULT FALSE,
   indigency_reason    TEXT,
   kyc_verified_at     TIMESTAMPTZ,
@@ -261,6 +264,23 @@ $$;
 CREATE TRIGGER trg_set_email_verified
   BEFORE INSERT OR UPDATE OF email, email_verified ON public.users_profile
   FOR EACH ROW EXECUTE FUNCTION public.set_email_verified();
+
+-- Face enrollments (biometric samples officials record for residents so the
+-- signup AI path can auto-approve a match). RLS is ENABLED with ZERO
+-- policies — a deliberate deviation from the house USING (true) pattern:
+-- rows hold face embeddings, so no client role may touch this table. The
+-- face-match edge function reaches it via the service-role key.
+CREATE TABLE public.face_enrollments (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  full_name            TEXT NOT NULL,
+  full_name_normalized TEXT NOT NULL,
+  dob                  DATE NOT NULL,
+  embedding            DOUBLE PRECISION[] NOT NULL,
+  photo_path           TEXT NOT NULL,
+  enrolled_by          UUID REFERENCES public.users_profile(id),
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE public.face_enrollments ENABLE ROW LEVEL SECURITY;
 
 -- 3b. Barangay config (public read reference data) ----------------------
 CREATE TABLE public.barangay_config (
@@ -730,6 +750,7 @@ CREATE INDEX idx_announcements_created        ON public.announcements(created_at
 CREATE INDEX idx_announcements_pinned         ON public.announcements(is_pinned);
 CREATE INDEX idx_emergency_hotlines_active    ON public.emergency_hotlines(is_active);
 CREATE INDEX idx_emergency_hotlines_name      ON public.emergency_hotlines(name);
+CREATE INDEX face_enrollments_name_idx        ON public.face_enrollments(full_name_normalized);
 
 
 -- ============================================================================
@@ -843,9 +864,10 @@ CREATE POLICY "app_access_emergency_hotlines"      ON public.emergency_hotlines 
 -- ============================================================================
 --  SECTION 7 — STORAGE BUCKETS
 --  Superset of setup_storage_buckets.sql + fix_documents_bucket.sql.
---  All buckets are public; the app stores signed-in citizen documents here,
---  so "public" means publicly readable URLs. See DOCUMENTATION.md for the
---  privacy implications.
+--  All buckets are public except face-samples (private, biometric — service
+--  role only, no storage policy). The app stores signed-in citizen documents
+--  here, so "public" means publicly readable URLs. See DOCUMENTATION.md for
+--  the privacy implications.
 -- ============================================================================
 
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -854,7 +876,10 @@ VALUES
   ('valid-ids',           'valid-ids',           true, 5242880,  ARRAY['image/jpeg','image/jpg','image/png','image/webp']),
   ('payment-receipts',    'payment-receipts',    true, 5242880,  ARRAY['image/jpeg','image/jpg','image/png','image/webp']),
   ('announcement-images', 'announcement-images', true, 5242880,  ARRAY['image/jpeg','image/jpg','image/png','image/webp','image/gif']),
-  ('documents',           'documents',           true, 10485760, ARRAY['application/pdf'])
+  ('documents',           'documents',           true, 10485760, ARRAY['application/pdf']),
+  -- face-samples: PRIVATE — enrolled face photos; no public URL, no storage
+  -- policy. Accessible only via the service-role face-match function.
+  ('face-samples',        'face-samples',        false, 5242880, ARRAY['image/jpeg','image/jpg','image/png'])
 ON CONFLICT (id) DO UPDATE
   SET public             = EXCLUDED.public,
       file_size_limit    = EXCLUDED.file_size_limit,
