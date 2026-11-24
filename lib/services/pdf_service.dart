@@ -35,6 +35,7 @@ class PdfService {
     String? profilePhotoUrl,
     bool isDraft = false,
     String? approverName,
+    String? approverSignatureUrl,
     String? documentId,
     String? qrUrl,
     String? expiresAtLabel,
@@ -52,6 +53,19 @@ class PdfService {
         }
       } catch (e) {
         print('Error loading profile photo: $e');
+      }
+    }
+
+    // Load approver signature if available
+    pw.ImageProvider? signatureImage;
+    if (approverSignatureUrl != null && approverSignatureUrl.isNotEmpty) {
+      try {
+        final response = await http.get(Uri.parse(approverSignatureUrl));
+        if (response.statusCode == 200) {
+          signatureImage = pw.MemoryImage(response.bodyBytes);
+        }
+      } catch (e) {
+        // Signature load failures must not block PDF generation
       }
     }
 
@@ -176,14 +190,27 @@ class PdfService {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.center,
                     children: [
-                      pw.Container(
-                        width: 200,
-                        height: 1,
-                        color: PdfColors.black,
-                      ),
+                      // Signature image if available, otherwise blank line
+                      if (signatureImage != null)
+                        pw.Container(
+                          width: 150,
+                          height: 50,
+                          margin: const pw.EdgeInsets.only(bottom: 8),
+                          child: pw.Image(
+                            signatureImage,
+                            fit: pw.BoxFit.contain,
+                          ),
+                        ),
+                      if (signatureImage == null)
+                        pw.Container(
+                          width: 150,
+                          height: 1,
+                          color: PdfColors.black,
+                        ),
                       pw.SizedBox(height: 5),
                       pw.Text(
-                        config.barangayCaptain ?? 'BARANGAY CAPTAIN',
+                        approverName ??
+                            (config.barangayCaptain ?? 'BARANGAY CAPTAIN'),
                         style: pw.TextStyle(
                           fontSize: 12,
                           fontWeight: pw.FontWeight.bold,

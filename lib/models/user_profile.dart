@@ -15,6 +15,7 @@ class UserProfile {
   final String gender;
   final String phoneNumber;
   final String? profilePhotoUrl;
+  final String? signatureUrl;
   final String? validIdUrl;
   final String? validIdBackUrl;
   // KYC / registration verification -----------------------------------------
@@ -87,6 +88,7 @@ class UserProfile {
     required this.gender,
     required this.phoneNumber,
     this.profilePhotoUrl,
+    this.signatureUrl,
     this.validIdUrl,
     this.validIdBackUrl,
     this.kycMethod,
@@ -159,6 +161,7 @@ class UserProfile {
       gender: json['gender'] as String,
       phoneNumber: json['phone_number'] as String,
       profilePhotoUrl: json['profile_photo_url'] as String?,
+      signatureUrl: json['signature_url'] as String?,
       validIdUrl: json['valid_id_url'] as String?,
       validIdBackUrl: json['valid_id_back_url'] as String?,
       kycMethod: json['kyc_method'] as String?,
@@ -206,6 +209,7 @@ class UserProfile {
       'gender': gender,
       'phone_number': phoneNumber,
       'profile_photo_url': profilePhotoUrl,
+      'signature_url': signatureUrl,
       'valid_id_url': validIdUrl,
       'valid_id_back_url': validIdBackUrl,
       'kyc_method': kycMethod,
@@ -248,6 +252,7 @@ class UserProfile {
     String? gender,
     String? phoneNumber,
     String? profilePhotoUrl,
+    String? signatureUrl,
     String? validIdUrl,
     String? validIdBackUrl,
     String? kycMethod,
@@ -288,6 +293,7 @@ class UserProfile {
       gender: gender ?? this.gender,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       profilePhotoUrl: profilePhotoUrl ?? this.profilePhotoUrl,
+      signatureUrl: signatureUrl ?? this.signatureUrl,
       validIdUrl: validIdUrl ?? this.validIdUrl,
       validIdBackUrl: validIdBackUrl ?? this.validIdBackUrl,
       kycMethod: kycMethod ?? this.kycMethod,

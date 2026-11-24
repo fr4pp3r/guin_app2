@@ -69,6 +69,7 @@ class UserService {
     String? gender,
     String? phoneNumber,
     String? profilePhotoUrl,
+    String? signatureUrl,
     String? validIdUrl,
     String? validIdBackUrl,
   }) async {
@@ -98,6 +99,9 @@ class UserService {
       if (phoneNumber != null) updateData['phone_number'] = phoneNumber;
       if (profilePhotoUrl != null) {
         updateData['profile_photo_url'] = profilePhotoUrl;
+      }
+      if (signatureUrl != null) {
+        updateData['signature_url'] = signatureUrl;
       }
       if (validIdUrl != null) updateData['valid_id_url'] = validIdUrl;
       if (validIdBackUrl != null) updateData['valid_id_back_url'] = validIdBackUrl;
@@ -394,6 +398,26 @@ class UserService {
       final fileExt = imageFile.path.split('.').last;
       final fileName =
           '$userId/${Helpers.now().millisecondsSinceEpoch}.$fileExt';
+
+      await _supabase.storage
+          .from('profile-photos')
+          .upload(fileName, imageFile);
+
+      final publicUrl = _supabase.storage
+          .from('profile-photos')
+          .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Upload signature image (stored in profile-photos bucket)
+  Future<String> uploadSignature(String userId, File imageFile) async {
+    try {
+      final fileExt = imageFile.path.split('.').last;
+      final fileName = 'signatures/$userId/signature_${Helpers.now().millisecondsSinceEpoch}.$fileExt';
 
       await _supabase.storage
           .from('profile-photos')

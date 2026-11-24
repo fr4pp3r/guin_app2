@@ -108,6 +108,7 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
       if (citizen == null) throw Exception('Citizen profile not found');
 
       final approverName = auth.userProfile!.fullName;
+      final approverSignatureUrl = auth.userProfile!.signatureUrl;
 
       // Build verification identity FIRST so the PDF can embed the QR + expiry.
       final payload = ReleasePayload.buildIdentity(
@@ -140,6 +141,7 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
             profilePhotoUrl: citizen.profilePhotoUrl,
             isDraft: false,
             approverName: approverName,
+            approverSignatureUrl: approverSignatureUrl,
             documentId: payload.documentId,
             qrUrl: payload.qrUrl,
             expiresAtLabel: expiresAtLabel,
