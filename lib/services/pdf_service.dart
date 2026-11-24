@@ -193,8 +193,8 @@ class PdfService {
                       // Signature image if available, otherwise blank line
                       if (signatureImage != null)
                         pw.Container(
-                          width: 150,
-                          height: 50,
+                          width: 200,
+                          height: 80,
                           margin: const pw.EdgeInsets.only(bottom: 8),
                           child: pw.Image(
                             signatureImage,
@@ -203,7 +203,7 @@ class PdfService {
                         ),
                       if (signatureImage == null)
                         pw.Container(
-                          width: 150,
+                          width: 200,
                           height: 1,
                           color: PdfColors.black,
                         ),
@@ -418,8 +418,8 @@ class PdfService {
                           // Signature image if available, otherwise blank line
                           if (signatureImage != null)
                             pw.Container(
-                              width: 150,
-                              height: 50,
+                              width: 200,
+                              height: 80,
                               margin: const pw.EdgeInsets.only(bottom: 8),
                               child: pw.Image(
                                 signatureImage,
@@ -428,7 +428,7 @@ class PdfService {
                             ),
                           if (signatureImage == null)
                             pw.Container(
-                              width: 150,
+                              width: 200,
                               height: 1,
                               color: PdfColors.black,
                             ),
@@ -668,8 +668,8 @@ class PdfService {
                       // Signature image if available, otherwise blank line
                       if (signatureImage != null)
                         pw.Container(
-                          width: 150,
-                          height: 50,
+                          width: 200,
+                          height: 80,
                           margin: const pw.EdgeInsets.only(bottom: 8),
                           child: pw.Image(
                             signatureImage,
@@ -1041,8 +1041,8 @@ class PdfService {
                       // Signature image if available, otherwise blank line
                       if (signatureImage != null)
                         pw.Container(
-                          width: 150,
-                          height: 50,
+                          width: 200,
+                          height: 80,
                           margin: const pw.EdgeInsets.only(bottom: 8),
                           child: pw.Image(
                             signatureImage,
@@ -1294,8 +1294,8 @@ class PdfService {
                       // Signature image if available, otherwise blank line
                       if (signatureImage != null)
                         pw.Container(
-                          width: 150,
-                          height: 50,
+                          width: 200,
+                          height: 80,
                           margin: const pw.EdgeInsets.only(bottom: 8),
                           child: pw.Image(
                             signatureImage,
@@ -1737,8 +1737,8 @@ class PdfService {
                       // Signature image if available, otherwise blank line
                       if (signatureImage != null)
                         pw.Container(
-                          width: 150,
-                          height: 50,
+                          width: 200,
+                          height: 80,
                           margin: const pw.EdgeInsets.only(bottom: 8),
                           child: pw.Image(
                             signatureImage,
@@ -1955,8 +1955,8 @@ class PdfService {
                       // Signature image if available, otherwise blank line
                       if (signatureImage != null)
                         pw.Container(
-                          width: 150,
-                          height: 50,
+                          width: 200,
+                          height: 80,
                           margin: const pw.EdgeInsets.only(bottom: 8),
                           child: pw.Image(
                             signatureImage,
@@ -2182,8 +2182,8 @@ class PdfService {
                       // Signature image if available, otherwise blank line
                       if (signatureImage != null)
                         pw.Container(
-                          width: 150,
-                          height: 50,
+                          width: 200,
+                          height: 80,
                           margin: const pw.EdgeInsets.only(bottom: 8),
                           child: pw.Image(
                             signatureImage,

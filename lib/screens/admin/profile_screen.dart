@@ -953,13 +953,16 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
           ),
         ),
         const SizedBox(width: 12),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-            letterSpacing: 0.3,
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+              letterSpacing: 0.3,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
