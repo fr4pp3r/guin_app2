@@ -309,7 +309,9 @@ class UserService {
 
   // Auto-approve a registration whose selfie matched an officially enrolled
   // face (face gate at signup). System decision — deliberately NO
-  // `kyc_reviewed_by`: no human reviewed this.
+  // `kyc_reviewed_by`: no human reviewed this. The official who enrolled the
+  // face verified identity + residency in person; skip the separate residency
+  // proof step so document requests unblock immediately.
   Future<UserProfile> autoApproveFaceMatch(
     String userId, {
     required double score,
@@ -323,6 +325,7 @@ class UserService {
           'kyc_verified_at': Helpers.now().toIso8601String(),
           'kyc_enrolled_face_score': score,
           'kyc_enrolled_face_at': Helpers.now().toIso8601String(),
+          'is_poblacion_resident': true,
         })
         .eq('id', userId)
         .select()

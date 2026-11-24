@@ -780,8 +780,7 @@ permission checks in `role_access.dart`.
 
 ### Registration flow (verified)
 
-New accounts now use a two-branch automatic KYC pre-check (non-indigent) plus an
-indigent bypass.
+New accounts now use a three-branch KYC flow: AI pre-check (advisory), face-gated auto-approval (mobile), and indigent bypass.
 
 Registration accepts **any valid government ID** (barangay ID, driver's license, passport,
 national ID, UMID, PRC, SSS, PhilHealth, postal ID, voter's ID, ...), and the AI pre-check is
@@ -817,7 +816,20 @@ as `kyc_face_match_score`. It is equally advisory: it never blocks and never aut
    returned an unusable payload, the registration **never blocks** and is **never auto-approved**:
    the captain/admin decides via **Admin → Manage Users → Pending** (`/admin/pending-users`).
 
-**Branch 2 — Indigent (no valid ID)**
+**Branch 2 — Face-gated auto-approval (mobile only)**
+When an official has pre-enrolled the user's face and the signup selfie matches, the account
+is instantified approved:
+1. The liveness selfie is embedded and sent to `face-match/verify`. The official's enrolled
+   sample was captured during an in-person visit (enrollment), proving both identity **and**
+   residency — they are in the same barangay neighborhood.
+2. Match ≥ 0.5 (`MATCH_THRESHOLD`, server-side) → the row is immediately updated:
+   `registration_status = 'approved'`, `is_approved = true`, `is_poblacion_resident = true`,
+   `kyc_method = 'ai_verified'`, `kyc_reviewed_by = NULL`. No officials' fan-out (nothing to
+   review), and the user goes straight to the sign-in screen (or the post-login dashboard).
+3. No match (or not enrolled) → the app shows "visit the barangay office" and blocks signup.
+4. **Web / desktop:** face embed is native-only → they follow Branch 1 (pending + manual review).
+
+**Branch 3 — Indigent (no valid ID)**
 1. In the Documents step tick **"I have no valid government ID (indigent)"**. The
    Barangay ID upload is hidden and a required **"Reason / situation"** field appears;
    uploading a **Certificate of Indigency (optional)** stores it as `valid_id_url` for
