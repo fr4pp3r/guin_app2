@@ -246,6 +246,7 @@ class PdfService {
     required int userAge,
     required String civilStatus,
     String? profilePhotoUrl,
+    String? approverSignatureUrl,
     String? documentId,
     String? qrUrl,
     String? expiresAtLabel,
@@ -255,6 +256,19 @@ class PdfService {
     final now = Helpers.now();
     final month = DateFormat('MMMM').format(now);
     final year2 = now.year.toString().substring(2);
+
+    // Load approver signature if available
+    pw.ImageProvider? signatureImage;
+    if (approverSignatureUrl != null && approverSignatureUrl.isNotEmpty) {
+      try {
+        final response = await http.get(Uri.parse(approverSignatureUrl));
+        if (response.statusCode == 200) {
+          signatureImage = pw.MemoryImage(response.bodyBytes);
+        }
+      } catch (e) {
+        // Signature load failures must not block PDF generation
+      }
+    }
 
     pdf.addPage(
       pw.Page(
@@ -401,6 +415,24 @@ class PdfService {
                       child: pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.center,
                         children: [
+                          // Signature image if available, otherwise blank line
+                          if (signatureImage != null)
+                            pw.Container(
+                              width: 150,
+                              height: 50,
+                              margin: const pw.EdgeInsets.only(bottom: 8),
+                              child: pw.Image(
+                                signatureImage,
+                                fit: pw.BoxFit.contain,
+                              ),
+                            ),
+                          if (signatureImage == null)
+                            pw.Container(
+                              width: 150,
+                              height: 1,
+                              color: PdfColors.black,
+                            ),
+                          pw.SizedBox(height: 5),
                           pw.Text(
                             (config.barangayCaptain ?? 'NENITA R. NACARIO')
                                 .toUpperCase(),
@@ -454,6 +486,7 @@ class PdfService {
     required String placeOfBirth,
     required String gender,
     String? profilePhotoUrl,
+    String? approverSignatureUrl,
     String? documentId,
     String? qrUrl,
     String? expiresAtLabel,
@@ -472,6 +505,19 @@ class PdfService {
         }
       } catch (e) {
         print('Error loading profile photo: $e');
+      }
+    }
+
+    // Load approver signature if available
+    pw.ImageProvider? signatureImage;
+    if (approverSignatureUrl != null && approverSignatureUrl.isNotEmpty) {
+      try {
+        final response = await http.get(Uri.parse(approverSignatureUrl));
+        if (response.statusCode == 200) {
+          signatureImage = pw.MemoryImage(response.bodyBytes);
+        }
+      } catch (e) {
+        // Signature load failures must not block PDF generation
       }
     }
 
@@ -619,11 +665,23 @@ class PdfService {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.center,
                     children: [
-                      pw.Container(
-                        width: 200,
-                        height: 1,
-                        color: PdfColors.black,
-                      ),
+                      // Signature image if available, otherwise blank line
+                      if (signatureImage != null)
+                        pw.Container(
+                          width: 150,
+                          height: 50,
+                          margin: const pw.EdgeInsets.only(bottom: 8),
+                          child: pw.Image(
+                            signatureImage,
+                            fit: pw.BoxFit.contain,
+                          ),
+                        ),
+                      if (signatureImage == null)
+                        pw.Container(
+                          width: 200,
+                          height: 1,
+                          color: PdfColors.black,
+                        ),
                       pw.SizedBox(height: 5),
                       pw.Text(
                         config.barangayCaptain ?? 'BARANGAY CAPTAIN',
@@ -666,6 +724,7 @@ class PdfService {
     String? profilePhotoUrl,
     bool isDraft = false,
     String? approverName,
+    String? approverSignatureUrl,
     String? documentId,
     String? qrUrl,
     String? expiresAtLabel,
@@ -686,6 +745,19 @@ class PdfService {
         }
       } catch (e) {
         // Photo load failures must never block PDF generation.
+      }
+    }
+
+    // Load approver signature if available
+    pw.ImageProvider? signatureImage;
+    if (approverSignatureUrl != null && approverSignatureUrl.isNotEmpty) {
+      try {
+        final response = await http.get(Uri.parse(approverSignatureUrl));
+        if (response.statusCode == 200) {
+          signatureImage = pw.MemoryImage(response.bodyBytes);
+        }
+      } catch (e) {
+        // Signature load failures must not block PDF generation
       }
     }
 
@@ -966,11 +1038,23 @@ class PdfService {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.center,
                     children: [
-                      pw.Container(
-                        width: 200,
-                        height: 1,
-                        color: PdfColors.black,
-                      ),
+                      // Signature image if available, otherwise blank line
+                      if (signatureImage != null)
+                        pw.Container(
+                          width: 150,
+                          height: 50,
+                          margin: const pw.EdgeInsets.only(bottom: 8),
+                          child: pw.Image(
+                            signatureImage,
+                            fit: pw.BoxFit.contain,
+                          ),
+                        ),
+                      if (signatureImage == null)
+                        pw.Container(
+                          width: 200,
+                          height: 1,
+                          color: PdfColors.black,
+                        ),
                       pw.SizedBox(height: 5),
                       pw.Text(
                         approverName ??
@@ -1026,6 +1110,7 @@ class PdfService {
     String? profilePhotoUrl,
     bool isDraft = false,
     String? approverName,
+    String? approverSignatureUrl,
     String? documentId,
     String? qrUrl,
     String? expiresAtLabel,
@@ -1044,6 +1129,19 @@ class PdfService {
         }
       } catch (e) {
         // Photo load failures must never block PDF generation.
+      }
+    }
+
+    // Load approver signature if available
+    pw.ImageProvider? signatureImage;
+    if (approverSignatureUrl != null && approverSignatureUrl.isNotEmpty) {
+      try {
+        final response = await http.get(Uri.parse(approverSignatureUrl));
+        if (response.statusCode == 200) {
+          signatureImage = pw.MemoryImage(response.bodyBytes);
+        }
+      } catch (e) {
+        // Signature load failures must never block PDF generation
       }
     }
 
@@ -1193,11 +1291,23 @@ class PdfService {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.center,
                     children: [
-                      pw.Container(
-                        width: 200,
-                        height: 1,
-                        color: PdfColors.black,
-                      ),
+                      // Signature image if available, otherwise blank line
+                      if (signatureImage != null)
+                        pw.Container(
+                          width: 150,
+                          height: 50,
+                          margin: const pw.EdgeInsets.only(bottom: 8),
+                          child: pw.Image(
+                            signatureImage,
+                            fit: pw.BoxFit.contain,
+                          ),
+                        ),
+                      if (signatureImage == null)
+                        pw.Container(
+                          width: 200,
+                          height: 1,
+                          color: PdfColors.black,
+                        ),
                       pw.SizedBox(height: 5),
                       pw.Text(
                         approverName ??
@@ -1482,6 +1592,7 @@ class PdfService {
     String? profilePhotoUrl,
     bool isDraft = false,
     String? approverName,
+    String? approverSignatureUrl,
     String? documentId,
     String? qrUrl,
     String? expiresAtLabel,
@@ -1499,6 +1610,19 @@ class PdfService {
         }
       } catch (e) {
         // Photo load failures must never block PDF generation.
+      }
+    }
+
+    // Load approver signature if available
+    pw.ImageProvider? signatureImage;
+    if (approverSignatureUrl != null && approverSignatureUrl.isNotEmpty) {
+      try {
+        final response = await http.get(Uri.parse(approverSignatureUrl));
+        if (response.statusCode == 200) {
+          signatureImage = pw.MemoryImage(response.bodyBytes);
+        }
+      } catch (e) {
+        // Signature load failures must never block PDF generation
       }
     }
 
@@ -1610,11 +1734,23 @@ class PdfService {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.center,
                     children: [
-                      pw.Container(
-                        width: 200,
-                        height: 1,
-                        color: PdfColors.black,
-                      ),
+                      // Signature image if available, otherwise blank line
+                      if (signatureImage != null)
+                        pw.Container(
+                          width: 150,
+                          height: 50,
+                          margin: const pw.EdgeInsets.only(bottom: 8),
+                          child: pw.Image(
+                            signatureImage,
+                            fit: pw.BoxFit.contain,
+                          ),
+                        ),
+                      if (signatureImage == null)
+                        pw.Container(
+                          width: 200,
+                          height: 1,
+                          color: PdfColors.black,
+                        ),
                       pw.SizedBox(height: 5),
                       pw.Text(
                         approverName ??
@@ -1670,6 +1806,7 @@ class PdfService {
     String? profilePhotoUrl,
     bool isDraft = false,
     String? approverName,
+    String? approverSignatureUrl,
     String? documentId,
     String? qrUrl,
     String? expiresAtLabel,
@@ -1688,6 +1825,19 @@ class PdfService {
         }
       } catch (e) {
         // Photo load failures must never block PDF generation.
+      }
+    }
+
+    // Load approver signature if available
+    pw.ImageProvider? signatureImage;
+    if (approverSignatureUrl != null && approverSignatureUrl.isNotEmpty) {
+      try {
+        final response = await http.get(Uri.parse(approverSignatureUrl));
+        if (response.statusCode == 200) {
+          signatureImage = pw.MemoryImage(response.bodyBytes);
+        }
+      } catch (e) {
+        // Signature load failures must never block PDF generation
       }
     }
 
@@ -1802,11 +1952,23 @@ class PdfService {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.center,
                     children: [
-                      pw.Container(
-                        width: 200,
-                        height: 1,
-                        color: PdfColors.black,
-                      ),
+                      // Signature image if available, otherwise blank line
+                      if (signatureImage != null)
+                        pw.Container(
+                          width: 150,
+                          height: 50,
+                          margin: const pw.EdgeInsets.only(bottom: 8),
+                          child: pw.Image(
+                            signatureImage,
+                            fit: pw.BoxFit.contain,
+                          ),
+                        ),
+                      if (signatureImage == null)
+                        pw.Container(
+                          width: 200,
+                          height: 1,
+                          color: PdfColors.black,
+                        ),
                       pw.SizedBox(height: 5),
                       pw.Text(
                         approverName ??
@@ -1863,6 +2025,7 @@ class PdfService {
     String? profilePhotoUrl,
     bool isDraft = false,
     String? approverName,
+    String? approverSignatureUrl,
     String? documentId,
     String? qrUrl,
     String? expiresAtLabel,
@@ -1881,6 +2044,19 @@ class PdfService {
         }
       } catch (e) {
         // Photo load failures must never block PDF generation.
+      }
+    }
+
+    // Load approver signature if available
+    pw.ImageProvider? signatureImage;
+    if (approverSignatureUrl != null && approverSignatureUrl.isNotEmpty) {
+      try {
+        final response = await http.get(Uri.parse(approverSignatureUrl));
+        if (response.statusCode == 200) {
+          signatureImage = pw.MemoryImage(response.bodyBytes);
+        }
+      } catch (e) {
+        // Signature load failures must never block PDF generation
       }
     }
 
@@ -2003,11 +2179,23 @@ class PdfService {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.center,
                     children: [
-                      pw.Container(
-                        width: 200,
-                        height: 1,
-                        color: PdfColors.black,
-                      ),
+                      // Signature image if available, otherwise blank line
+                      if (signatureImage != null)
+                        pw.Container(
+                          width: 150,
+                          height: 50,
+                          margin: const pw.EdgeInsets.only(bottom: 8),
+                          child: pw.Image(
+                            signatureImage,
+                            fit: pw.BoxFit.contain,
+                          ),
+                        ),
+                      if (signatureImage == null)
+                        pw.Container(
+                          width: 200,
+                          height: 1,
+                          color: PdfColors.black,
+                        ),
                       pw.SizedBox(height: 5),
                       pw.Text(
                         approverName ??

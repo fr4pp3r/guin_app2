@@ -19,6 +19,7 @@ import 'package:guin_app/models/document_request.dart';
 import 'package:guin_app/providers/auth_provider.dart';
 import 'package:guin_app/services/document_automation_service.dart';
 import 'package:guin_app/services/storage_service.dart';
+import 'package:guin_app/services/user_service.dart';
 import 'package:guin_app/services/verification_service.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
@@ -1469,12 +1470,20 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
       );
       final expiresAt = request.expiresAt;
 
+      // Fetch approver signature if available
+      String? approverSignatureUrl;
+      if (request.approverId != null) {
+        final approver = await UserService().getUserProfile(request.approverId!);
+        approverSignatureUrl = approver?.signatureUrl;
+      }
+
       final file = await DocumentAutomationService().generatePrintableCopyPdf(
         request: request,
         documentId: documentId,
         qrUrl: qrUrl,
         expiresAtLabel: expiresAt == null ? null : _isoDateLabel(expiresAt),
         copyNotice: copyNotice,
+        approverSignatureUrl: approverSignatureUrl,
       );
       final bytes = await file.readAsBytes();
 

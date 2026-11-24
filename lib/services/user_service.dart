@@ -7,6 +7,7 @@ import 'package:guin_app/utils/helpers.dart';
 import 'package:guin_app/services/notification_service.dart';
 import 'package:guin_app/utils/password_hash.dart';
 import 'package:guin_app/utils/notification_refs.dart';
+import 'package:guin_app/utils/role_access.dart';
 import 'package:guin_app/utils/session_manager.dart';
 
 class UserService {
@@ -623,7 +624,24 @@ class UserService {
         .select()
         .single();
 
-    return UserProfile.fromJson(response);
+    final createdUser = UserProfile.fromJson(response);
+
+    // Notify admin roles that a new user was created successfully.
+    // Best-effort — a notification failure must never fail the user creation.
+    try {
+      await _notificationService.notifyRoles(
+        roles: [AppRoles.captain, AppRoles.legacyAdmin],
+        title: 'User created',
+        message: '$fullName ($role) was created successfully.',
+        type: 'system',
+        referenceType: NotificationRefs.userRegistration,
+        referenceId: createdUser.id,
+      );
+    } catch (e) {
+      debugPrint('User creation notification failed: $e');
+    }
+
+    return createdUser;
   }
 
   // Update a user's role (Admin/Captain only)
