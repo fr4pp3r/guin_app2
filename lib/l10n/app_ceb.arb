@@ -374,6 +374,8 @@
   "reqDocPleaseSelectType": "Palihog pagpili og klase sa dokumento",
   "reqDocPurposeHint": "Mubo nga ihulagway ang katuyoan niini nga hangyo",
   "reqDocPurposeHintExample": "pananglitan, Tabang medikal, Suporta sa edukasyon",
+  "reqDocPurposeSuggestionsTitle": "Mga Sugyot sa Katuyoan",
+  "reqDocPurposeSuggestionsTooltip": "Pindota aron makita ang mga sugyot sa katuyoan",
   "reqDocReceiptUploaded": "Na-upload na ang resibo! Naghulat sa beripikasyon sa admin.",
   "reqDocRenewal": "Pag-renew",
   "reqDocRequestCancelled": "Malampusong nakansela ang hangyo",

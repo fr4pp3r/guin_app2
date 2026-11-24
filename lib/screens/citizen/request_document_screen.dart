@@ -695,6 +695,11 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                     labelText: l10n.commonPurpose,
                     border: const OutlineInputBorder(),
                     hintText: l10n.reqDocPurposeHint,
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.lightbulb_outline),
+                      onPressed: _showPurposeSuggestions,
+                      tooltip: l10n.reqDocPurposeSuggestionsTooltip,
+                    ),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -812,6 +817,61 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
           ),
       ],
     );
+  }
+
+  /// Purpose suggestions for the hint button.
+  List<String> get _purposeSuggestions => const [
+        'Business registration',
+        'Business permit renewal',
+        'Medical assistance',
+        'Educational support',
+        'Job application',
+        'Marriage-related',
+        'Birth certificate',
+        'Death certificate',
+        'Legal requirement',
+        'Government agency',
+        'Emergency assistance',
+        'Tourism promotion',
+      ];
+
+  void _showPurposeSuggestions() {
+    showModalBottomSheet<String>(
+      context: context,
+      builder: (context) {
+        final l10n = AppLocalizations.of(context);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                l10n.reqDocPurposeSuggestionsTitle,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const Divider(height: 1),
+            for (final suggestion in _purposeSuggestions)
+              ListTile(
+                title: Text(suggestion),
+                onTap: () {
+                  Navigator.pop(context, suggestion);
+                },
+              ),
+          ],
+        );
+      },
+    ).then((suggestion) {
+      if (suggestion != null && mounted) {
+        _purposeController.text = suggestion;
+        _purposeController.selection = TextSelection.fromPosition(
+          TextPosition(offset: suggestion.length),
+        );
+      }
+    });
   }
 
   String _feeLabelFor(BarangayProvider provider, String type) {

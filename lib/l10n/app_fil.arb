@@ -374,6 +374,8 @@
   "reqDocPleaseSelectType": "Mangyaring pumili ng uri ng dokumento",
   "reqDocPurposeHint": "Maikling ilarawan ang layunin ng kahilingang ito",
   "reqDocPurposeHintExample": "hal., Tulong medikal, Suportang pang-edukasyon",
+  "reqDocPurposeSuggestionsTitle": "Mga Suhestiyon sa Layunin",
+  "reqDocPurposeSuggestionsTooltip": "I-click upang makita ang mga suhestiyon sa layunin",
   "reqDocReceiptUploaded": "Nai-upload na ang resibo! Naghihintay ng beripikasyon ng admin.",
   "reqDocRenewal": "Pag-renew",
   "reqDocRequestCancelled": "Matagumpay na nakansela ang kahilingan",

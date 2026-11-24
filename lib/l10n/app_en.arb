@@ -607,6 +607,8 @@
   "reqDocPleaseSelectType": "Please select a document type",
   "reqDocPurposeHint": "Briefly describe the purpose of this request",
   "reqDocPurposeHintExample": "e.g., Medical assistance, Educational support",
+  "reqDocPurposeSuggestionsTitle": "Purpose Suggestions",
+  "reqDocPurposeSuggestionsTooltip": "Tap to see purpose suggestions",
   "reqDocReceiptUploaded": "Receipt uploaded! Waiting for admin verification.",
   "reqDocRenewal": "Renewal",
   "reqDocRequestCancelled": "Request cancelled successfully",
