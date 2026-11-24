@@ -695,10 +695,15 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                     labelText: l10n.commonPurpose,
                     border: const OutlineInputBorder(),
                     hintText: l10n.reqDocPurposeHint,
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.lightbulb_outline),
-                      onPressed: _showPurposeSuggestions,
-                      tooltip: l10n.reqDocPurposeSuggestionsTooltip,
+                    suffixIcon: SizedBox(
+                      width: 32,
+                      height: 32,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(Icons.lightbulb_outline, size: 20),
+                        onPressed: _showPurposeSuggestions,
+                        tooltip: l10n.reqDocPurposeSuggestionsTooltip,
+                      ),
                     ),
                   ),
                   validator: (value) {
@@ -854,13 +859,19 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
               ),
             ),
             const Divider(height: 1),
-            for (final suggestion in _purposeSuggestions)
-              ListTile(
-                title: Text(suggestion),
-                onTap: () {
-                  Navigator.pop(context, suggestion);
-                },
+            Expanded(
+              child: ListView(
+                children: [
+                  for (final suggestion in _purposeSuggestions)
+                    ListTile(
+                      title: Text(suggestion),
+                      onTap: () {
+                        Navigator.pop(context, suggestion);
+                      },
+                    ),
+                ],
               ),
+            ),
           ],
         );
       },
