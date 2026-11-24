@@ -2075,5 +2075,16 @@
   "faceGateApproved": "Registration approved. Welcome!",
   "verifyResidencyReviewNoNotes": "No notes",
   "verifyResidencyReviewConfirmed": "Proof confirmed — user marked as Poblacion resident",
-  "verifyResidencyReviewRejected": "Proof rejected — user remains unverified"
+  "verifyResidencyReviewRejected": "Proof rejected — user remains unverified",
+  "profileSignature": "Signature",
+  "profileSignatureUpload": "Upload Signature",
+  "profileSignatureSubtitle": "Your digital signature for document approval. PNG with transparent background recommended.",
+  "profileSignatureImagePickerTitle": "Select Signature Image",
+  "profileSignatureImagePickerDesc": "Choose a PNG image with transparent background for your signature.",
+  "profileSignatureSet": "Signature Set",
+  "profileSignatureCleared": "Signature Removed",
+  "profileSignatureRemove": "Remove Signature",
+  "profileSignatureRemoveConfirm": "Remove your signature? It will no longer appear on your approved documents.",
+  "profileSignatureNotSet": "No signature set",
+  "profileSignatureTapToSet": "Tap to set your signature"
 }

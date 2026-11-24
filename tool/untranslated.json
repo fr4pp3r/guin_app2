@@ -1,1 +1,29 @@
-{}
+{
+  "ceb": [
+    "profileSignature",
+    "profileSignatureUpload",
+    "profileSignatureSubtitle",
+    "profileSignatureImagePickerTitle",
+    "profileSignatureImagePickerDesc",
+    "profileSignatureSet",
+    "profileSignatureCleared",
+    "profileSignatureRemove",
+    "profileSignatureRemoveConfirm",
+    "profileSignatureNotSet",
+    "profileSignatureTapToSet"
+  ],
+
+  "fil": [
+    "profileSignature",
+    "profileSignatureUpload",
+    "profileSignatureSubtitle",
+    "profileSignatureImagePickerTitle",
+    "profileSignatureImagePickerDesc",
+    "profileSignatureSet",
+    "profileSignatureCleared",
+    "profileSignatureRemove",
+    "profileSignatureRemoveConfirm",
+    "profileSignatureNotSet",
+    "profileSignatureTapToSet"
+  ]
+}

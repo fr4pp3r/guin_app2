@@ -433,6 +433,35 @@ class UserService {
     }
   }
 
+  /// Clear a user's signature by deleting the file and nulling the URL
+  Future<void> clearSignature(String userId) async {
+    try {
+      // Get current signature URL to find the file to delete
+      final profile = await _supabase
+          .from('users_profile')
+          .select('signature_url')
+          .eq('id', userId)
+          .single();
+
+      final signatureUrl = profile['signature_url'] as String?;
+      if (signatureUrl != null) {
+        // Delete the signature file from storage
+        final uri = Uri.parse(signatureUrl);
+        // Path is signatures/{userId}/signature_*.png
+        final path = uri.pathSegments.skip(uri.pathSegments.length - 4).join('/');
+        await _supabase.storage.from('profile-photos').remove([path]);
+      }
+
+      // Clear the signature_url in the database
+      await _supabase
+          .from('users_profile')
+          .update({'signature_url': null})
+          .eq('id', userId);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   // Upload valid ID
   Future<String> uploadValidId(String userId, File imageFile) async {
     try {

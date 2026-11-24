@@ -322,6 +322,7 @@ class AuthProvider extends ChangeNotifier {
     String? phoneNumber,
     File? profilePhoto,
     File? validId,
+    File? signatureFile,
   }) async {
     _isLoading = true;
     _error = null;
@@ -349,6 +350,11 @@ class AuthProvider extends ChangeNotifier {
         validIdUrl = await _userService.uploadValidId(userId, validId);
       }
 
+      String? signatureUrl;
+      if (signatureFile != null) {
+        signatureUrl = await _userService.uploadSignature(userId, signatureFile);
+      }
+
       _userProfile = await _userService.updateUserProfile(
         userId: userId,
         givenName: givenName,
@@ -362,9 +368,30 @@ class AuthProvider extends ChangeNotifier {
         gender: gender,
         phoneNumber: phoneNumber,
         profilePhotoUrl: profilePhotoUrl,
+        signatureUrl: signatureUrl,
         validIdUrl: validIdUrl,
       );
 
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString().replaceAll('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Clear a user's signature (used by captains/admins)
+  Future<bool> clearSignature(String userId) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _userService.clearSignature(userId);
+      await loadUserProfile();
       _isLoading = false;
       notifyListeners();
       return true;

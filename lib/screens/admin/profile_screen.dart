@@ -36,6 +36,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
 
   // Images
   File? _profilePhoto;
+  File? _signature;
 
   // State
   bool _isEditMode = false;
@@ -100,6 +101,27 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
     }
   }
 
+  Future<void> _pickSignature() async {
+    try {
+      final pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 200,
+        imageQuality: 90,
+      );
+      if (pickedFile != null) {
+        setState(() {
+          _signature = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        final l10n = AppLocalizations.of(context);
+        Helpers.showErrorSnackBar(context, l10n.authFailedPickImage);
+      }
+    }
+  }
+
   Future<void> _selectDateOfBirth() async {
     final date = await showDatePicker(
       context: context,
@@ -147,6 +169,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
       gender: _selectedGender,
       phoneNumber: _phoneController.text.trim(),
       profilePhoto: _profilePhoto,
+      signatureFile: _signature,
     );
 
     if (!mounted) return;
@@ -160,6 +183,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
       setState(() {
         _isEditMode = false;
         _profilePhoto = null;
+        _signature = null;
       });
     } else {
       Helpers.showErrorSnackBar(
@@ -824,6 +848,11 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
           ]),
           const SizedBox(height: AppSizes.paddingL),
 
+          // Signature Section
+          if (userProfile.role != 'citizen' && userProfile.role != 'barangay_tanod')
+            _buildSignatureSection(userProfile),
+          const SizedBox(height: AppSizes.paddingL),
+
           // Account Section (read-only)
           _buildSectionHeader(l10n.authStepAccountLabel, AppColors.success),
           const SizedBox(height: AppSizes.paddingM),
@@ -1233,6 +1262,73 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
               ),
       ),
     );
+  }
+
+  Widget _buildSignatureSection(UserProfile userProfile) {
+    final l10n = AppLocalizations.of(context);
+    final hasSignature = userProfile.signatureUrl != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(l10n.profileSignatureSubtitle, AppColors.primary),
+        const SizedBox(height: AppSizes.paddingS),
+        Text(
+          l10n.profileSignatureImagePickerDesc,
+          style: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: AppSizes.paddingM),
+        _buildImageUploadRow(
+          label: l10n.profileSignatureTapToSet,
+          file: _signature,
+          networkUrl: userProfile.signatureUrl,
+          onTap: _pickSignature,
+        ),
+        if (hasSignature) ...[
+          const SizedBox(height: AppSizes.paddingS),
+          TextButton.icon(
+            onPressed: () => _showRemoveSignatureConfirm(),
+            icon: const Icon(Icons.close, size: 18),
+            label: Text(l10n.profileSignatureRemove),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.primary,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _showRemoveSignatureConfirm() async {
+    final l10n = AppLocalizations.of(context);
+    final confirm = await Helpers.showConfirmDialog(
+      context,
+      title: l10n.commonDelete,
+      message: l10n.profileSignatureRemoveConfirm,
+    );
+    
+    if (confirm && mounted) {
+      setState(() {
+        _signature = null;
+      });
+      await _clearSignature();
+    }
+  }
+
+  Future<void> _clearSignature() async {
+    final authProvider = context.read<AuthProvider>();
+    
+    final userId = authProvider.userProfile?.id;
+    if (userId == null) return;
+
+    final success = await authProvider.clearSignature(userId);
+
+    if (mounted && success) {
+      await authProvider.loadUserProfile();
+    }
   }
 
   void _viewImage(String title, String? networkUrl, File? localFile) {
