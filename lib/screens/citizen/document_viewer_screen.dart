@@ -1470,11 +1470,15 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
       );
       final expiresAt = request.expiresAt;
 
-      // Fetch approver signature if available
+      // Fetch approver details if available
       String? approverSignatureUrl;
+      String? approverName;
       if (request.approverId != null) {
         final approver = await UserService().getUserProfile(request.approverId!);
-        approverSignatureUrl = approver?.signatureUrl;
+        if (approver != null) {
+          approverSignatureUrl = approver.signatureUrl;
+          approverName = approver.fullName;
+        }
       }
 
       final file = await DocumentAutomationService().generatePrintableCopyPdf(
@@ -1483,6 +1487,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
         qrUrl: qrUrl,
         expiresAtLabel: expiresAt == null ? null : _isoDateLabel(expiresAt),
         copyNotice: copyNotice,
+        approverName: approverName,
         approverSignatureUrl: approverSignatureUrl,
       );
       final bytes = await file.readAsBytes();

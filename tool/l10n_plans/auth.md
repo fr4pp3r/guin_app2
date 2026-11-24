@@ -69,7 +69,7 @@ offlineBanner, offlineBannerSuffix, offlineBannerSemantics.
 - verify_document_screen.dart:225 — "This document has already been used." → verifyReasonUsed
 - verify_document_screen.dart:227 — "This document has reached its maximum number of uses." → verifyReasonUseLimit
 - verify_document_screen.dart:317 — "Verify Document" → verifyTitle
-- verify_document_screen.dart:349 — "Enter Document ID (e.g. BRGY-GUION-2025-000001)" → verifyDocumentIdHint
+- verify_document_screen.dart:349 — "Enter Document ID (e.g. BRGY-POBLACION-2025-000001)" → verifyDocumentIdHint
 - verify_document_screen.dart:397 — "Scan the QR on the document, or type the ID above." → verifyScanOrTypeHint
 - verify_document_screen.dart:430 — "Scan QR" → verifyScanQrButton
 - verify_document_screen.dart:532 — "Document Verification" → verifyEmptyStateTitle

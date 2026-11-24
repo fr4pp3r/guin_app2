@@ -651,7 +651,7 @@
     }
   },
   "verifyDocTypeLabel": "Document Type",
-  "verifyDocumentIdHint": "Enter Document ID (e.g. BRGY-GUION-2025-000001)",
+  "verifyDocumentIdHint": "Enter Document ID (e.g. BRGY-POBLACION-2025-000001)",
   "verifyDocumentNotFound": "Document not found or verification token is invalid.",
   "verifyDocumentUsedSuccess": "Document used successfully. {uses}",
   "@verifyDocumentUsedSuccess": {

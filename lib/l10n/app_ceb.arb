@@ -410,7 +410,7 @@
   "verifyCitizenNameLabel": "Ngalan sa Lumulupyo",
   "verifyCouldNotUse": "Dili magamit kining dokumentoha: {error}",
   "verifyDocTypeLabel": "Klase sa Dokumento",
-  "verifyDocumentIdHint": "Isulod ang Document ID (pananglitan BRGY-GUION-2025-000001)",
+  "verifyDocumentIdHint": "Isulod ang Document ID (pananglitan BRGY-POBLACION-2025-000001)",
   "verifyDocumentNotFound": "Wala makit-an ang dokumento o dili balido ang verification token.",
   "verifyDocumentUsedSuccess": "Malampuson nga gigamit ang dokumento. {uses}",
   "verifyDocumentVerified": "Na-verify ang Dokumento",

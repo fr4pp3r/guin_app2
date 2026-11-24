@@ -410,7 +410,7 @@
   "verifyCitizenNameLabel": "Pangalan ng Mamamayan",
   "verifyCouldNotUse": "Hindi magamit ang dokumentong ito: {error}",
   "verifyDocTypeLabel": "Uri ng Dokumento",
-  "verifyDocumentIdHint": "Ilagay ang Document ID (hal. BRGY-GUION-2025-000001)",
+  "verifyDocumentIdHint": "Ilagay ang Document ID (hal. BRGY-POBLACION-2025-000001)",
   "verifyDocumentNotFound": "Hindi mahanap ang dokumento o di-wasto ang verification token.",
   "verifyDocumentUsedSuccess": "Matagumpay na nagamit ang dokumento. {uses}",
   "verifyDocumentVerified": "Naberipika ang Dokumento",

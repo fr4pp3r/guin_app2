@@ -220,7 +220,7 @@ role-gated pipeline:
       │                                    ▼                              ▼
       │                             [rejected]              releaseDocument() → [released]
       │                                                                    │
-      │                                       sets document_id (BRGY-GUION-…),
+      │                                       sets document_id (BRGY-POBLACION-…),
       │                                       final_document_url, verification token
       ▼
   (also) deleteRequest() → [cancelled]
@@ -417,7 +417,7 @@ entry in `AndroidManifest.xml` (already present).
 
 When `releaseDocument()` runs, the service generates:
 
-- `document_id` — format `BRGY-GUION-<year>-<6-digit sequence>`
+- `document_id` — format `BRGY-POBLACION-<year>-<6-digit sequence>`
 - a SHA-256 **verification token** derived from document id + request id + timestamp
 - a `qr_url` for scanning
 - a real SHA-256 **`document_hash`** of the released PDF

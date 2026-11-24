@@ -32,12 +32,12 @@ Uses the standard Supabase Edge Function environment variables:
 ## QR Code URL Format
 
 ```
-https://<project-ref>.supabase.co/functions/v1/verify-document/BRGY-GUION-2026-000123?token=<64hex>
+https://<project-ref>.supabase.co/functions/v1/verify-document/BRGY-POBLACION-2026-000123?token=<64hex>
 ```
 
 Or with a custom domain:
 ```
-https://barangay-guion.app/verify-document/BRGY-GUION-2026-000123?token=<64hex>
+https://barangay-poblacion.app/verify-document/BRGY-POBLACION-2026-000123?token=<64hex>
 ```
 
 ## Verification Logic

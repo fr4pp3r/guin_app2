@@ -253,9 +253,6 @@ class PdfService {
     String? copyNotice,
   }) async {
     final pdf = pw.Document(theme: await _loadUnicodeTheme());
-    final now = Helpers.now();
-    final month = DateFormat('MMMM').format(now);
-    final year2 = now.year.toString().substring(2);
 
     // Load approver signature if available
     pw.ImageProvider? signatureImage;
@@ -380,7 +377,7 @@ class PdfService {
                   // Body
                   pw.Paragraph(
                     text:
-                        'This is to certify that ___________, ${userAge >= 0 ? userAge : '___'} years old, _____, Filipino Citizen is a bonafide resident of ___________, Barangay Poblacion, Narra, Palawan.',
+                        'This is to certify that $userFullName, ${userAge >= 0 ? userAge : '___'} years old, $civilStatus, Filipino Citizen is a bonafide resident of $userAddress, Barangay Poblacion, Narra, Palawan.',
                     style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
                     textAlign: pw.TextAlign.justify,
                   ),
@@ -394,14 +391,14 @@ class PdfService {
                   pw.SizedBox(height: 14),
                   pw.Paragraph(
                     text:
-                        'This certification is being issued upon request of _______________________, for __________ purpose that may legally serve his/her best.',
+                        'This certification is being issued upon request of $userFullName, for ${request.purpose} purpose that may legally serve his/her best.',
                     style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
                     textAlign: pw.TextAlign.justify,
                   ),
                   pw.SizedBox(height: 14),
                   pw.Paragraph(
                     text:
-                        'Issued this ______ day of $month, 20$year2 at Barangay Hall, Poblacion, Narra, Palawan.',
+                        'Issued this ${_formatDate(DateTime.now())} at Barangay Hall, Poblacion, Narra, Palawan.',
                     style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
                     textAlign: pw.TextAlign.justify,
                   ),
