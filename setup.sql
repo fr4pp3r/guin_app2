@@ -957,7 +957,7 @@ END $$;
 -- 9a. Default document fees
 INSERT INTO public.document_fees (document_type, fee_amount, is_free, description) VALUES
   ('barangay_clearance', 75.00,  FALSE, 'Barangay Clearance Fee'),
-  ('business_clearance',  0.00,  FALSE, 'Barangay Business Clearance Fee (Admin Sets)'),
+  ('business_clearance',  100.00, FALSE, 'Barangay Business Clearance Fee'),
   ('certification',       0.00,  FALSE, 'Barangay Certification Fee (Admin Sets)'),
   ('oath_undertaking',    0.00,  TRUE,  'Oath of Undertaking (Free)'),
   ('indigency',           0.00,  TRUE,  'Certificate of Indigency (Free)'),
