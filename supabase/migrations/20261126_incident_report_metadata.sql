@@ -21,4 +21,4 @@ CREATE INDEX IF NOT EXISTS idx_incident_reports_submission_metadata
 
 -- Create index on report hash for duplicate detection
 CREATE INDEX IF NOT EXISTS idx_incident_reports_content_hash 
-  ON public.incident_reports (content_hash) WHERE content_hash IS NOT NULL;
+  ON public.incident_reports (content_hash);
