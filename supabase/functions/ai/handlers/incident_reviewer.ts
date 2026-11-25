@@ -14,6 +14,7 @@ import {
 
 const RISK_LEVELS = ["low", "moderate", "high", "critical"] as const;
 const ESCALATION = ["yes", "no", "review"] as const;
+const FRAUD_FLAGS = ["no_issues", "likely_fabricated", "definitely_duplicate", "potential_spam", "needs_human_review"] as const;
 
 const RESPONSE_SCHEMA: Record<string, unknown> = {
   type: "object",
@@ -28,8 +29,14 @@ const RESPONSE_SCHEMA: Record<string, unknown> = {
       minItems: 0,
       maxItems: 5,
     },
+    fraudFlags: {
+      type: "array",
+      items: { type: "string", enum: [...FRAUD_FLAGS] },
+      minItems: 1,
+      maxItems: 3,
+    },
   },
-  required: ["summary", "riskLevel", "escalationRecommended", "reviewNotes"],
+  required: ["summary", "riskLevel", "escalationRecommended", "reviewNotes", "fraudFlags"],
 };
 
 function coerceEnum<T extends string>(
@@ -79,12 +86,19 @@ export async function incidentReviewer(
     "- escalationRecommended: one of yes, no, review",
     "- reviewNotes: 1-2 sentences (<=300 chars) with analysis/review",
     "- suggestedNextSteps: array of 0-5 short bullet items (each <=80 chars)",
+    "- fraudFlags: array of 1-3 flags from: no_issues, likely_fabricated, definitely_duplicate, potential_spam, needs_human_review",
+    "  Use 'likely_fabricated' for reports with unrealistic details, conflicting information, or patterns suggesting deliberate falsehoods.",
+    "  Use 'definitely_duplicate' for reports that are identical or nearly identical to recent submissions.",
+    "  Use 'potential_spam' for repetitive, templated, or clearly automated-looking content.",
+    "  Use 'needs_human_review' when fraud cannot be determined from content alone.",
+    "  Use 'no_issues' when the report appears legitimate.",
     "",
     "Guidelines:",
     "- Be factual, avoid speculation beyond what is stated.",
     "- For minor disputes use low/moderate; for threats to safety use high; immediate danger = critical.",
     "- If unclear, choose the safer review flag ('review') for escalationRecommended.",
     "- Never include PII beyond what is provided; respect anonymity.",
+    "- Scan for signs of fabrication: inconsistent details, impossible timelines, template language, or content that seems staged.",
     "- Do not include any text outside the JSON object.",
     "",
     `Report type: ${reportType}`,
@@ -145,6 +159,20 @@ export async function incidentReviewer(
     }
   }
 
+  // Extract fraud flags: default to first plausible option
+  let fraudFlags: string[] = ["no_issues"];
+  if (Array.isArray(obj.fraudFlags)) {
+    const flags: string[] = [];
+    for (const f of obj.fraudFlags) {
+      if (typeof f === "string" && FRAUD_FLAGS.includes(f as any)) {
+        flags.push(f as string);
+      }
+    }
+    if (flags.length > 0) {
+      fraudFlags = flags.slice(0, 3);
+    }
+  }
+
   return jsonResponse(200, {
     result: {
       summary,
@@ -152,6 +180,7 @@ export async function incidentReviewer(
       escalationRecommended,
       reviewNotes,
       suggestedNextSteps,
+      fraudFlags,
     },
   });
 }

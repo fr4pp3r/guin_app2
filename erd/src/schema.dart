@@ -321,6 +321,8 @@ final List<Tbl> tables = [
     fk('resolved_by', 'UUID', 'users_profile'),
     c('resolved_at', timestamptz),
     c('resolution_summary', 'TEXT'),
+    c('content_hash', 'TEXT'),  // Added for duplicate/spam detection
+    c('submission_metadata', 'JSONB'),  // Added for fraud detection audit
     c('created_at', timestamptz),
     c('updated_at', timestamptz),
   ]),

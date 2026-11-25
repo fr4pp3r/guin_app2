@@ -21,6 +21,10 @@ class IncidentReportService {
     final visibility = isAnonymous
         ? (isSensitive ? 'hidden_until_authorized' : 'restricted')
         : 'visible';
+    
+    // Generate content hash for duplicate detection
+    final contentHash = _computeContentHash(title, description, location);
+    
     final response = await _supabase.from('incident_reports').insert({
       'submitted_by': submittedBy,
       'report_number': 'IR-${Helpers.now().year}-${Helpers.now().millisecondsSinceEpoch}',
@@ -34,10 +38,37 @@ class IncidentReportService {
       'identity_visibility': visibility,
       'priority': priority,
       'status': 'submitted',
+      'content_hash': contentHash,
+      'submission_metadata': {
+        'client_timestamp': DateTime.now().toIso8601String(),
+        'title_length': title.length,
+        'description_length': description.length,
+        'has_location': location.isNotEmpty,
+        'has_gps': latitude != null && longitude != null,
+      },
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
     }).select().single();
     return IncidentReport.fromJson(response);
+  }
+
+  /// Compute a simple hash of title+description+location for deduplication.
+  /// Uses a deterministic hash that doesn't require crypto.
+  String _computeContentHash(String title, String description, String location) {
+    final combined = '$title|$description|$location';
+    // Simple hash using string code units
+    int hash = 0;
+    for (int i = 0; i < combined.length; i++) {
+      hash = ((hash << 5) - hash + combined.codeUnitAt(i)) & 0xFFFFFFFF;
+    }
+    return 'dup_${hash.toRadixString(16)}';
+  }
+
+  /// Check if a similar report exists within the last hour (duplicate detection).
+  Future<bool> isDuplicateContent(String title, String description, String location, {Duration window = const Duration(hours: 1)}) {
+    final contentHash = _computeContentHash(title, description, location);
+    final cutoff = DateTime.now().subtract(window).toIso8601String();
+    return _supabase.from('incident_reports').select('id').eq('content_hash', contentHash).gte('created_at', cutoff).then((list) => (list as List).isNotEmpty);
   }
 
   Future<List<IncidentReport>> getMyReports(String userId) async {

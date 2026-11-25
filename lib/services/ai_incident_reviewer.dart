@@ -8,6 +8,7 @@ class IncidentReview {
   final String escalationRecommended;
   final String reviewNotes;
   final List<String> suggestedNextSteps;
+  final List<String> fraudFlags;
 
   const IncidentReview({
     required this.summary,
@@ -15,7 +16,11 @@ class IncidentReview {
     required this.escalationRecommended,
     required this.reviewNotes,
     this.suggestedNextSteps = const [],
+    this.fraudFlags = const ['no_issues'],
   });
+
+  /// Check if the AI detected potential fraud
+  bool get hasFraudFlags => fraudFlags.isNotEmpty && fraudFlags[0] != 'no_issues';
 
   factory IncidentReview.fromMap(Map<String, dynamic> map) {
     final summary = map['summary'] is String
@@ -41,12 +46,25 @@ class IncidentReview {
       }
     }
 
+    // Parse fraud flags
+    final List<String> flags = [];
+    final rawFlags = map['fraudFlags'];
+    if (rawFlags is List) {
+      for (final f in rawFlags) {
+        if (f is String && f.trim().isNotEmpty) {
+          flags.add(f.trim());
+        }
+      }
+    }
+    final fraudFlags = flags.isNotEmpty ? flags : ['no_issues'];
+
     return IncidentReview(
       summary: summary,
       riskLevel: riskLevel,
       escalationRecommended: escalationRecommended,
       reviewNotes: reviewNotes,
       suggestedNextSteps: steps,
+      fraudFlags: fraudFlags,
     );
   }
 }

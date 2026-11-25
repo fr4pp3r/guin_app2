@@ -19,6 +19,8 @@ class IncidentReport {
   final String? resolutionSummary;
   final double? latitude;
   final double? longitude;
+  final String? contentHash;
+  final Map<String, dynamic>? submissionMetadata;
   final DateTime createdAt;
 
   IncidentReport({
@@ -42,6 +44,8 @@ class IncidentReport {
     this.resolutionSummary,
     this.latitude,
     this.longitude,
+    this.contentHash,
+    this.submissionMetadata,
     required this.createdAt,
   });
 
@@ -67,6 +71,8 @@ class IncidentReport {
       'resolution_summary': resolutionSummary,
       'latitude': latitude,
       'longitude': longitude,
+      'content_hash': contentHash,
+      'submission_metadata': submissionMetadata,
       'created_at': createdAt.toIso8601String(),
     };
   }
@@ -93,6 +99,8 @@ class IncidentReport {
       resolutionSummary: json['resolution_summary'] as String?,
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
+      contentHash: json['content_hash'] as String?,
+      submissionMetadata: json['submission_metadata'] as Map<String, dynamic>?,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }

@@ -411,6 +411,8 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                       ),
                     ),
                   ],
+                  // AI fraud detection warning
+                  if (_aiReview != null) _buildFraudWarning(),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _titleController,
@@ -749,6 +751,58 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
           fontWeight: FontWeight.w600,
           color: color,
         ),
+      ),
+    );
+  }
+
+  /// Build a warning banner for AI fraud detection flags
+  Widget _buildFraudWarning() {
+    if (_aiReview == null || !_aiReview!.hasFraudFlags) return const SizedBox.shrink();
+    
+    final flags = _aiReview!.fraudFlags;
+    if (flags.isEmpty || flags[0] == 'no_issues') return const SizedBox.shrink();
+
+    String message;
+    Color color;
+    
+    if (flags.contains('definitely_duplicate')) {
+      message = 'This report looks similar to a recent submission. Please verify your report is unique.';
+      color = Colors.orange;
+    } else if (flags.contains('likely_fabricated')) {
+      message = 'The AI detected unusual patterns. Your report will be reviewed before processing.';
+      color = Colors.deepOrange;
+    } else if (flags.contains('potential_spam')) {
+      message = 'Report detected as potentially spam. A moderator will review before processing.';
+      color = Colors.purple;
+    } else if (flags.contains('needs_human_review')) {
+      message = 'This report needs manual review. Your submission is saved securely.';
+      color = AppColors.primary;
+    } else {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_outlined, size: 20, color: Colors.orange),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: 13,
+                color: color,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
