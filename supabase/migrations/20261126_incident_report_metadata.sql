@@ -8,6 +8,10 @@
 -- Safe to re-run (idempotent).
 -- ============================================================================
 
+-- Add content_hash column for duplicate detection
+ALTER TABLE public.incident_reports
+  ADD COLUMN IF NOT EXISTS content_hash TEXT;
+
 -- Add submission_metadata JSON column for fraud detection audit trail
 ALTER TABLE public.incident_reports
   ADD COLUMN IF NOT EXISTS submission_metadata JSONB;
