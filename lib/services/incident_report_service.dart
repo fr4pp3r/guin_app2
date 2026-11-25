@@ -13,15 +13,10 @@ class IncidentReportService {
     required String location,
     required DateTime incidentDateTime,
     required bool isSensitive,
-    required bool isAnonymous,
     String priority = 'normal',
     double? latitude,
     double? longitude,
   }) async {
-    final visibility = isAnonymous
-        ? (isSensitive ? 'hidden_until_authorized' : 'restricted')
-        : 'visible';
-    
     // Generate content hash for duplicate detection
     final contentHash = _computeContentHash(title, description, location);
     
@@ -34,8 +29,6 @@ class IncidentReportService {
       'location': location,
       'incident_datetime': incidentDateTime.toIso8601String(),
       'is_sensitive': isSensitive,
-      'is_anonymous': isAnonymous,
-      'identity_visibility': visibility,
       'priority': priority,
       'status': 'submitted',
       'content_hash': contentHash,

@@ -81,7 +81,6 @@ class AiIncidentReviewer {
     String reportType = '',
     String priority = '',
     bool isSensitive = false,
-    bool isAnonymous = false,
   }) async {
     try {
       final result = await _service.invoke(
@@ -93,7 +92,6 @@ class AiIncidentReviewer {
           'reportType': reportType,
           'priority': priority,
           'isSensitive': isSensitive,
-          'isAnonymous': isAnonymous,
         },
         timeout: const Duration(seconds: 30),
       );

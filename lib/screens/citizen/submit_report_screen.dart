@@ -26,7 +26,6 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
   String _reportType = 'complaint';
   String _priority = 'normal';
   bool _isSensitive = false;
-  bool _isAnonymous = false;
   bool _isSubmitting = false;
   IncidentSuggestion? _aiSuggestion;
   IncidentReview? _aiReview;
@@ -70,7 +69,6 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
         reportType: _reportType,
         priority: _priority,
         isSensitive: _isSensitive,
-        isAnonymous: _isAnonymous,
       );
       final results = await Future.wait([suggestionFuture, reviewFuture]);
       final suggestion = results[0] as IncidentSuggestion?;
@@ -161,7 +159,6 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
         location: _locationController.text.trim(),
         incidentDateTime: Helpers.now(),
         isSensitive: _isSensitive,
-        isAnonymous: _isAnonymous,
         priority: _priority,
         latitude: _pickedPin?.latitude,
         longitude: _pickedPin?.longitude,
@@ -558,15 +555,6 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                     subtitle: l10n.reportMarkSensitiveSubtitle,
                     value: _isSensitive,
                     onChanged: (v) => setState(() => _isSensitive = v),
-                  ),
-                  const SizedBox(height: 8),
-                  _optionTile(
-                    icon: Icons.visibility_off_outlined,
-                    iconColor: Colors.purple,
-                    title: l10n.reportSubmitAnonymously,
-                    subtitle: l10n.reportSubmitAnonymouslySubtitle,
-                    value: _isAnonymous,
-                    onChanged: (v) => setState(() => _isAnonymous = v),
                   ),
                 ],
               ),
