@@ -622,6 +622,7 @@ class DocumentAutomationService {
     String? qrUrl,
     String? expiresAtLabel,
     String? copyNotice,
+    String? profilePhotoUrl,
   }) {
     return _generatePdf(
       request: request,
@@ -634,6 +635,7 @@ class DocumentAutomationService {
       qrUrl: qrUrl,
       expiresAtLabel: expiresAtLabel,
       copyNotice: copyNotice,
+      profilePhotoUrl: profilePhotoUrl,
     );
   }
 
@@ -648,7 +650,11 @@ class DocumentAutomationService {
     String? qrUrl,
     String? expiresAtLabel,
     String? copyNotice,
+    String? profilePhotoUrl,
   }) {
+    // Use provided profilePhotoUrl, otherwise fall back to citizen's photo
+    final effectivePhotoUrl = profilePhotoUrl ?? citizen.profilePhotoUrl;
+    
     switch (request.documentType) {
       case 'barangay_clearance':
         return PdfService.generateBarangayClearance(
@@ -658,7 +664,7 @@ class DocumentAutomationService {
           userAddress: citizen.address,
           userAge: citizen.age,
           civilStatus: citizen.civilStatus,
-          profilePhotoUrl: citizen.profilePhotoUrl,
+          profilePhotoUrl: effectivePhotoUrl,
           isDraft: isDraft,
           approverName: approverName,
           approverSignatureUrl: approverSignatureUrl,
@@ -675,7 +681,7 @@ class DocumentAutomationService {
           userAddress: citizen.address,
           userAge: citizen.age,
           civilStatus: citizen.civilStatus,
-          profilePhotoUrl: citizen.profilePhotoUrl,
+          profilePhotoUrl: effectivePhotoUrl,
           approverSignatureUrl: approverSignatureUrl,
           documentId: documentId,
           qrUrl: qrUrl,
@@ -696,7 +702,7 @@ class DocumentAutomationService {
               '${citizen.dateOfBirth.day.toString().padLeft(2, '0')}',
           placeOfBirth: citizen.placeOfBirth,
           gender: citizen.gender,
-          profilePhotoUrl: citizen.profilePhotoUrl,
+          profilePhotoUrl: effectivePhotoUrl,
           approverSignatureUrl: approverSignatureUrl,
           documentId: documentId,
           qrUrl: qrUrl,
@@ -724,7 +730,7 @@ class DocumentAutomationService {
           bloodType:
               request.documentData['blood_type']?.toString() ?? 'Unknown',
           config: config,
-          profilePhotoUrl: citizen.profilePhotoUrl,
+          profilePhotoUrl: effectivePhotoUrl,
           documentId: documentId,
           qrUrl: qrUrl,
           expiresAtLabel: expiresAtLabel,
@@ -738,7 +744,7 @@ class DocumentAutomationService {
           userAddress: citizen.address,
           userAge: citizen.age,
           civilStatus: citizen.civilStatus,
-          profilePhotoUrl: citizen.profilePhotoUrl,
+          profilePhotoUrl: effectivePhotoUrl,
           isDraft: isDraft,
           approverName: approverName,
           approverSignatureUrl: approverSignatureUrl,
@@ -755,7 +761,7 @@ class DocumentAutomationService {
           userAddress: citizen.address,
           userAge: citizen.age,
           civilStatus: citizen.civilStatus,
-          profilePhotoUrl: citizen.profilePhotoUrl,
+          profilePhotoUrl: effectivePhotoUrl,
           isDraft: isDraft,
           approverName: approverName,
           approverSignatureUrl: approverSignatureUrl,
@@ -772,7 +778,7 @@ class DocumentAutomationService {
           userAddress: citizen.address,
           userAge: citizen.age,
           civilStatus: citizen.civilStatus,
-          profilePhotoUrl: citizen.profilePhotoUrl,
+          profilePhotoUrl: effectivePhotoUrl,
           isDraft: isDraft,
           approverName: approverName,
           approverSignatureUrl: approverSignatureUrl,
@@ -789,7 +795,7 @@ class DocumentAutomationService {
           userAddress: citizen.address,
           userAge: citizen.age,
           civilStatus: citizen.civilStatus,
-          profilePhotoUrl: citizen.profilePhotoUrl,
+          profilePhotoUrl: effectivePhotoUrl,
           isDraft: isDraft,
           approverName: approverName,
           approverSignatureUrl: approverSignatureUrl,
@@ -806,7 +812,7 @@ class DocumentAutomationService {
           userAddress: citizen.address,
           userAge: citizen.age,
           civilStatus: citizen.civilStatus,
-          profilePhotoUrl: citizen.profilePhotoUrl,
+          profilePhotoUrl: effectivePhotoUrl,
           isDraft: isDraft,
           approverName: approverName,
           approverSignatureUrl: approverSignatureUrl,
@@ -855,6 +861,7 @@ class DocumentAutomationService {
       qrUrl: qrUrl,
       expiresAtLabel: expiresAtLabel,
       copyNotice: copyNotice,
+      profilePhotoUrl: null, // No profile photo in printable copies
     );
   }
 

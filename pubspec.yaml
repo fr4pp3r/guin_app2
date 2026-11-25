@@ -79,6 +79,9 @@ dependencies:
 
   # reCAPTCHA widget (webview-based, cross-platform)
   webview_flutter: ^4.10.0
+  
+  # OpenCV for face detection - pinned to 2.2.2 to avoid hooks build issues
+  opencv_dart: 2.2.2
 
 dev_dependencies:
   flutter_test:

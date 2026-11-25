@@ -1470,11 +1470,13 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen>
       );
       final expiresAt = request.expiresAt;
 
-      // Fetch approver details if available
+      // Fetch approver details: release never persists approver_id, so fall
+      // back to released_by (the same captain signs and releases in one step).
+      final approverId = request.approverId ?? request.releasedBy;
       String? approverSignatureUrl;
       String? approverName;
-      if (request.approverId != null) {
-        final approver = await UserService().getUserProfile(request.approverId!);
+      if (approverId != null) {
+        final approver = await UserService().getUserProfile(approverId);
         if (approver != null) {
           approverSignatureUrl = approver.signatureUrl;
           approverName = approver.fullName;
