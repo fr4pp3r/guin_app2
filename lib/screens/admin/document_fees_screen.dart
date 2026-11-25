@@ -371,27 +371,6 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
                   _gradientEditButton(() => _showEditDialog(fee)),
               ],
             ),
-            if (canManage) ...[
-              const SizedBox(height: 4),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  onPressed: () => _confirmMarkAsFree(fee),
-                  icon: const Icon(
-                    Icons.sell_outlined,
-                    size: 18,
-                    color: Color(0xFF1976D2),
-                  ),
-                  label: Text(
-                    l10n.afeeMarkAsFree,
-                    style: const TextStyle(
-                      color: Color(0xFF1976D2),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ],
           ],
         ),
       ),
@@ -400,7 +379,6 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
 
   Widget _buildFreeCard(DocumentFee fee) {
     final l10n = AppLocalizations.of(context);
-    final canManage = _canManageFees;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: _cardDecoration(),
@@ -482,25 +460,6 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
                     ),
                   ],
                 ),
-                if (canManage)
-                  TextButton.icon(
-                    onPressed: () => _showEditDialog(
-                      fee,
-                      removingFreeTag: true,
-                    ),
-                    icon: const Icon(
-                      Icons.label_off_outlined,
-                      size: 18,
-                      color: Color(0xFF1976D2),
-                    ),
-                    label: Text(
-                      l10n.afeeRemoveFreeTag,
-                      style: const TextStyle(
-                        color: Color(0xFF1976D2),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
               ],
             ),
           ],
@@ -509,100 +468,7 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
     );
   }
 
-  void _confirmMarkAsFree(DocumentFee fee) {
-    final l10n = AppLocalizations.of(context);
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.sell_outlined,
-                color: Color(0xFF4CAF50),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                l10n.afeeMarkAsFreeConfirmTitle,
-                style: const TextStyle(fontSize: 18),
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          l10n.afeeMarkAsFreeConfirmBody,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
-            height: 1.4,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(l10n.commonCancel),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF4CAF50), Color(0xFF66BB6A)],
-              ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: ElevatedButton(
-              onPressed: () => _markFeeFree(fee),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(l10n.commonConfirm),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _markFeeFree(DocumentFee fee) async {
-    final l10n = AppLocalizations.of(context);
-    final barangayProvider = context.read<BarangayProvider>();
-
-    Navigator.pop(context); // Close confirmation dialog
-    Helpers.showLoadingDialog(context, l10n.afeeUpdating);
-
-    try {
-      await barangayProvider.updateFee(
-        id: fee.id,
-        feeAmount: 0,
-        description: fee.description,
-        isFree: true,
-      );
-
-      if (!mounted) return;
-      Helpers.dismissDialog(context);
-      Helpers.showSuccessSnackBar(context, l10n.afeeMarkedFree);
-    } catch (e) {
-      if (!mounted) return;
-      Helpers.dismissDialog(context);
-      Helpers.showErrorSnackBar(
-        context,
-        Helpers.parseSupabaseError(e.toString()),
-      );
-    }
-  }
-
-  void _showEditDialog(DocumentFee fee, {bool removingFreeTag = false}) {
+  void _showEditDialog(DocumentFee fee) {
     final l10n = AppLocalizations.of(context);
     final amountController = TextEditingController(
       text: fee.feeAmount.toStringAsFixed(2),
@@ -629,9 +495,7 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                removingFreeTag
-                    ? l10n.afeeRemoveFreeTag
-                    : l10n.afeeEditDialogTitle(_formatDocumentType(fee.documentType)),
+                _formatDocumentType(fee.documentType),
                 style: const TextStyle(fontSize: 18),
               ),
             ),
@@ -700,7 +564,6 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
                 amountController.text,
                 descriptionController.text,
                 formKey,
-                isFree: !removingFreeTag,
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
@@ -721,9 +584,8 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
     String feeId,
     String amountText,
     String description,
-    GlobalKey<FormState> formKey, {
-    required bool isFree,
-  }) async {
+    GlobalKey<FormState> formKey,
+  ) async {
     final l10n = AppLocalizations.of(context);
     if (!formKey.currentState!.validate()) return;
 
@@ -738,7 +600,7 @@ class _DocumentFeesScreenState extends State<DocumentFeesScreen> {
         id: feeId,
         feeAmount: amount,
         description: description.isEmpty ? null : description,
-        isFree: isFree,
+        isFree: false, // Only Indigency and Oath Taking should be free (set in DB)
       );
 
       if (!mounted) return;
