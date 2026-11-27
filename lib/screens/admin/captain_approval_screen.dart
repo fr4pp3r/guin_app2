@@ -13,7 +13,6 @@ import 'package:guin_app/providers/notification_provider.dart';
 import 'package:guin_app/screens/admin/document_request_detail_screen.dart';
 import 'package:guin_app/services/pdf_service.dart';
 import 'package:guin_app/services/user_service.dart';
-import 'package:guin_app/l10n/app_l10n.dart';
 import 'package:guin_app/l10n/generated/app_localizations.dart';
 import 'package:guin_app/utils/constants.dart';
 import 'package:guin_app/utils/helpers.dart';
@@ -63,12 +62,6 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
       return;
     }
 
-    // 1) Configure the release policy (expiry / single-use / use limit)
-    //    BEFORE anything is generated. Dismissing the sheet aborts cleanly.
-    final policy = await _showReleasePolicySheet();
-    if (!mounted || policy == null) return;
-    final policyLine = l10n.acapReleasePolicyLine(_describePolicy(policy));
-
     final auth = context.read<AuthProvider>();
     final role = auth.userProfile!.role;
 
@@ -77,7 +70,7 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
       final ok = await Helpers.showConfirmDialog(
         context,
         title: l10n.acapKagawadApproval,
-        message: l10n.acapKagawadApprovalMessage(policyLine),
+        message: l10n.acapKagawadApprovalMessage(''),
       );
       if (!ok) return;
     } else {
@@ -86,7 +79,7 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
         title: l10n.acapApproveAndSign,
         message: l10n.acapApproveAndSignMessage(
           request.documentTypeDisplay,
-          policyLine,
+          '',
         ),
       );
       if (!ok) return;
@@ -111,17 +104,14 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
       final approverSignatureUrl = auth.userProfile!.signatureUrl;
 
       // Build verification identity FIRST so the PDF can embed the QR + expiry.
+      // Uses default validity: January 1 of the incoming year.
       final payload = ReleasePayload.buildIdentity(
         requestId: request.id,
         sequence: Helpers.now().millisecondsSinceEpoch,
         releasedBy: auth.userProfile!.id,
         now: Helpers.now(),
-        singleUse: policy.singleUse,
-        maxUses: policy.singleUse ? null : policy.maxUses,
-        validFor: policy.noExpiry
-            ? null
-            : (policy.validFor ?? const Duration(days: 30)),
-        noExpiry: policy.noExpiry,
+        singleUse: false,
+        maxUses: null,
       );
       final expiresAtLabel = payload.expiresAt != null
           ? DateFormat('MMM dd, yyyy').format(Helpers.toPh(payload.expiresAt!))
@@ -319,17 +309,6 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
         l10n.acapErrorFormatted(Helpers.parseSupabaseError(e.toString())),
       );
     }
-  }
-
-  // ── Release policy picker (expiry / single-use / use limit) ─────────
-
-  Future<_ReleasePolicy?> _showReleasePolicySheet() {
-    return showModalBottomSheet<_ReleasePolicy>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const _ReleasePolicySheet(),
-    );
   }
 
   // ── Reject ──────────────────────────────────────────────────────────
@@ -760,484 +739,6 @@ class _CaptainApprovalScreenState extends State<CaptainApprovalScreen> {
       default:
         return Icons.description_outlined;
     }
-  }
-}
-
-// ── Release policy (expiry • single-use • use limit) ─────────────────────
-
-/// Per-document release policy chosen by the approver before signing.
-class _ReleasePolicy {
-  const _ReleasePolicy({
-    required this.validFor,
-    required this.noExpiry,
-    required this.singleUse,
-    required this.maxUses,
-  });
-
-  /// How long the released copy stays valid. Unused when [noExpiry] is true.
-  final Duration? validFor;
-
-  /// When true the document never expires ([validFor] is not applied).
-  final bool noExpiry;
-
-  /// The document may only be claimed once.
-  final bool singleUse;
-
-  /// Allowed uses when not single-use; `null` means unlimited.
-  final int? maxUses;
-
-  /// 30 days, expiring, multi-use, unlimited — the sensible default.
-  static const _ReleasePolicy defaults = _ReleasePolicy(
-    validFor: Duration(days: 30),
-    noExpiry: false,
-    singleUse: false,
-    maxUses: null,
-  );
-}
-
-/// One-line description of a policy — used in the confirmation dialog and as
-/// the live preview inside the policy sheet.
-String _describePolicy(_ReleasePolicy p) {
-  final l10n = AppL10n.current;
-  final validity = p.noExpiry
-      ? l10n.acapPolicyNoExpiry
-      : l10n.acapPolicyValidForDays(p.validFor?.inDays ?? 30);
-  final usage = p.singleUse
-      ? l10n.acapPolicySingleUse
-      : p.maxUses == null
-      ? l10n.acapPolicyMultiUseUnlimited
-      : l10n.acapPolicyMultiUseMax(p.maxUses!);
-  return '$validity • $usage';
-}
-
-/// Bottom sheet where the approver configures how the released document may
-/// be used. Pops with the chosen [_ReleasePolicy], or `null` when dismissed.
-class _ReleasePolicySheet extends StatefulWidget {
-  const _ReleasePolicySheet();
-
-  @override
-  State<_ReleasePolicySheet> createState() => _ReleasePolicySheetState();
-}
-
-class _ReleasePolicySheetState extends State<_ReleasePolicySheet> {
-  /// Matches the "Sign & Release" button / gradient header blue.
-  static const Color _accent = Color(0xFF0D47A1);
-
-  /// `(label, days)` — `days == null` is the "No expiry" option.
-  static List<(String, int?)> _validityOptions(AppLocalizations l10n) => [
-    (l10n.acapValidityDays(7), 7),
-    (l10n.acapValidityDays(30), 30),
-    (l10n.acapValidityDays(90), 90),
-    (l10n.acapValidityOneYear, 365),
-    (l10n.acapPolicyNoExpiry, null),
-  ];
-
-  static const TextStyle _labelStyle = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.w700,
-    letterSpacing: 0.6,
-    color: AppColors.textSecondary,
-  );
-
-  int _days = _ReleasePolicy.defaults.validFor?.inDays ?? 30;
-  bool _noExpiry = _ReleasePolicy.defaults.noExpiry;
-  bool _singleUse = _ReleasePolicy.defaults.singleUse;
-  final TextEditingController _maxUsesCtrl = TextEditingController();
-  final TextEditingController _customDaysCtrl = TextEditingController();
-  String? _maxUsesError;
-  String? _customDaysError;
-
-  @override
-  void dispose() {
-    _maxUsesCtrl.dispose();
-    _customDaysCtrl.dispose();
-    super.dispose();
-  }
-
-  /// Best-effort policy for the live preview; strict validation happens in
-  /// [_confirm].
-  _ReleasePolicy _previewPolicy() {
-    final rawMax = _maxUsesCtrl.text.trim();
-    final rawCustom = _customDaysCtrl.text.trim();
-
-    int activeDays = _days;
-    if (rawCustom.isNotEmpty) {
-      final customParsed = int.tryParse(rawCustom);
-      if (customParsed != null && customParsed > 0) {
-        activeDays = customParsed;
-      }
-    }
-
-    return _ReleasePolicy(
-      validFor: _noExpiry ? null : Duration(days: activeDays),
-      noExpiry: _noExpiry,
-      singleUse: _singleUse,
-      maxUses: _singleUse || rawMax.isEmpty ? null : int.tryParse(rawMax),
-    );
-  }
-
-  void _selectValidity(int? days) {
-    setState(() {
-      if (days == null) {
-        _noExpiry = true;
-      } else {
-        _noExpiry = false;
-        _days = days;
-      }
-      _customDaysError = null;
-    });
-  }
-
-  void _confirm() {
-    final l10n = AppLocalizations.of(context);
-    int? maxUses;
-    if (!_singleUse) {
-      final raw = _maxUsesCtrl.text.trim();
-      if (raw.isNotEmpty) {
-        final parsed = RegExp(r'^\d+$').hasMatch(raw)
-            ? int.tryParse(raw)
-            : null;
-        if (parsed == null || parsed < 1) {
-          setState(() {
-            _maxUsesError = l10n.acapMaxUsesError;
-          });
-          return;
-        }
-        maxUses = parsed;
-      }
-    }
-
-    if (!mounted) return;
-
-    // Validate custom days if they are typed
-    final rawCustom = _customDaysCtrl.text.trim();
-    int finalDays = _days;
-    if (rawCustom.isNotEmpty) {
-      final parsed = int.tryParse(rawCustom);
-      if (parsed == null || parsed <= 0) {
-        setState(() {
-          _customDaysError = l10n.acapCustomDaysError;
-        });
-        return;
-      }
-      finalDays = parsed;
-    }
-
-    Navigator.pop(
-      context,
-      _ReleasePolicy(
-        validFor: _noExpiry ? null : Duration(days: finalDays),
-        noExpiry: _noExpiry,
-        singleUse: _singleUse,
-        maxUses: _singleUse ? null : maxUses,
-      ),
-    );
-  }
-
-  Widget _sectionLabel(String text) => Text(text, style: _labelStyle);
-
-  Widget _buildSegment(String label, int? days) {
-    final selected = days == null ? _noExpiry : !_noExpiry && _days == days;
-    return Expanded(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => _selectValidity(days),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          margin: const EdgeInsets.symmetric(horizontal: 2),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: selected ? _accent : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: selected
-                ? [
-                    BoxShadow(
-                      color: _accent.withValues(alpha: 0.28),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
-              color: selected ? Colors.white : AppColors.textSecondary,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final mediaQuery = MediaQuery.of(context);
-    // Modal bottom sheets are not keyboard-aware on their own — lift the
-    // content so the max-uses field and buttons stay visible.
-    final keyboardInset = mediaQuery.viewInsets.bottom;
-
-    return Container(
-      width: double.infinity,
-      constraints: BoxConstraints(maxHeight: mediaQuery.size.height - 12),
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.only(bottom: keyboardInset),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Drag handle
-                Center(
-                  child: Container(
-                    width: 44,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Title
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.schedule,
-                        color: AppColors.primary,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.acapReleasePolicyTitle,
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            l10n.acapReleasePolicySubtitle,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // Validity
-                _sectionLabel(l10n.acapValiditySection),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0F4FA),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      for (final (label, days) in _validityOptions(l10n))
-                        _buildSegment(label, days),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Single-use switch
-                Container(
-                  padding: const EdgeInsets.fromLTRB(14, 4, 6, 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F7FA),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: AppColors.primary.withValues(
-                        alpha: _singleUse ? 0.4 : 0.12,
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.looks_one,
-                          color: AppColors.primary,
-                          size: 18,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              l10n.acapPolicySingleUse,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              l10n.acapSingleUseHelp,
-                              style: const TextStyle(
-                                fontSize: 11.5,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Switch(
-                        value: _singleUse,
-                        onChanged: (value) => setState(() {
-                          _singleUse = value;
-                          if (value) _maxUsesError = null;
-                        }),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Custom days input
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _sectionLabel(l10n.acapCustomDaysSection),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _customDaysCtrl,
-                        keyboardType: TextInputType.number,
-                        onChanged: (_) =>
-                            setState(() => _customDaysError = null),
-                        decoration: InputDecoration(
-                          labelText: l10n.acapCustomDaysLabel,
-                          hintText: l10n.acapCustomDaysHint,
-                          helperText: l10n.acapCustomDaysHelper,
-                          errorText: _customDaysError,
-                          filled: true,
-                          fillColor: const Color(0xFFF5F7FA),
-                          prefixIcon: const Icon(
-                            Icons.calendar_today,
-                            size: 20,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Live summary of the chosen policy
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: _accent.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _accent.withValues(alpha: 0.18)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.info_outline, size: 16, color: _accent),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _describePolicy(_previewPolicy()),
-                          style: const TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                            color: _accent,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Actions
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.textSecondary,
-                          side: BorderSide(
-                            color: Colors.grey.withValues(alpha: 0.5),
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: Text(l10n.commonCancel),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton.icon(
-                        onPressed: _confirm,
-                        icon: const Icon(Icons.check, size: 16),
-                        label: Text(
-                          l10n.acapConfirmPolicy,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _accent,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
 

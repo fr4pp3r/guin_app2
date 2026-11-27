@@ -28,8 +28,13 @@ class DocumentAccessState {
 }
 
 class DocumentAccessRules {
-  /// Default validity window for a released document.
-  static const Duration defaultValidity = Duration(days: 30);
+  /// Default validity window for a released document: until January 1 of the
+  /// incoming year. Not const because it depends on the current date.
+  static Duration get defaultValidity {
+    final now = Helpers.now();
+    final nextYear = DateTime(now.year + 1, 1, 1);
+    return nextYear.difference(now);
+  }
 
   /// Evaluate whether a document may still be verified/used.
   /// Order: revoked -> already used -> expired -> single-use consumed -> limit reached -> allowed.
