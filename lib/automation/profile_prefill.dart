@@ -6,9 +6,9 @@ import 'package:guin_app/models/user_profile.dart';
 
 /// The subset of `document_data` the profile already answers, keyed exactly as
 /// `request_document_screen.dart` writes it and `DocumentDataValidator` reads
-/// it. Keys with no profile source (cedula height/weight/TIN/occupation/annual
-/// income, indigency requester for someone else) are deliberately absent — the
-/// request form keeps those as optional extras.
+/// it. Keys with no profile source (cedula TIN/occupation/annual_income,
+/// indigency requester for someone else) are deliberately absent — the
+/// request form requires those fields to be filled in.
 Map<String, dynamic> profileDocumentData(
   UserProfile profile,
   String documentType,

@@ -1330,8 +1330,6 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        // Height and weight are the only fields the citizen may edit here;
-        // everything else is locked to the profile.
         Row(
           children: [
             Expanded(
@@ -1342,6 +1340,8 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                   labelText: l10n.reqDocHeight,
                   border: const OutlineInputBorder(),
                 ),
+                validator: (value) =>
+                    value?.isEmpty ?? true ? l10n.commonRequired : null,
               ),
             ),
             const SizedBox(width: 16),
@@ -1353,6 +1353,8 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
                   labelText: l10n.reqDocWeight,
                   border: const OutlineInputBorder(),
                 ),
+                validator: (value) =>
+                    value?.isEmpty ?? true ? l10n.commonRequired : null,
               ),
             ),
           ],
@@ -1360,31 +1362,34 @@ class _RequestDocumentScreenState extends State<RequestDocumentScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _cedulaTinController,
-          readOnly: _cedulaTinController.text.isEmpty,
           keyboardType: TextInputType.number,
           decoration: const InputDecoration(
             labelText: 'TIN',
             border: OutlineInputBorder(),
           ),
+          validator: (value) =>
+              value?.isEmpty ?? true ? l10n.commonRequired : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _cedulaOccupationController,
-          readOnly: _cedulaOccupationController.text.isEmpty,
           decoration: InputDecoration(
             labelText: l10n.reqDocOccupation,
             border: const OutlineInputBorder(),
           ),
+          validator: (value) =>
+              value?.isEmpty ?? true ? l10n.commonRequired : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _cedulaAnnualIncomeController,
-          readOnly: _cedulaAnnualIncomeController.text.isEmpty,
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
             labelText: l10n.reqDocAnnualIncome,
             border: const OutlineInputBorder(),
           ),
+          validator: (value) =>
+              value?.isEmpty ?? true ? l10n.commonRequired : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
